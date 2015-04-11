@@ -101,18 +101,17 @@ class HTTPException(Exception):
 
     def get_description(self, environ=None):
         """Get the description."""
-        return u'<p>%s</p>' % escape(self.description)
+        return u'%s' % self.description
 
     def get_body(self, environ=None):
         """Get the HTML body."""
         return text_type((
-            u'<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n'
-            u'<title>%(code)s %(name)s</title>\n'
-            u'<h1>%(name)s</h1>\n'
+            u'%(code)s %(name)s\n'
+            u'%(name)s\n'
             u'%(description)s\n'
         ) % {
             'code':         self.code,
-            'name':         escape(self.name),
+            'name':         self.name,
             'description':  self.get_description(environ)
         })
 
@@ -606,6 +605,4 @@ abort = Aborter()
 BadRequestKeyError = BadRequest.wrap(KeyError)
 
 
-# imported here because of circular dependencies of flagon.utils
-from flagon.utils import escape
 from flagon.http import HTTP_STATUS_CODES

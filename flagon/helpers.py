@@ -29,11 +29,7 @@ from flagon.datastructures import Headers
 from flagon.exceptions import NotFound
 
 # this was moved in 0.7
-try:
-    from flagon.wsgi import wrap_file
-except ImportError:
-    from flagon.utils import wrap_file
-
+from flagon.wsgi import wrap_file
 from .globals import session, _request_ctx_stack, _app_ctx_stack, \
      current_app, request
 from ._compat import string_types, text_type
@@ -311,72 +307,6 @@ def url_for(endpoint, **values):
     if anchor is not None:
         rv += '#' + url_quote(anchor)
     return rv
-
-
-def flash(message, category='message'):
-    """Flashes a message to the next request.  In order to remove the
-    flashed message from the session and to display it to the user,
-    the template has to call :func:`get_flashed_messages`.
-
-    .. versionchanged:: 0.3
-       `category` parameter added.
-
-    :param message: the message to be flashed.
-    :param category: the category for the message.  The following values
-                     are recommended: ``'message'`` for any kind of message,
-                     ``'error'`` for errors, ``'info'`` for information
-                     messages and ``'warning'`` for warnings.  However any
-                     kind of string can be used as category.
-    """
-    # Original implementation:
-    #
-    #     session.setdefault('_flashes', []).append((category, message))
-    #
-    # This assumed that changes made to mutable structures in the session are
-    # are always in sync with the sess on object, which is not true for session
-    # implementations that use external storage for keeping their keys/values.
-    flashes = session.get('_flashes', [])
-    flashes.append((category, message))
-    session['_flashes'] = flashes
-
-
-def get_flashed_messages(with_categories=False, category_filter=[]):
-    """Pulls all flashed messages from the session and returns them.
-    Further calls in the same request to the function will return
-    the same messages.  By default just the messages are returned,
-    but when `with_categories` is set to `True`, the return value will
-    be a list of tuples in the form ``(category, message)`` instead.
-
-    Filter the flashed messages to one or more categories by providing those
-    categories in `category_filter`.  This allows rendering categories in
-    separate html blocks.  The `with_categories` and `category_filter`
-    arguments are distinct:
-
-    * `with_categories` controls whether categories are returned with message
-      text (`True` gives a tuple, where `False` gives just the message text).
-    * `category_filter` filters the messages down to only those matching the
-      provided categories.
-
-    See :ref:`message-flashing-pattern` for examples.
-
-    .. versionchanged:: 0.3
-       `with_categories` parameter added.
-
-    .. versionchanged:: 0.9
-        `category_filter` parameter added.
-
-    :param with_categories: set to `True` to also receive categories.
-    :param category_filter: whitelist of categories to limit return values
-    """
-    flashes = _request_ctx_stack.top.flashes
-    if flashes is None:
-        _request_ctx_stack.top.flashes = flashes = session.pop('_flashes') \
-            if '_flashes' in session else []
-    if category_filter:
-        flashes = list(filter(lambda f: f[0] in category_filter, flashes))
-    if not with_categories:
-        return [x[1] for x in flashes]
-    return flashes
 
 
 def send_file(filename_or_fp, mimetype=None, as_attachment=False,

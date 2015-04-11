@@ -49,7 +49,6 @@ from flagon._compat import to_bytes, string_types, text_type, \
 
 from .exceptions import BadRequest
 
-from .debughelpers import attach_enctype_error_multidict
 from . import json
 from .globals import _request_ctx_stack
 
@@ -1333,19 +1332,6 @@ class ETagRequestMixin(object):
         return parse_range_header(self.environ.get('HTTP_RANGE'))
 
 
-class UserAgentMixin(object):
-    """Adds a `user_agent` attribute to the request object which contains the
-    parsed user agent of the browser that triggered the request as a
-    :class:`~flagon.useragents.UserAgent` object.
-    """
-
-    @cached_property
-    def user_agent(self):
-        """The current user agent."""
-        from flagon.useragents import UserAgent
-        return UserAgent(self.environ)
-
-
 class AuthorizationMixin(object):
     """Adds an :attr:`authorization` property that represents the parsed
     value of the `Authorization` header as
@@ -1798,13 +1784,12 @@ class WWWAuthenticateMixin(object):
 
 
 class RequestBase(BaseRequest, AcceptMixin, ETagRequestMixin,
-              UserAgentMixin, AuthorizationMixin,
+              AuthorizationMixin,
               CommonRequestDescriptorsMixin):
     """Full featured request object implementing the following mixins:
 
     - :class:`AcceptMixin` for accept header parsing
     - :class:`ETagRequestMixin` for etag and cache control handling
-    - :class:`UserAgentMixin` for user agent introspection
     - :class:`AuthorizationMixin` for http auth handling
     - :class:`CommonRequestDescriptorsMixin` for common headers
     """
@@ -1976,12 +1961,6 @@ class Request(RequestBase):
     def _load_form_data(self):
         RequestBase._load_form_data(self)
 
-        # in debug mode we're replacing the files multidict with an ad-hoc
-        # subclass that raises a different error for key errors.
-        ctx = _request_ctx_stack.top
-        if ctx is not None and ctx.app.debug and \
-           self.mimetype != 'multipart/form-data' and not self.files:
-            attach_enctype_error_multidict(self)
 
 
 class Response(ResponseBase):

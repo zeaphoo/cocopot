@@ -987,9 +987,3 @@ from flagon.datastructures import Accept, HeaderSet, ETags, Authorization, \
      WWWAuthenticate, TypeConversionDict, IfRange, Range, ContentRange, \
      RequestCacheControl
 
-
-# DEPRECATED
-# backwards compatible imports
-from flagon.datastructures import MIMEAccept, CharsetAccept, \
-     LanguageAccept, Headers
-from flagon.urls import iri_to_uri

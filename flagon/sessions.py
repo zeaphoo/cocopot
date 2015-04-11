@@ -20,7 +20,6 @@ from ._compat import iteritems, text_type
 
 from itsdangerous import URLSafeTimedSerializer, BadSignature
 
-
 def total_seconds(td):
     return td.days * 60 * 60 * 24 + td.seconds
 
@@ -75,7 +74,7 @@ class TaggedJSONSerializer(object):
                 try:
                     return text_type(value)
                 except UnicodeError:
-                    raise UnexpectedUnicodeError(u'A byte string with '
+                    raise UnicodeError(u'A byte string with '
                         u'non-ASCII data was passed to the session system '
                         u'which can only store unicode strings.  Consider '
                         u'base64 encoding your string (String was %r)' % value)
@@ -323,6 +322,3 @@ class SecureCookieSessionInterface(SessionInterface):
         response.set_cookie(app.session_cookie_name, val,
                             expires=expires, httponly=httponly,
                             domain=domain, path=path, secure=secure)
-
-
-from flagon.debughelpers import UnexpectedUnicodeError

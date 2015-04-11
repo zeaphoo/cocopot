@@ -1214,13 +1214,9 @@ class Flagon(_PackageBoundObject):
 
         :internal:
         """
-        if not self.debug \
-           or not isinstance(request.routing_exception, RequestRedirect) \
+        if not isinstance(request.routing_exception, RequestRedirect) \
            or request.method in ('GET', 'HEAD', 'OPTIONS'):
             raise request.routing_exception
-
-        from .debughelpers import FormDataRoutingRedirect
-        raise FormDataRoutingRedirect(request)
 
     def dispatch_request(self):
         """Does the request dispatching.  Matches the URL and returns the

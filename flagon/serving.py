@@ -589,10 +589,6 @@ def run_simple(hostname, port, application, use_reloader=False,
                         the server should automatically create one, or ``None``
                         to disable SSL (which is the default).
     """
-    if static_files:
-        from flagon.wsgi import SharedDataMiddleware
-        application = SharedDataMiddleware(application, static_files)
-
     def inner():
         make_server(hostname, port, application, threaded,
                     processes, request_handler,

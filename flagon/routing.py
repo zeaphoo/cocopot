@@ -20,13 +20,6 @@
     ...     Rule('/', endpoint='static/index'),
     ...     Rule('/about', endpoint='static/about'),
     ...     Rule('/help', endpoint='static/help'),
-    ...     # Knowledge Base
-    ...     Subdomain('kb', [
-    ...         Rule('/', endpoint='kb/index'),
-    ...         Rule('/browse/', endpoint='kb/browse'),
-    ...         Rule('/browse/<int:id>/', endpoint='kb/browse'),
-    ...         Rule('/browse/<int:id>/<int:page>', endpoint='kb/browse')
-    ...     ])
     ... ], default_subdomain='www')
 
     If the application doesn't use subdomains it's perfectly fine to not set
@@ -117,24 +110,12 @@ _rule_re = re.compile(r'''
     <
     (?:
         (?P<converter>[a-zA-Z_][a-zA-Z0-9_]*)   # converter name
-        (?:\((?P<args>.*?)\))?                  # converter arguments
         \:                                      # variable delimiter
     )?
     (?P<variable>[a-zA-Z_][a-zA-Z0-9_]*)        # variable name
     >
 ''', re.VERBOSE)
 _simple_rule_re = re.compile(r'<([^>]+)>')
-_converter_args_re = re.compile(r'''
-    ((?P<name>\w+)\s*=\s*)?
-    (?P<value>
-        True|False|
-        \d+.\d+|
-        \d+.|
-        \d+|
-        \w+|
-        [urUR]?(?P<stringval>"[^"]*?"|'[^']*')
-    )\s*,
-''', re.VERBOSE | re.UNICODE)
 
 
 _PYTHON_CONSTANTS = {
@@ -157,28 +138,9 @@ def _pythonize(value):
     return text_type(value)
 
 
-def parse_converter_args(argstr):
-    argstr += ','
-    args = []
-    kwargs = {}
-
-    for item in _converter_args_re.finditer(argstr):
-        value = item.group('stringval')
-        if value is None:
-            value = item.group('value')
-        value = _pythonize(value)
-        if not item.group('name'):
-            args.append(value)
-        else:
-            name = item.group('name')
-            kwargs[name] = value
-
-    return tuple(args), kwargs
-
-
 def parse_rule(rule):
     """Parse a rule and return it as generator. Each iteration yields tuples
-    in the form ``(converter, arguments, variable)``. If the converter is
+    in the form ``(converter, variable)``. If the converter is
     `None` it's a static url part, otherwise it's a dynamic one.
 
     :internal:
@@ -193,19 +155,19 @@ def parse_rule(rule):
             break
         data = m.groupdict()
         if data['static']:
-            yield None, None, data['static']
+            yield None, data['static']
         variable = data['variable']
         converter = data['converter'] or 'default'
         if variable in used_names:
             raise ValueError('variable name %r used twice.' % variable)
         used_names.add(variable)
-        yield converter, data['args'] or None, variable
+        yield converter, variable
         pos = m.end()
     if pos < end:
         remaining = rule[pos:]
         if '>' in remaining or '<' in remaining:
             raise ValueError('malformed url rule: %r' % rule)
-        yield None, None, remaining
+        yield None, remaining
 
 
 class RoutingException(Exception):
@@ -271,152 +233,6 @@ class RuleFactory(object):
         """Subclasses of `RuleFactory` have to override this method and return
         an iterable of rules."""
         raise NotImplementedError()
-
-
-class Subdomain(RuleFactory):
-    """All URLs provided by this factory have the subdomain set to a
-    specific domain. For example if you want to use the subdomain for
-    the current language this can be a good setup::
-
-        url_map = Map([
-            Rule('/', endpoint='#select_language'),
-            Subdomain('<string(length=2):lang_code>', [
-                Rule('/', endpoint='index'),
-                Rule('/about', endpoint='about'),
-                Rule('/help', endpoint='help')
-            ])
-        ])
-
-    All the rules except for the ``'#select_language'`` endpoint will now
-    listen on a two letter long subdomain that holds the language code
-    for the current request.
-    """
-
-    def __init__(self, subdomain, rules):
-        self.subdomain = subdomain
-        self.rules = rules
-
-    def get_rules(self, map):
-        for rulefactory in self.rules:
-            for rule in rulefactory.get_rules(map):
-                rule = rule.empty()
-                rule.subdomain = self.subdomain
-                yield rule
-
-
-class Submount(RuleFactory):
-    """Like `Subdomain` but prefixes the URL rule with a given string::
-
-        url_map = Map([
-            Rule('/', endpoint='index'),
-            Submount('/blog', [
-                Rule('/', endpoint='blog/index'),
-                Rule('/entry/<entry_slug>', endpoint='blog/show')
-            ])
-        ])
-
-    Now the rule ``'blog/show'`` matches ``/blog/entry/<entry_slug>``.
-    """
-
-    def __init__(self, path, rules):
-        self.path = path.rstrip('/')
-        self.rules = rules
-
-    def get_rules(self, map):
-        for rulefactory in self.rules:
-            for rule in rulefactory.get_rules(map):
-                rule = rule.empty()
-                rule.rule = self.path + rule.rule
-                yield rule
-
-
-class EndpointPrefix(RuleFactory):
-    """Prefixes all endpoints (which must be strings for this factory) with
-    another string. This can be useful for sub applications::
-
-        url_map = Map([
-            Rule('/', endpoint='index'),
-            EndpointPrefix('blog/', [Submount('/blog', [
-                Rule('/', endpoint='index'),
-                Rule('/entry/<entry_slug>', endpoint='show')
-            ])])
-        ])
-    """
-
-    def __init__(self, prefix, rules):
-        self.prefix = prefix
-        self.rules = rules
-
-    def get_rules(self, map):
-        for rulefactory in self.rules:
-            for rule in rulefactory.get_rules(map):
-                rule = rule.empty()
-                rule.endpoint = self.prefix + rule.endpoint
-                yield rule
-
-
-class RuleTemplate(object):
-    """Returns copies of the rules wrapped and expands string templates in
-    the endpoint, rule, defaults or subdomain sections.
-
-    Here a small example for such a rule template::
-
-        from flagon.routing import Map, Rule, RuleTemplate
-
-        resource = RuleTemplate([
-            Rule('/$name/', endpoint='$name.list'),
-            Rule('/$name/<int:id>', endpoint='$name.show')
-        ])
-
-        url_map = Map([resource(name='user'), resource(name='page')])
-
-    When a rule template is called the keyword arguments are used to
-    replace the placeholders in all the string parameters.
-    """
-
-    def __init__(self, rules):
-        self.rules = list(rules)
-
-    def __call__(self, *args, **kwargs):
-        return RuleTemplateFactory(self.rules, dict(*args, **kwargs))
-
-
-class RuleTemplateFactory(RuleFactory):
-    """A factory that fills in template variables into rules.  Used by
-    `RuleTemplate` internally.
-
-    :internal:
-    """
-
-    def __init__(self, rules, context):
-        self.rules = rules
-        self.context = context
-
-    def get_rules(self, map):
-        for rulefactory in self.rules:
-            for rule in rulefactory.get_rules(map):
-                new_defaults = subdomain = None
-                if rule.defaults:
-                    new_defaults = {}
-                    for key, value in iteritems(rule.defaults):
-                        if isinstance(value, string_types):
-                            value = format_string(value, self.context)
-                        new_defaults[key] = value
-                if rule.subdomain is not None:
-                    subdomain = format_string(rule.subdomain, self.context)
-                new_endpoint = rule.endpoint
-                if isinstance(new_endpoint, string_types):
-                    new_endpoint = format_string(new_endpoint, self.context)
-                yield Rule(
-                    format_string(rule.rule, self.context),
-                    new_defaults,
-                    subdomain,
-                    rule.methods,
-                    rule.build_only,
-                    new_endpoint,
-                    rule.strict_slashes
-                )
-
 
 @implements_to_string
 class Rule(RuleFactory):
@@ -645,7 +461,7 @@ class Rule(RuleFactory):
         regex_parts = []
 
         def _build_regex(rule):
-            for converter, arguments, variable in parse_rule(rule):
+            for converter, variable in parse_rule(rule):
                 if converter is None:
                     regex_parts.append(re.escape(variable))
                     self._trace.append((False, variable))
@@ -653,11 +469,8 @@ class Rule(RuleFactory):
                         if part:
                             self._weights.append((0, -len(part)))
                 else:
-                    if arguments:
-                        c_args, c_kwargs = parse_converter_args(arguments)
-                    else:
-                        c_args = ()
-                        c_kwargs = {}
+                    c_args = ()
+                    c_kwargs = {}
                     convobj = self.get_converter(
                         variable, converter, c_args, c_kwargs)
                     regex_parts.append('(?P<%s>%s)' % (variable, convobj.regex))
@@ -896,22 +709,6 @@ class UnicodeConverter(BaseConverter):
         self.regex = '[^/]' + length
 
 
-class AnyConverter(BaseConverter):
-    """Matches one of the items provided.  Items can either be Python
-    identifiers or strings::
-
-        Rule('/<any(about, help, imprint, class, "foo,bar"):page_name>')
-
-    :param map: the :class:`Map`.
-    :param items: this function accepts the possible items as positional
-                  arguments.
-    """
-
-    def __init__(self, map, *items):
-        BaseConverter.__init__(self, map)
-        self.regex = '(?:%s)' % '|'.join([re.escape(x) for x in items])
-
-
 class PathConverter(BaseConverter):
     """Like the default :class:`UnicodeConverter`, but it also matches
     slashes.  This is useful for wikis and similar applications::
@@ -991,34 +788,13 @@ class FloatConverter(NumberConverter):
         NumberConverter.__init__(self, map, 0, min, max)
 
 
-class UUIDConverter(BaseConverter):
-    """This converter only accepts UUID strings::
-
-        Rule('/object/<uuid:identifier>')
-
-    .. versionadded:: 0.10
-
-    :param map: the :class:`Map`.
-    """
-    regex = r'[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-' \
-            r'[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}'
-
-    def to_python(self, value):
-        return uuid.UUID(value)
-
-    def to_url(self, value):
-        return str(value)
-
-
 #: the default converter mapping for the map.
 DEFAULT_CONVERTERS = {
     'default':          UnicodeConverter,
     'string':           UnicodeConverter,
-    'any':              AnyConverter,
     'path':             PathConverter,
     'int':              IntegerConverter,
     'float':            FloatConverter,
-    'uuid':             UUIDConverter,
 }
 
 
