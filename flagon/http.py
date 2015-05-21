@@ -980,10 +980,3 @@ def is_byte_range_valid(start, stop, length):
     elif start >= stop:
         return False
     return 0 <= start < length
-
-
-# circular dependency fun
-from flagon.datastructures import Accept, HeaderSet, ETags, Authorization, \
-     WWWAuthenticate, TypeConversionDict, IfRange, Range, ContentRange, \
-     RequestCacheControl
-

@@ -601,27 +601,7 @@ def run_simple(hostname, port, application, use_reloader=False,
         quit_msg = '(Press CTRL+C to quit)'
         _log('info', ' * Running on %s://%s:%d/ %s', ssl_context is None
              and 'http' or 'https', display_hostname, port, quit_msg)
-    if use_reloader:
-        # Create and destroy a socket so that any exceptions are raised before
-        # we spawn a separate Python interpreter and lose this ability.
-        address_family = select_ip_version(hostname, port)
-        test_socket = socket.socket(address_family, socket.SOCK_STREAM)
-        test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        test_socket.bind((hostname, port))
-        test_socket.close()
-
-        from ._reloader import run_with_reloader
-        run_with_reloader(inner, extra_files, reloader_interval,
-                          reloader_type)
-    else:
-        inner()
-
-
-def run_with_reloader(*args, **kwargs):
-    # People keep using undocumented APIs.  Do not use this function
-    # please, we do not guarantee that it continues working.
-    from ._reloader import run_with_reloader
-    return run_with_reloader(*args, **kwargs)
+    inner()
 
 
 def main():

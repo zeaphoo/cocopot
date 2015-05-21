@@ -645,10 +645,6 @@ class BaseRequest(object):
     is_multiprocess = environ_property('wsgi.multiprocess', doc='''
         boolean that is `True` if the application is served by
         a WSGI server that spawns multiple processes.''')
-    is_run_once = environ_property('wsgi.run_once', doc='''
-        boolean that is `True` if the application will be executed only
-        once in a process lifetime.  This is the case for CGI for example,
-        but it's not guaranteed that the exeuction only happens one time.''')
 
 
 class BaseResponse(object):
