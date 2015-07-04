@@ -518,4 +518,3 @@ class MultiPartParser(object):
         form = (p[1] for p in formstream if p[0] == 'form')
         files = (p[1] for p in filestream if p[0] == 'file')
         return self.cls(form), self.cls(files)
-

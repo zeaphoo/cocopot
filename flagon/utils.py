@@ -21,8 +21,7 @@ except ImportError:
 
 from flagon._compat import unichr, text_type, string_types, iteritems, \
     reraise, PY2
-from flagon._internal import _DictAccessorProperty, \
-     _parse_signature, _missing
+from flagon._internal import _parse_signature, _missing
 
 
 _format_re = re.compile(r'\$(?:(%s)|\{(%s)\})' % (('[a-zA-Z_][a-zA-Z0-9_]*',) * 2))
@@ -71,40 +70,6 @@ class cached_property(object):
             value = self.func(obj)
             obj.__dict__[self.__name__] = value
         return value
-
-
-class environ_property(_DictAccessorProperty):
-    """Maps request attributes to environment variables. This works not only
-    for the Werzeug request object, but also any other class with an
-    environ attribute:
-
-    >>> class Test(object):
-    ...     environ = {'key': 'value'}
-    ...     test = environ_property('key')
-    >>> var = Test()
-    >>> var.test
-    'value'
-
-    If you pass it a second value it's used as default if the key does not
-    exist, the third one can be a converter that takes a value and converts
-    it.  If it raises :exc:`ValueError` or :exc:`TypeError` the default value
-    is used. If no default value is provided `None` is used.
-
-    Per default the property is read only.  You have to explicitly enable it
-    by passing ``read_only=False`` to the constructor.
-    """
-
-    read_only = True
-
-    def lookup(self, obj):
-        return obj.environ
-
-
-class header_property(_DictAccessorProperty):
-    """Like `environ_property` but for headers."""
-
-    def lookup(self, obj):
-        return obj.headers
 
 
 def get_content_type(mimetype, charset):

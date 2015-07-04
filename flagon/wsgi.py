@@ -20,8 +20,8 @@ from datetime import datetime
 from functools import partial, update_wrapper
 
 from flagon._compat import iteritems, text_type, string_types, \
-     implements_iterator, make_literal_wrapper, to_unicode, to_bytes, \
-     wsgi_get_bytes, try_coerce_native, PY2
+        implements_iterator, make_literal_wrapper, to_unicode, \
+        to_bytes, wsgi_get_bytes, try_coerce_native, PY2
 from flagon._internal import _empty_stream, _encode_idna
 from flagon.http import is_resource_modified, http_date
 from flagon.urls import uri_to_iri, url_quote, url_parse, url_join
