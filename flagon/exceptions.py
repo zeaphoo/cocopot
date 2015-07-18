@@ -59,9 +59,9 @@
 """
 import sys
 
-from flagon._internal import _get_environ
-from flagon._compat import iteritems, integer_types, text_type, \
+from ._compat import iteritems, integer_types, text_type, \
      implements_to_string
+from .http.base import HTTP_STATUS_CODES
 
 
 @implements_to_string
@@ -598,11 +598,3 @@ class Aborter(object):
         raise self.mapping[code](*args, **kwargs)
 
 abort = Aborter()
-
-
-#: an exception that is used internally to signal both a key error and a
-#: bad request.  Used by a lot of the datastructures.
-BadRequestKeyError = BadRequest.wrap(KeyError)
-
-
-from flagon.http import HTTP_STATUS_CODES

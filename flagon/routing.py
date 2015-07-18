@@ -1,11 +1,14 @@
 
-import warnings
+import re
+from .exceptions import BadRequest, NotFound, MethodNotAllowed
 
+class RouteSyntaxError(Exception):
+    pass
 
 class Router(object):
-    """ A Router is an ordered collection of route->target pairs. It is used to
+    """ A Router is an ordered collection of route->endpoint pairs. It is used to
         efficiently match WSGI requests against a number of routes and return
-        the first target that satisfies the request. The target may be anything,
+        the first endpoint that satisfies the request. The endpoint may be anything,
         usually a string, ID or callable object. A route consists of a path-rule
         and a HTTP method.
         The path-rule is either a static path (e.g. `/contact`) or a dynamic
@@ -17,10 +20,8 @@ class Router(object):
     _MAX_GROUPS_PER_PATTERN = 99
 
     def __init__(self, strict=False):
-        self.rules = []  # All rules in order
-        self._groups = {}  # index of regexes to find them in dyna_routes
-        self.builder = {}  # Data structure for the url builder
         self.static_routes = {}  # Search structure for static routes
+        self.dynamic_patterns = []
         self.dynamic_routes = {}
         #: If true, static routes are no longer checked first.
         self.strict_order = strict
@@ -55,8 +56,8 @@ class Router(object):
         if offset <= len(rule) or prefix:
             yield prefix + rule[offset:], None, None
 
-    def add(self, rule, methods, target, defaults=None):
-        """ Add a new rule or replace the target for an existing rule. """
+    def add(self, rule, endpoint, methods=['GET'], defaults=None):
+        """ Add a new rule or replace the endpoint for an existing rule. """
         pattern = ''  # Regular expression pattern with named groups
         filters = []  # Lists of wildcard input filters
         builder = []  # Data structure for the URL builder
@@ -73,10 +74,9 @@ class Router(object):
                 pattern += re.escape(key)
                 builder.append((None, key))
 
-        self.builder[rule] = builder
-
+        rule_args = dict(endpoint=endpoint, rule=rule, filters=filters, builder=builder, pattern=pattern)
         if is_static and not self.strict_order:
-            self.static[self.build(rule)] = (target, None)
+            self.static_routes[rule] = dict([(m.upper(), rule_args)for m in methods])
             return
 
         try:
@@ -86,82 +86,39 @@ class Router(object):
             raise RouteSyntaxError("Could not add Route: %s (%s)" %
                                    (rule, _e()))
 
+        rule_args['match'] = re_match
+        
+        self.dynamic_patterns.append(re_pattern)
+        self.dynamic_rules[re_pattern] = dict([(m.upper(), rule_args)for m in methods])
+
+
+
+    def match(self, path, method='GET'):
+        """ Return a (endpoint, url_args) tuple or raise HTTPException(400/404/405). """
+        print self.static_routes
+        rule_args = self.static_routes.get(path)
+        url_args = {}
+        if not rule_args:
+            for re_pattern in self.dynamic_patterns:
+                matched = re_pattern.match(path)
+                if matched:
+                    url_args = groupdict()
+                    rule_args = self.dynamic_routes[re_pattern]
+                    break
+
+        if not rule_args:
+            raise NotFound("Not found: " + repr(path))
+
+        if method not in rule_args:
+            allow_header = ",".join(sorted(rule_args.keys()))
+            raise MethodNotAllowed("Method not allowed. Allowed methods: %s"%(allow_header))
+
+        args = rule_args[method]
+        filters = args.get('filters')
         if filters:
-
-            def getargs(path):
-                url_args = re_match(path).groupdict()
-                for name, wildcard_filter in filters:
-                    try:
-                        url_args[name] = wildcard_filter(url_args[name])
-                    except ValueError:
-                        raise HTTPError(400, 'Path has wrong format.')
-                return url_args
-        elif re_pattern.groupindex:
-
-            def getargs(path):
-                return re_match(path).groupdict()
-        else:
-            getargs = None
-
-        whole_rule = (rule, pattern, target, getargs)
-
-        if (pattern, method) in self._groups:
-            msg = 'Route <%s %s> overwrites a previously defined route'
-            warnings.warn(msg % (method, rule), RuntimeWarning)
-            self.dyna_routes[method][
-                self._groups[pattern, method]] = whole_rule
-        else:
-            self.dyna_routes.setdefault(method, []).append(whole_rule)
-            self._groups[pattern, method] = len(self.dyna_routes[method]) - 1
-
-    def build(self, _name, *anons, **query):
-        """ Build an URL by filling the wildcards in a rule. """
-        builder = self.builder.get(_name)
-        if not builder:
-            raise RouteBuildError("No route with that name.", _name)
-        try:
-            for i, value in enumerate(anons):
-                query['anon%d' % i] = value
-            url = ''.join([f(query.pop(n)) if n else f for (n, f) in builder])
-            return url if not query else url + '?' + urlencode(query)
-        except KeyError:
-            raise RouteBuildError('Missing URL argument: %r' % _e().args[0])
-
-    def match(self, environ):
-        """ Return a (target, url_args) tuple or raise HTTPError(400/404/405). """
-        verb = environ['REQUEST_METHOD'].upper()
-        path = environ['PATH_INFO'] or '/'
-
-        if verb == 'HEAD':
-            methods = ['PROXY', verb, 'GET', 'ANY']
-        else:
-            methods = ['PROXY', verb, 'ANY']
-
-        for method in methods:
-            if method in self.static and path in self.static[method]:
-                target, getargs = self.static[method][path]
-                return target, getargs(path) if getargs else {}
-            elif method in self.dyna_regexes:
-                for combined, rules in self.dyna_regexes[method]:
-                    match = combined(path)
-                    if match:
-                        target, getargs = rules[match.lastindex - 1]
-                        return target, getargs(path) if getargs else {}
-
-        # No matching route found. Collect alternative methods for 405 response
-        allowed = set([])
-        nocheck = set(methods)
-        for method in set(self.static) - nocheck:
-            if path in self.static[method]:
-                allowed.add(verb)
-        for method in set(self.dyna_regexes) - allowed - nocheck:
-            for combined, rules in self.dyna_regexes[method]:
-                match = combined(path)
-                if match:
-                    allowed.add(method)
-        if allowed:
-            allow_header = ",".join(sorted(allowed))
-            raise HTTPError(405, "Method not allowed.", Allow=allow_header)
-
-        # No matching route and no alternative method found. We give up
-        raise HTTPError(404, "Not found: " + repr(path))
+            for name, wildcard_filter in filters:
+                try:
+                    url_args[name] = wildcard_filter(url_args[name])
+                except ValueError:
+                    raise BadRequest('Path has wrong format.')
+        return args['endpoint'], url_args
