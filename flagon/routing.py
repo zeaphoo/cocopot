@@ -38,7 +38,7 @@ class Router(object):
         The first element is a string, the last two are callables or None. """
         self.filters[name] = func
 
-    rule_syntax = re.compile('(?:<([a-zA-Z_][a-zA-Z_0-9]*:)?(?:([a-zA-Z_]+))>)')
+    rule_syntax = re.compile('(?:<([a-zA-Z_]+:)?(?:([a-zA-Z_][a-zA-Z_0-9]*))>)')
 
     def _itertokens(self, rule):
         offset, prefix = 0, ''
@@ -51,7 +51,8 @@ class Router(object):
                 converter, variable = None, g[0]
             else:
                 converter, variable = g[0], g[1]
-            yield None, converter or 'string', variable
+            converter = converter[:-1] if converter else 'string'
+            yield None, converter, variable
             offset, prefix = match.end(), ''
         if offset <= len(rule) or prefix:
             yield prefix + rule[offset:], None, None
@@ -87,22 +88,21 @@ class Router(object):
                                    (rule, _e()))
 
         rule_args['match'] = re_match
-        
+
         self.dynamic_patterns.append(re_pattern)
-        self.dynamic_rules[re_pattern] = dict([(m.upper(), rule_args)for m in methods])
+        self.dynamic_routes[re_pattern] = dict([(m.upper(), rule_args)for m in methods])
 
 
 
     def match(self, path, method='GET'):
         """ Return a (endpoint, url_args) tuple or raise HTTPException(400/404/405). """
-        print self.static_routes
         rule_args = self.static_routes.get(path)
         url_args = {}
         if not rule_args:
             for re_pattern in self.dynamic_patterns:
                 matched = re_pattern.match(path)
                 if matched:
-                    url_args = groupdict()
+                    url_args = matched.groupdict()
                     rule_args = self.dynamic_routes[re_pattern]
                     break
 
