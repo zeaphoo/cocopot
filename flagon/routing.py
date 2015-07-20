@@ -75,7 +75,8 @@ class Router(object):
                 pattern += re.escape(key)
                 builder.append((None, key))
 
-        rule_args = dict(endpoint=endpoint, rule=rule, filters=filters, builder=builder, pattern=pattern)
+        rule_args = dict(endpoint=endpoint, rule=rule, filters=filters,
+                        builder=builder, pattern=pattern, defaults=defaults)
         if is_static and not self.strict_order:
             self.static_routes[rule] = dict([(m.upper(), rule_args)for m in methods])
             return
@@ -115,10 +116,14 @@ class Router(object):
 
         args = rule_args[method]
         filters = args.get('filters')
+        defaults = args.get('defaults') or {}
         if filters:
             for name, wildcard_filter in filters:
                 try:
                     url_args[name] = wildcard_filter(url_args[name])
                 except ValueError:
                     raise BadRequest('Path has wrong format.')
+        for k, v in defaults.items():
+            if k not in url_args:
+                url_args[k] = v
         return args['endpoint'], url_args

@@ -38,3 +38,9 @@ def test_dynamic_routing():
     assert r.match('/bar/20') == ('bar', {'bar': 20})
     assert r.match('/float/20.333') == ('bar2', {'bar2': 20.333})
     assert r.match('/path/foo/bar/xxx') == ('bar3', {'bar3': 'foo/bar/xxx'})
+
+
+def test_default_values():
+    r = Router()
+    r.add('/<name>', endpoint='index', defaults={'foo': 1234, 'name':'bar'})
+    assert r.match('/foo') == ('index', {'name': 'foo', 'foo': 1234})
