@@ -18,11 +18,10 @@
 import os
 import re
 from flagon._compat import text_type, PY2, to_unicode, \
-     to_native, implements_to_string, try_coerce_native, \
+     to_native, try_coerce_native, \
      normalize_string_tuple, make_literal_wrapper, \
      fix_tuple_repr
-from flagon._internal import _encode_idna, _decode_idna
-from flagon.datastructures import MultiDict, iter_multi_items
+from flagon.http.datastructures import MultiDict, iter_multi_items
 from collections import namedtuple
 
 
@@ -43,6 +42,47 @@ _hextobyte = dict(
 _URLTuple = fix_tuple_repr(namedtuple('_URLTuple',
     ['scheme', 'netloc', 'path', 'query', 'fragment']))
 
+
+def _encode_idna(domain):
+    # If we're given bytes, make sure they fit into ASCII
+    if not isinstance(domain, text_type):
+        domain.decode('ascii')
+        return domain
+
+    # Otherwise check if it's already ascii, then return
+    try:
+        return domain.encode('ascii')
+    except UnicodeError:
+        pass
+
+    # Otherwise encode each part separately
+    parts = domain.split('.')
+    for idx, part in enumerate(parts):
+        parts[idx] = part.encode('idna')
+    return b'.'.join(parts)
+
+
+def _decode_idna(domain):
+    # If the input is a string try to encode it to ascii to
+    # do the idna decoding.  if that fails because of an
+    # unicode error, then we already have a decoded idna domain
+    if isinstance(domain, text_type):
+        try:
+            domain = domain.encode('ascii')
+        except UnicodeError:
+            return domain
+
+    # Decode each part separately.  If a part fails, try to
+    # decode it with ascii and silently ignore errors.  This makes
+    # most sense because the idna codec does not have error handling
+    parts = domain.split(b'.')
+    for idx, part in enumerate(parts):
+        try:
+            parts[idx] = part.decode('idna')
+        except UnicodeError:
+            parts[idx] = part.decode('ascii', 'ignore')
+
+    return '.'.join(parts)
 
 class BaseURL(_URLTuple):
     '''Superclass of :py:class:`URL` and :py:class:`BytesURL`.'''
@@ -904,134 +944,3 @@ def url_join(base, url, allow_fragments=True):
 
     path = s('/').join(segments)
     return url_unparse((scheme, netloc, path, query, fragment))
-
-
-class Href(object):
-    """Implements a callable that constructs URLs with the given base. The
-    function can be called with any number of positional and keyword
-    arguments which than are used to assemble the URL.  Works with URLs
-    and posix paths.
-
-    Positional arguments are appended as individual segments to
-    the path of the URL:
-
-    >>> href = Href('/foo')
-    >>> href('bar', 23)
-    '/foo/bar/23'
-    >>> href('foo', bar=23)
-    '/foo/foo?bar=23'
-
-    If any of the arguments (positional or keyword) evaluates to `None` it
-    will be skipped.  If no keyword arguments are given the last argument
-    can be a :class:`dict` or :class:`MultiDict` (or any other dict subclass),
-    otherwise the keyword arguments are used for the query parameters, cutting
-    off the first trailing underscore of the parameter name:
-
-    >>> href(is_=42)
-    '/foo?is=42'
-    >>> href({'foo': 'bar'})
-    '/foo?foo=bar'
-
-    Combining of both methods is not allowed:
-
-    >>> href({'foo': 'bar'}, bar=42)
-    Traceback (most recent call last):
-      ...
-    TypeError: keyword arguments and query-dicts can't be combined
-
-    Accessing attributes on the href object creates a new href object with
-    the attribute name as prefix:
-
-    >>> bar_href = href.bar
-    >>> bar_href("blub")
-    '/foo/bar/blub'
-
-    If `sort` is set to `True` the items are sorted by `key` or the default
-    sorting algorithm:
-
-    >>> href = Href("/", sort=True)
-    >>> href(a=1, b=2, c=3)
-    '/?a=1&b=2&c=3'
-
-    .. versionadded:: 0.5
-        `sort` and `key` were added.
-    """
-
-    def __init__(self, base='./', charset='utf-8', sort=False, key=None):
-        if not base:
-            base = './'
-        self.base = base
-        self.charset = charset
-        self.sort = sort
-        self.key = key
-
-    def __getattr__(self, name):
-        if name[:2] == '__':
-            raise AttributeError(name)
-        base = self.base
-        if base[-1:] != '/':
-            base += '/'
-        return Href(url_join(base, name), self.charset, self.sort, self.key)
-
-    def __call__(self, *path, **query):
-        if path and isinstance(path[-1], dict):
-            if query:
-                raise TypeError('keyword arguments and query-dicts '
-                                'can\'t be combined')
-            query, path = path[-1], path[:-1]
-        elif query:
-            query = dict([(k.endswith('_') and k[:-1] or k, v)
-                          for k, v in query.items()])
-        path = '/'.join([to_unicode(url_quote(x, self.charset), 'ascii')
-                        for x in path if x is not None]).lstrip('/')
-        rv = self.base
-        if path:
-            if not rv.endswith('/'):
-                rv += '/'
-            rv = url_join(rv, './' + path)
-        if query:
-            rv += '?' + to_unicode(url_encode(query, self.charset, sort=self.sort,
-                                              key=self.key), 'ascii')
-        return to_native(rv)
-
-def _encode_idna(domain):
-    # If we're given bytes, make sure they fit into ASCII
-    if not isinstance(domain, text_type):
-        domain.decode('ascii')
-        return domain
-
-    # Otherwise check if it's already ascii, then return
-    try:
-        return domain.encode('ascii')
-    except UnicodeError:
-        pass
-
-    # Otherwise encode each part separately
-    parts = domain.split('.')
-    for idx, part in enumerate(parts):
-        parts[idx] = part.encode('idna')
-    return b'.'.join(parts)
-
-
-def _decode_idna(domain):
-    # If the input is a string try to encode it to ascii to
-    # do the idna decoding.  if that fails because of an
-    # unicode error, then we already have a decoded idna domain
-    if isinstance(domain, text_type):
-        try:
-            domain = domain.encode('ascii')
-        except UnicodeError:
-            return domain
-
-    # Decode each part separately.  If a part fails, try to
-    # decode it with ascii and silently ignore errors.  This makes
-    # most sense because the idna codec does not have error handling
-    parts = domain.split(b'.')
-    for idx, part in enumerate(parts):
-        try:
-            parts[idx] = part.decode('idna')
-        except UnicodeError:
-            parts[idx] = part.decode('ascii', 'ignore')
-
-    return '.'.join(parts)
-    

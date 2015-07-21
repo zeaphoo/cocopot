@@ -8,12 +8,12 @@
     ~ What is Flagon?
 
       Flagon is a microframework for Python which provide same interface
-      with Flask, except jinja2 template and signals. It's intended for 
+      with Flask, except jinja2 template and signals. It's intended for
       focus on mobile service development, which not handle html rendering.
 
     ~ Is it ready?
 
-      It's still in alpha state.
+      It's still in very early stage, pre 0.1.
 
     ~ What do I need?
 

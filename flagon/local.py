@@ -10,7 +10,7 @@
 """
 from functools import update_wrapper
 from flagon.wsgi import ClosingIterator
-from flagon._compat import PY2, implements_bool
+from flagon._compat import PY2
 
 # since each thread has its own greenlet we can just use those as identifiers
 # for the context.  If greenlets are not available we fall back to the
@@ -245,8 +245,6 @@ class LocalManager(object):
             len(self.locals)
         )
 
-
-@implements_bool
 class LocalProxy(object):
     """Acts as a proxy for a flagon. local.  Forwards all operations to
     a proxied object.  The only operations not supported for forwarding
@@ -283,6 +281,9 @@ class LocalProxy(object):
        The class can be instanciated with a callable as well now.
     """
     __slots__ = ('__local', '__dict__', '__name__')
+    if PY2:
+        __nonzero__ = __bool__
+        del __bool__
 
     def __init__(self, local, name=None):
         object.__setattr__(self, '_LocalProxy__local', local)
