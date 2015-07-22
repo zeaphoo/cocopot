@@ -42,7 +42,6 @@ from flagon.datastructures import MultiDict, CombinedMultiDict, Headers, \
      ImmutableList, MIMEAccept, CharsetAccept, LanguageAccept, \
      ResponseCacheControl, RequestCacheControl, CallbackDict, \
      ContentRange, iter_multi_items
-from flagon._internal import _get_environ
 from flagon._compat import to_bytes, string_types, text_type, \
      integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
      to_unicode, to_native, BytesIO
