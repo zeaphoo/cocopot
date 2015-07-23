@@ -42,14 +42,12 @@ from flagon.datastructures import MultiDict, CombinedMultiDict, Headers, \
      ImmutableList, MIMEAccept, CharsetAccept, LanguageAccept, \
      ResponseCacheControl, RequestCacheControl, CallbackDict, \
      ContentRange, iter_multi_items
-from flagon._internal import _get_environ
 from flagon._compat import to_bytes, string_types, text_type, \
      integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
      to_unicode, to_native, BytesIO
 
 from .exceptions import BadRequest
 
-from . import json
 from .globals import _request_ctx_stack
 
 
@@ -90,7 +88,7 @@ def _iter_encoded(iterable, charset):
             yield item
 
 
-class BaseResponse(object):
+class Response(object):
     """Base response class.  The most important fact about a response object
     is that it's a regular WSGI application.  It's initialized with a couple
     of response parameters (headers, body, status code etc.) and will start a
@@ -665,14 +663,6 @@ class BaseResponse(object):
         start_response(status, headers)
         return app_iter
 
-
-class AcceptMixin(object):
-    """A mixin for classes with an :attr:`~BaseResponse.environ` attribute
-    to get all the HTTP accept headers as
-    :class:`~flagon.datastructures.Accept` objects (or subclasses
-    thereof).
-    """
-
     @cached_property
     def accept_mimetypes(self):
         """List of mimetypes this client supports as
@@ -1091,15 +1081,3 @@ def _get_data(req, cache):
     if getter is not None:
         return getter(cache=cache)
     return req.data
-
-
-class Response(ResponseBase):
-    """The response object that is used by default in Flagon.  Works like the
-    response object from Werkzeug but is set to have an HTML mimetype by
-    default.  Quite often you don't have to create this object yourself because
-    :meth:`~flagon.Flagon.make_response` will take care of that for you.
-
-    If you want to replace the response object used you can subclass this and
-    set :attr:`~flagon.Flagon.response_class` to your subclass.
-    """
-    default_mimetype = 'text/html'

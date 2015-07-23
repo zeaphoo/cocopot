@@ -48,48 +48,10 @@ from flagon._compat import to_bytes, string_types, text_type, \
 
 from .exceptions import BadRequest
 
-from . import json
 from .globals import _request_ctx_stack
 
 
-def _run_wsgi_app(*args):
-    """This function replaces itself to ensure that the test module is not
-    imported unless required.  DO NOT USE!
-    """
-    global _run_wsgi_app
-    from flagon.test import run_wsgi_app as _run_wsgi_app
-    return _run_wsgi_app(*args)
-
-
-def _warn_if_string(iterable):
-    """Helper for the response objects to check if the iterable returned
-    to the WSGI server is not a string.
-    """
-    if isinstance(iterable, string_types):
-        from warnings import warn
-        warn(Warning('response iterable was set to a string.  This appears '
-                     'to work but means that the server will send the '
-                     'data to the client char, by char.  This is almost '
-                     'never intended behavior, use response.data to assign '
-                     'strings to the response object.'), stacklevel=2)
-
-
-def _assert_not_shallow(request):
-    if request.shallow:
-        raise RuntimeError('A shallow request tried to consume '
-                           'form data.  If you really want to do '
-                           'that, set `shallow` to False.')
-
-
-def _iter_encoded(iterable, charset):
-    for item in iterable:
-        if isinstance(item, text_type):
-            yield item.encode(charset)
-        else:
-            yield item
-
-
-class BaseRequest(object):
+class Request(object):
     """Very basic request object.  This does not implement advanced stuff like
     entity tag parsing or cache controls.  The request object is created with
     the WSGI environment as first argument and will add itself to the WSGI
@@ -162,35 +124,6 @@ class BaseRequest(object):
     #: .. versionadded:: 0.5
     max_form_memory_size = None
 
-    #: the class to use for `args` and `form`.  The default is an
-    #: :class:`~flagon.datastructures.ImmutableMultiDict` which supports
-    #: multiple values per key.  alternatively it makes sense to use an
-    #: :class:`~flagon.datastructures.ImmutableOrderedMultiDict` which
-    #: preserves order or a :class:`~flagon.datastructures.ImmutableDict`
-    #: which is the fastest but only remembers the last key.  It is also
-    #: possible to use mutable structures, but this is not recommended.
-    #:
-    #: .. versionadded:: 0.6
-    parameter_storage_class = ImmutableMultiDict
-
-    #: the type to be used for list values from the incoming WSGI environment.
-    #: By default an :class:`~flagon.datastructures.ImmutableList` is used
-    #: (for example for :attr:`access_list`).
-    #:
-    #: .. versionadded:: 0.6
-    list_storage_class = ImmutableList
-
-    #: the type to be used for dict values from the incoming WSGI environment.
-    #: By default an
-    #: :class:`~flagon.datastructures.ImmutableTypeConversionDict` is used
-    #: (for example for :attr:`cookies`).
-    #:
-    #: .. versionadded:: 0.6
-    dict_storage_class = ImmutableTypeConversionDict
-
-    #: The form data parser that shoud be used.  Can be replaced to customize
-    #: the form date parsing.
-    form_data_parser_class = FormDataParser
 
     #: Optionally a list of hosts that is trusted by this request.  By default
     #: all hosts are trusted which means that whatever the client sends the
@@ -209,6 +142,23 @@ class BaseRequest(object):
     #:
     #: .. versionadded:: 0.9
     disable_data_descriptor = False
+
+    #: the internal URL rule that matched the request.  This can be
+    #: useful to inspect which methods are allowed for the URL from
+    #: a before/after handler (``request.url_rule.methods``) etc.
+    #:
+    #: .. versionadded:: 0.6
+    url_rule = None
+
+    #: a dict of view arguments that matched the request.  If an exception
+    #: happened when matching, this will be `None`.
+    view_args = None
+
+    #: if matching the URL failed, this is the exception that will be
+    #: raised / was raised as part of the request handling.  This is
+    #: usually a :exc:`~flagon.exceptions.NotFound` exception or
+    #: something similar.
+    routing_exception = None
 
     def __init__(self, environ, populate_request=True, shallow=False):
         self.environ = environ
@@ -646,13 +596,6 @@ class BaseRequest(object):
         a WSGI server that spawns multiple processes.''')
 
 
-class AcceptMixin(object):
-    """A mixin for classes with an :attr:`~BaseResponse.environ` attribute
-    to get all the HTTP accept headers as
-    :class:`~flagon.datastructures.Accept` objects (or subclasses
-    thereof).
-    """
-
     @cached_property
     def accept_mimetypes(self):
         """List of mimetypes this client supports as
@@ -688,12 +631,6 @@ class AcceptMixin(object):
         return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
                                    LanguageAccept)
 
-
-class ETagRequestMixin(object):
-    """Add entity tag and cache descriptors to a request object or object with
-    a WSGI environment available as :attr:`~BaseRequest.environ`.  This not
-    only provides access to etags but also to the cache control header.
-    """
 
     @cached_property
     def cache_control(self):
@@ -751,12 +688,6 @@ class ETagRequestMixin(object):
         return parse_range_header(self.environ.get('HTTP_RANGE'))
 
 
-class AuthorizationMixin(object):
-    """Adds an :attr:`authorization` property that represents the parsed
-    value of the `Authorization` header as
-    :class:`~flagon.datastructures.Authorization` object.
-    """
-
     @cached_property
     def authorization(self):
         """The `Authorization` object in parsed form."""
@@ -764,26 +695,8 @@ class AuthorizationMixin(object):
         return parse_authorization_header(header)
 
 
-class StreamOnlyMixin(object):
-    """If mixed in before the request object this will change the bahavior
-    of it to disable handling of form parsing.  This disables the
-    :attr:`files`, :attr:`form` attributes and will just provide a
-    :attr:`stream` attribute that however is always available.
-
-    .. versionadded:: 0.9
-    """
-
     disable_data_descriptor = True
     want_form_data_parsed = False
-
-
-class CommonRequestDescriptorsMixin(object):
-    """A mixin for :class:`BaseRequest` subclasses.  Request objects that
-    mix this class in will automatically get descriptors for a couple of
-    HTTP headers with automatic type conversion.
-
-    .. versionadded:: 0.5
-    """
 
     content_type = environ_property('CONTENT_TYPE', doc='''
         The Content-Type entity-header field indicates the media type of
@@ -864,10 +777,6 @@ class CommonRequestDescriptorsMixin(object):
         """
         return parse_set_header(self.environ.get('HTTP_PRAGMA', ''))
 
-
-class WWWAuthenticateMixin(object):
-    """Adds a :attr:`www_authenticate` property to a response object."""
-
     @property
     def www_authenticate(self):
         """The `WWW-Authenticate` header in a parsed form."""
@@ -878,70 +787,6 @@ class WWWAuthenticateMixin(object):
                 self.headers['WWW-Authenticate'] = www_auth.to_header()
         header = self.headers.get('www-authenticate')
         return parse_www_authenticate_header(header, on_update)
-
-
-class RequestBase(BaseRequest, AcceptMixin, ETagRequestMixin,
-              AuthorizationMixin,
-              CommonRequestDescriptorsMixin):
-    """Full featured request object implementing the following mixins:
-
-    - :class:`AcceptMixin` for accept header parsing
-    - :class:`ETagRequestMixin` for etag and cache control handling
-    - :class:`AuthorizationMixin` for http auth handling
-    - :class:`CommonRequestDescriptorsMixin` for common headers
-    """
-
-
-class PlainRequest(StreamOnlyMixin, RequestBase):
-    """A request object without special form parsing capabilities.
-
-    .. versionadded:: 0.9
-    """
-
-
-_missing = object()
-
-
-def _get_data(req, cache):
-    getter = getattr(req, 'get_data', None)
-    if getter is not None:
-        return getter(cache=cache)
-    return req.data
-
-
-class Request(RequestBase):
-    """The request object used by default in Flagon.  Remembers the
-    matched endpoint and view arguments.
-
-    It is what ends up as :class:`~flagon.request`.  If you want to replace
-    the request object used you can subclass this and set
-    :attr:`~flagon.Flagon.request_class` to your subclass.
-
-    The request object is a :class:`~flagon.wrappers.Request` subclass and
-    provides all of the attributes Werkzeug defines plus a few Flagon
-    specific ones.
-    """
-
-    #: the internal URL rule that matched the request.  This can be
-    #: useful to inspect which methods are allowed for the URL from
-    #: a before/after handler (``request.url_rule.methods``) etc.
-    #:
-    #: .. versionadded:: 0.6
-    url_rule = None
-
-    #: a dict of view arguments that matched the request.  If an exception
-    #: happened when matching, this will be `None`.
-    view_args = None
-
-    #: if matching the URL failed, this is the exception that will be
-    #: raised / was raised as part of the request handling.  This is
-    #: usually a :exc:`~flagon.exceptions.NotFound` exception or
-    #: something similar.
-    routing_exception = None
-
-    # switched by the request context until 1.0 to opt in deprecated
-    # module functionality
-    _is_old_module = False
 
     @property
     def max_content_length(self):
@@ -1015,7 +860,7 @@ class Request(RequestBase):
         # and strict in what we send out.
         request_charset = self.mimetype_params.get('charset')
         try:
-            data = _get_data(self, cache)
+            data = self.get_data(self, cache)
             if request_charset is not None:
                 rv = json.loads(data, encoding=request_charset)
             else:

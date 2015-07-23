@@ -8,9 +8,7 @@
     :copyright: (c) 2014 by the Werkzeug Team, see AUTHORS for more details.
     :license: BSD, see LICENSE for more details.
 """
-from functools import update_wrapper
-from flagon.wsgi import ClosingIterator
-from flagon._compat import PY2
+from ._compat import PY2
 
 # since each thread has its own greenlet we can just use those as identifiers
 # for the context.  If greenlets are not available we fall back to the
@@ -163,87 +161,6 @@ class LocalStack(object):
             return self._local.stack[-1]
         except (AttributeError, IndexError):
             return None
-
-
-class LocalManager(object):
-    """Local objects cannot manage themselves. For that you need a local
-    manager.  You can pass a local manager multiple locals or add them later
-    by appending them to `manager.locals`.  Everytime the manager cleans up
-    it, will clean up all the data left in the locals for this context.
-
-    The `ident_func` parameter can be added to override the default ident
-    function for the wrapped locals.
-
-    .. versionchanged:: 0.6.1
-       Instead of a manager the :func:`release_local` function can be used
-       as well.
-
-    .. versionchanged:: 0.7
-       `ident_func` was added.
-    """
-
-    def __init__(self, locals=None, ident_func=None):
-        if locals is None:
-            self.locals = []
-        elif isinstance(locals, Local):
-            self.locals = [locals]
-        else:
-            self.locals = list(locals)
-        if ident_func is not None:
-            self.ident_func = ident_func
-            for local in self.locals:
-                object.__setattr__(local, '__ident_func__', ident_func)
-        else:
-            self.ident_func = get_ident
-
-    def get_ident(self):
-        """Return the context identifier the local objects use internally for
-        this context.  You cannot override this method to change the behavior
-        but use it to link other context local objects (such as SQLAlchemy's
-        scoped sessions) to the Werkzeug locals.
-
-        .. versionchanged:: 0.7
-           You can pass a different ident function to the local manager that
-           will then be propagated to all the locals passed to the
-           constructor.
-        """
-        return self.ident_func()
-
-    def cleanup(self):
-        """Manually clean up the data in the locals for this context.  Call
-        this at the end of the request or use `make_middleware()`.
-        """
-        for local in self.locals:
-            release_local(local)
-
-    def make_middleware(self, app):
-        """Wrap a WSGI application so that cleaning up happens after
-        request end.
-        """
-        def application(environ, start_response):
-            return ClosingIterator(app(environ, start_response), self.cleanup)
-        return application
-
-    def middleware(self, func):
-        """Like `make_middleware` but for decorating functions.
-
-        Example usage::
-
-            @manager.middleware
-            def application(environ, start_response):
-                ...
-
-        The difference to `make_middleware` is that the function passed
-        will have all the arguments copied from the inner application
-        (name, docstring, module).
-        """
-        return update_wrapper(self.make_middleware(func), func)
-
-    def __repr__(self):
-        return '<%s storages: %d>' % (
-            self.__class__.__name__,
-            len(self.locals)
-        )
 
 class LocalProxy(object):
     """Acts as a proxy for a flagon. local.  Forwards all operations to

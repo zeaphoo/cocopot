@@ -14,15 +14,8 @@ import re
 import os
 import sys
 import pkgutil
-try:
-    from html.entities import name2codepoint
-except ImportError:
-    from htmlentitydefs import name2codepoint
-
-from flagon._compat import unichr, text_type, string_types, iteritems, \
+from _compat import unichr, text_type, string_types, iteritems, \
     reraise, PY2
-from flagon._internal import _parse_signature, _missing
-
 
 _format_re = re.compile(r'\$(?:(%s)|\{(%s)\})' % (('[a-zA-Z_][a-zA-Z0-9_]*',) * 2))
 _entity_re = re.compile(r'&([^;]+);')
@@ -30,6 +23,7 @@ _filename_ascii_strip_re = re.compile(r'[^A-Za-z0-9_.-]')
 _windows_device_files = ('CON', 'AUX', 'COM1', 'COM2', 'COM3', 'COM4', 'LPT1',
                          'LPT2', 'LPT3', 'PRN', 'NUL')
 
+_missing = object()
 
 class cached_property(object):
     """A decorator that converts a function into a lazy property.  The

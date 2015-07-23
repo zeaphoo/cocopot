@@ -11,8 +11,7 @@
 """
 
 from functools import partial
-from flagon.local import LocalStack, LocalProxy
-
+from .local import LocalStack, LocalProxy
 
 def _lookup_req_object(name):
     top = _request_ctx_stack.top
