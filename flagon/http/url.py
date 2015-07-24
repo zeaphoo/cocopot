@@ -21,7 +21,7 @@ from flagon._compat import text_type, PY2, to_unicode, \
      to_native, try_coerce_native, \
      normalize_string_tuple, make_literal_wrapper, \
      fix_tuple_repr
-from flagon.http.datastructures import MultiDict, iter_multi_items
+from flagon.datastructures import MultiDict, iter_multi_items
 from collections import namedtuple
 
 

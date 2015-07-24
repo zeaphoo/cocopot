@@ -52,48 +52,7 @@ from .globals import _request_ctx_stack
 
 
 class Request(object):
-    """Very basic request object.  This does not implement advanced stuff like
-    entity tag parsing or cache controls.  The request object is created with
-    the WSGI environment as first argument and will add itself to the WSGI
-    environment as ``'flagon.request'`` unless it's created with
-    `populate_request` set to False.
-
-    There are a couple of mixins available that add additional functionality
-    to the request object, there is also a class called `Request` which
-    subclasses `BaseRequest` and all the important mixins.
-
-    It's a good idea to create a custom subclass of the :class:`BaseRequest`
-    and add missing functionality either via mixins or direct implementation.
-    Here an example for such subclasses::
-
-        from flagon.wrappers import BaseRequest, ETagRequestMixin
-
-        class Request(BaseRequest, ETagRequestMixin):
-            pass
-
-    Request objects are **read only**.  As of 0.5 modifications are not
-    allowed in any place.  Unlike the lower level parsing functions the
-    request object will use immutable objects everywhere possible.
-
-    Per default the request object will assume all the text data is `utf-8`
-    encoded.  Please refer to `the unicode chapter <unicode.txt>`_ for more
-    details about customizing the behavior.
-
-    Per default the request object will be added to the WSGI
-    environment as `flagon.request` to support the debugging system.
-    If you don't want that, set `populate_request` to `False`.
-
-    If `shallow` is `True` the environment is initialized as shallow
-    object around the environ.  Every operation that would modify the
-    environ in any way (such as consuming form data) raises an exception
-    unless the `shallow` attribute is explicitly set to `False`.  This
-    is useful for middlewares where you don't want to consume the form
-    data by accident.  A shallow request is not populated to the WSGI
-    environment.
-
-    .. versionchanged:: 0.5
-       read-only mode was enforced by using immutables classes for all
-       data.
+    """
     """
 
     #: the charset for the request, defaults to utf-8
@@ -160,11 +119,10 @@ class Request(object):
     #: something similar.
     routing_exception = None
 
-    def __init__(self, environ, populate_request=True, shallow=False):
+    def __init__(self, environ, populate_request=True):
         self.environ = environ
-        if populate_request and not shallow:
+        if populate_request:
             self.environ['flagon.request'] = self
-        self.shallow = shallow
 
     def __repr__(self):
         # make sure the __repr__ even works if the request was created
@@ -303,8 +261,6 @@ class Request(object):
         if 'form' in self.__dict__:
             return
 
-        _assert_not_shallow(self)
-
         if self.want_form_data_parsed:
             content_type = self.environ.get('CONTENT_TYPE', '')
             content_length = get_content_length(self.environ)
@@ -363,7 +319,6 @@ class Request(object):
            form parser later on.  Previously the stream was only set if no
            parsing happened.
         """
-        _assert_not_shallow(self)
         return get_input_stream(self.environ)
 
     input_stream = environ_property('wsgi.input', 'The WSGI input stream.\n'
