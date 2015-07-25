@@ -1,4 +1,7 @@
-
+import email
+import base64
+import time
+from flagon._compat import to_unicode
 from collections import MutableMapping as DictMixin
 
 
@@ -60,6 +63,54 @@ class WSGIHeaders(DictMixin):
     def __contains__(self, key):
         return self._ekey(key) in self.environ
 
+
+def http_date(value):
+    if isinstance(value, (datedate, datetime)):
+        value = value.utctimetuple()
+    elif isinstance(value, (int, float)):
+        value = time.gmtime(value)
+    if not isinstance(value, basestring):
+        value = time.strftime("%a, %d %b %Y %H:%M:%S GMT", value)
+    return value
+
+
+def parse_date(ims):
+    """ Parse rfc1123, rfc850 and asctime timestamps and return UTC epoch. """
+    try:
+        ts = email.utils.parsedate_tz(ims)
+        return time.mktime(ts[:8] + (0, )) - (ts[9] or 0) - time.timezone
+    except (TypeError, ValueError, IndexError, OverflowError):
+        return None
+
+
+def parse_auth(header):
+    """ Parse rfc2617 HTTP authentication header string (basic) and return (user,pass) tuple or None"""
+    try:
+        method, data = header.split(None, 1)
+        if method.lower() == 'basic':
+            user, pwd = to_unicode(base64.b64decode(tob(data))).split(':', 1)
+            return user, pwd
+    except (KeyError, ValueError):
+        return None
+
+
+def parse_range_header(header, maxlen=0):
+    """ Yield (start, end) ranges parsed from a HTTP Range header. Skip
+        unsatisfiable ranges. The end index is non-inclusive."""
+    if not header or header[:6] != 'bytes=': return
+    ranges = [r.split('-', 1) for r in header[6:].split(',') if '-' in r]
+    for start, end in ranges:
+        try:
+            if not start:  # bytes=-100    -> last 100 bytes
+                start, end = max(0, maxlen - int(end)), maxlen
+            elif not end:  # bytes=100-    -> all but the first 99 bytes
+                start, end = int(start), maxlen
+            else:  # bytes=100-200 -> bytes 100-200 (inclusive)
+                start, end = int(start), min(int(end) + 1, maxlen)
+            if 0 <= start < end <= maxlen:
+                yield start, end
+        except ValueError:
+            pass
 
 class HeaderSet(object):
     """Similar to the :class:`ETags` class this implements a set-like structure.

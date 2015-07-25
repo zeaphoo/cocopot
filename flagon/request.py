@@ -1,47 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-    flagon.wrappers
-    ~~~~~~~~~~~~~~~~~
-
-    The wrappers are simple request and response objects which you can
-    subclass to do whatever you want them to do.  The request object contains
-    the information transmitted by the client (webbrowser) and the response
-    object contains all the information sent back to the browser.
-
-    An important detail is that the request object is created with the WSGI
-    environ and will act as high-level proxy whereas the response object is an
-    actual WSGI application.
-
-    Like everything else in Werkzeug these objects will work correctly with
-    unicode data.  Incoming form data parsed by the response object will be
-    decoded into an unicode object if possible and if it makes sense.
-
-
-    :copyright: (c) 2014 by the Werkzeug Team, see AUTHORS for more details.
-    :license: BSD, see LICENSE for more details.
+    flagon.request
 """
 from functools import update_wrapper
 from datetime import datetime, timedelta
 
-from flagon.http import HTTP_STATUS_CODES, \
-     parse_accept_header, parse_cache_control_header, parse_etags, \
-     parse_date, generate_etag, is_resource_modified, unquote_etag, \
-     quote_etag, parse_set_header, parse_authorization_header, \
-     parse_www_authenticate_header, remove_entity_headers, \
-     parse_options_header, dump_options_header, http_date, \
-     parse_if_range_header, parse_cookie, dump_cookie, \
-     parse_range_header, parse_content_range_header, dump_header
-from flagon.urls import url_decode, iri_to_uri, url_join
-from flagon.formparser import FormDataParser, default_stream_factory
+from flagon.http import HTTP_STATUS_CODES
+from flagon.http.urls import url_decode, iri_to_uri, url_join
+from flagon.http.formparser import FormDataParser, default_stream_factory
 from flagon.utils import cached_property, environ_property, \
      header_property, get_content_type
 from flagon.wsgi import get_current_url, get_host, \
      ClosingIterator, get_input_stream, get_content_length
-from flagon.datastructures import MultiDict, CombinedMultiDict, Headers, \
-     EnvironHeaders, ImmutableMultiDict, ImmutableTypeConversionDict, \
-     ImmutableList, MIMEAccept, CharsetAccept, LanguageAccept, \
-     ResponseCacheControl, RequestCacheControl, CallbackDict, \
-     ContentRange, iter_multi_items
+from flagon.datastructures import MultiDict
 from flagon._compat import to_bytes, string_types, text_type, \
      integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
      to_unicode, to_native, BytesIO
@@ -148,34 +119,6 @@ class Request(object):
         .. versionadded:: 0.6
         """
         return self.charset
-
-    @classmethod
-    def from_values(cls, *args, **kwargs):
-        """Create a new request object based on the values provided.  If
-        environ is given missing values are filled from there.  This method is
-        useful for small scripts when you need to simulate a request from an URL.
-        Do not use this method for unittesting, there is a full featured client
-        object (:class:`Client`) that allows to create multipart requests,
-        support for cookies etc.
-
-        This accepts the same options as the
-        :class:`~flagon.test.EnvironBuilder`.
-
-        .. versionchanged:: 0.5
-           This method now accepts the same arguments as
-           :class:`~flagon.test.EnvironBuilder`.  Because of this the
-           `environ` parameter is now called `environ_overrides`.
-
-        :return: request object
-        """
-        from flagon.test import EnvironBuilder
-        charset = kwargs.pop('charset', cls.charset)
-        kwargs['charset'] = charset
-        builder = EnvironBuilder(*args, **kwargs)
-        try:
-            return builder.get_request(cls)
-        finally:
-            builder.close()
 
     @classmethod
     def application(cls, f):
@@ -842,6 +785,3 @@ class Request(object):
         .. versionadded:: 0.8
         """
         raise BadRequest()
-
-    def _load_form_data(self):
-        RequestBase._load_form_data(self)

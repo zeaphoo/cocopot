@@ -99,20 +99,6 @@ if PY2:
             return s
         return s.encode(charset, errors)
 
-    def to_bytes(x, charset=sys.getdefaultencoding(), errors='strict'):
-        if x is None:
-            return None
-        if isinstance(x, (bytes, bytearray, buffer)):
-            return bytes(x)
-        if isinstance(x, unicode):
-            return x.encode(charset, errors)
-        raise TypeError('Expected bytes')
-
-    def to_native(x, charset=sys.getdefaultencoding(), errors='strict'):
-        if x is None or isinstance(x, str):
-            return x
-        return x.encode(charset, errors)
-
 else:
     unichr = chr
     text_type = str
@@ -177,47 +163,21 @@ else:
             return s.decode('latin1', errors)
         return s.encode(charset).decode('latin1', errors)
 
-    def to_bytes(x, charset=sys.getdefaultencoding(), errors='strict'):
-        if x is None:
-            return None
-        if isinstance(x, (bytes, bytearray, memoryview)):
-            return bytes(x)
-        if isinstance(x, str):
-            return x.encode(charset, errors)
-        raise TypeError('Expected bytes')
 
-    def to_native(x, charset=sys.getdefaultencoding(), errors='strict'):
-        if x is None or isinstance(x, str):
-            return x
-        return x.decode(charset, errors)
-
-
-def to_unicode(x, charset=sys.getdefaultencoding(), errors='strict',
-               allow_none_charset=False):
+# Some helpers for string/byte handling
+def to_bytes(s, enc='utf8'):
     if x is None:
         return None
-    if not isinstance(x, bytes):
-        return text_type(x)
-    if charset is None and allow_none_charset:
-        return x
-    return x.decode(charset, errors)
+    return s.encode(enc) if isinstance(s, unicode) else bytes(s)
 
 
-def with_metaclass(meta, *bases):
-    # This requires a bit of explanation: the basic idea is to make a
-    # dummy metaclass for one level of class instantiation that replaces
-    # itself with the actual metaclass.  Because of internal type checks
-    # we also need to make sure that we downgrade the custom metaclass
-    # for one level to something closer to type (that's why __call__ and
-    # __init__ comes back from type etc.).
-    #
-    # This has the advantage over six.with_metaclass in that it does not
-    # introduce dummy classes into the final MRO.
-    class metaclass(meta):
-        __call__ = type.__call__
-        __init__ = type.__init__
-        def __new__(cls, name, this_bases, d):
-            if this_bases is None:
-                return type.__new__(cls, name, (), d)
-            return meta(name, bases, d)
-    return metaclass('temporary_class', None, {})
+def to_unicode(s, enc='utf8', err='strict'):
+    if x is None:
+        return None
+    if isinstance(s, bytes):
+        return s.decode(enc, err)
+    else:
+        return unicode(s)
+
+
+to_native = to_bytes if PY2 else to_unicode

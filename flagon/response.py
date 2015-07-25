@@ -1,37 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-    flagon.wrappers
-    ~~~~~~~~~~~~~~~~~
-
-    The wrappers are simple request and response objects which you can
-    subclass to do whatever you want them to do.  The request object contains
-    the information transmitted by the client (webbrowser) and the response
-    object contains all the information sent back to the browser.
-
-    An important detail is that the request object is created with the WSGI
-    environ and will act as high-level proxy whereas the response object is an
-    actual WSGI application.
-
-    Like everything else in Werkzeug these objects will work correctly with
-    unicode data.  Incoming form data parsed by the response object will be
-    decoded into an unicode object if possible and if it makes sense.
-
-
-    :copyright: (c) 2014 by the Werkzeug Team, see AUTHORS for more details.
-    :license: BSD, see LICENSE for more details.
+    flagon.response
 """
 from functools import update_wrapper
 from datetime import datetime, timedelta
 
-from flagon.http import HTTP_STATUS_CODES, \
-     parse_accept_header, parse_cache_control_header, parse_etags, \
-     parse_date, generate_etag, is_resource_modified, unquote_etag, \
-     quote_etag, parse_set_header, parse_authorization_header, \
-     parse_www_authenticate_header, remove_entity_headers, \
-     parse_options_header, dump_options_header, http_date, \
-     parse_if_range_header, parse_cookie, dump_cookie, \
-     parse_range_header, parse_content_range_header, dump_header
-from flagon.urls import url_decode, iri_to_uri, url_join
+from flagon.http import HTTP_STATUS_CODES
+from flagon.http.urls import url_decode, iri_to_uri, url_join
 from flagon.formparser import FormDataParser, default_stream_factory
 from flagon.utils import cached_property, environ_property, \
      header_property, get_content_type
