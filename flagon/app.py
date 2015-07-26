@@ -16,23 +16,17 @@ from datetime import timedelta
 from itertools import chain
 from functools import update_wrapper
 
-from flagon.datastructures import ImmutableDict
-from flagon.routing import Map, Rule, RequestRedirect, BuildError
-from flagon.exceptions import HTTPException, InternalServerError, \
+from .datastructures import ImmutableDict
+from .routing import Map, Rule, RequestRedirect, BuildError
+from .exceptions import HTTPException, InternalServerError, \
      MethodNotAllowed, BadRequest
 
-from .helpers import _PackageBoundObject, url_for, get_flashed_messages, \
-     locked_cached_property, _endpoint_from_view_func, find_package
-from . import json
-from .wrappers import Request, Response
+from .request import Request
+from .respone import Response
 from .config import ConfigAttribute, Config
-from .ctx import RequestContext, AppContext, _AppCtxGlobals
 from .globals import _request_ctx_stack, request, session, g
 from .sessions import SecureCookieSessionInterface
 from ._compat import reraise, string_types, text_type, integer_types
-
-# a lock used for logger initialization
-_logger_lock = Lock()
 
 
 def _make_timedelta(value):
@@ -58,7 +52,7 @@ def setupmethod(f):
     return update_wrapper(wrapper_func, f)
 
 
-class Flagon(_PackageBoundObject):
+class Flagon(object):
     """The flagon object implements a WSGI application and acts as the central
     object.  It is passed the name of the module or package of the
     application.  Once it is created it will act as a central registry for

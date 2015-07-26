@@ -5,21 +5,17 @@
 from functools import update_wrapper
 from datetime import datetime, timedelta
 
-from flagon.http import HTTP_STATUS_CODES
-from flagon.http.urls import url_decode, iri_to_uri, url_join
-from flagon.http.formparser import FormDataParser, default_stream_factory
-from flagon.utils import cached_property, environ_property, \
-     header_property, get_content_type
-from flagon.wsgi import get_current_url, get_host, \
-     ClosingIterator, get_input_stream, get_content_length
-from flagon.datastructures import MultiDict
-from flagon._compat import to_bytes, string_types, text_type, \
+from .http import HTTP_STATUS_CODES
+from .http.urls import url_decode, iri_to_uri, url_join
+from .utils import cached_property
+from .datastructures import MultiDict
+from ._compat import to_bytes, string_types, text_type, \
      integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
      to_unicode, to_native, BytesIO
 
 from .exceptions import BadRequest
 
-from .globals import _request_ctx_stack
+from .globals import current_app
 
 
 class Request(object):
@@ -689,9 +685,9 @@ class Request(object):
     @property
     def max_content_length(self):
         """Read-only view of the `MAX_CONTENT_LENGTH` config key."""
-        ctx = _request_ctx_stack.top
-        if ctx is not None:
-            return ctx.app.config['MAX_CONTENT_LENGTH']
+        app = current_app
+        if app is not None:
+            return app.config['MAX_CONTENT_LENGTH']
 
     @property
     def endpoint(self):

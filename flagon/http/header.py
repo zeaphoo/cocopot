@@ -263,3 +263,43 @@ class HeaderSet(object):
             self.__class__.__name__,
             self._headers
         )
+
+def get_host(environ):
+    """Return the real host for the given WSGI environment.  This first checks
+    the `X-Forwarded-Host` header, then the normal `Host` header, and finally
+    the `SERVER_NAME` environment variable (using the first one it finds).
+
+    Optionally it verifies that the host is in a list of trusted hosts.
+    If the host is not in there it will raise a
+    :exc:`~flagon.exceptions.SecurityError`.
+
+    :param environ: the WSGI environment to get the host of.
+    :param trusted_hosts: a list of trusted hosts, see :func:`host_is_trusted`
+                          for more information.
+    """
+    if 'HTTP_X_FORWARDED_HOST' in environ:
+        rv = environ['HTTP_X_FORWARDED_HOST'].split(',', 1)[0].strip()
+    elif 'HTTP_HOST' in environ:
+        rv = environ['HTTP_HOST']
+    else:
+        rv = environ['SERVER_NAME']
+        if (environ['wsgi.url_scheme'], environ['SERVER_PORT']) not \
+           in (('https', '443'), ('http', '80')):
+            rv += ':' + environ['SERVER_PORT']
+    return rv
+
+
+def get_content_length(environ):
+    """Returns the content length from the WSGI environment as
+    integer.  If it's not available `None` is returned.
+
+    .. versionadded:: 0.9
+
+    :param environ: the WSGI environ to fetch the content length from.
+    """
+    content_length = environ.get('CONTENT_LENGTH')
+    if content_length is not None:
+        try:
+            return max(0, int(content_length))
+        except (ValueError, TypeError):
+            pass

@@ -944,3 +944,54 @@ def url_join(base, url, allow_fragments=True):
 
     path = s('/').join(segments)
     return url_unparse((scheme, netloc, path, query, fragment))
+
+
+def get_current_url(environ, root_only=False, strip_querystring=False,
+                    host_only=False, trusted_hosts=None):
+    """A handy helper function that recreates the full URL as IRI for the
+    current request or parts of it.  Here an example:
+
+    >>> from flagon.test import create_environ
+    >>> env = create_environ("/?param=foo", "http://localhost/script")
+    >>> get_current_url(env)
+    'http://localhost/script/?param=foo'
+    >>> get_current_url(env, root_only=True)
+    'http://localhost/script/'
+    >>> get_current_url(env, host_only=True)
+    'http://localhost/'
+    >>> get_current_url(env, strip_querystring=True)
+    'http://localhost/script/'
+
+    This optionally it verifies that the host is in a list of trusted hosts.
+    If the host is not in there it will raise a
+    :exc:`~flagon.exceptions.SecurityError`.
+
+    Note that the string returned might contain unicode characters as the
+    representation is an IRI not an URI.  If you need an ASCII only
+    representation you can use the :func:`~flagon.urls.iri_to_uri`
+    function:
+
+    >>> from flagon.urls import iri_to_uri
+    >>> iri_to_uri(get_current_url(env))
+    'http://localhost/script/?param=foo'
+
+    :param environ: the WSGI environment to get the current URL from.
+    :param root_only: set `True` if you only want the root URL.
+    :param strip_querystring: set to `True` if you don't want the querystring.
+    :param host_only: set to `True` if the host URL should be returned.
+    :param trusted_hosts: a list of trusted hosts, see :func:`host_is_trusted`
+                          for more information.
+    """
+    tmp = [environ['wsgi.url_scheme'], '://', get_host(environ, trusted_hosts)]
+    cat = tmp.append
+    if host_only:
+        return uri_to_iri(''.join(tmp) + '/')
+    cat(url_quote(wsgi_get_bytes(environ.get('SCRIPT_NAME', ''))).rstrip('/'))
+    cat('/')
+    if not root_only:
+        cat(url_quote(wsgi_get_bytes(environ.get('PATH_INFO', '')).lstrip(b'/')))
+        if not strip_querystring:
+            qs = get_query_string(environ)
+            if qs:
+                cat('?' + qs)
+    return uri_to_iri(''.join(tmp))

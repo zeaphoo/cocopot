@@ -11,9 +11,6 @@
 """
 from functools import update_wrapper
 
-from .helpers import _PackageBoundObject, _endpoint_from_view_func
-
-
 class BlueprintSetupState(object):
     """Temporary holder object for registering a blueprint with the
     application.  An instance of this class is created by the
@@ -76,7 +73,7 @@ class BlueprintSetupState(object):
                               view_func, defaults=defaults, **options)
 
 
-class Blueprint(_PackageBoundObject):
+class Blueprint(object):
     """Represents a blueprint.  A blueprint is an object that records
     functions that will be called with the
     :class:`~flagon.blueprint.BlueprintSetupState` later to register functions
