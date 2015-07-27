@@ -152,17 +152,6 @@ class Flagon(object):
     #: .. versionadded:: 0.10
     app_ctx_globals_class = _AppCtxGlobals
 
-    # Backwards compatibility support
-    def _get_request_globals_class(self):
-        return self.app_ctx_globals_class
-    def _set_request_globals_class(self, value):
-        from warnings import warn
-        warn(DeprecationWarning('request_globals_class attribute is now '
-                                'called app_ctx_globals_class'))
-        self.app_ctx_globals_class = value
-    request_globals_class = property(_get_request_globals_class,
-                                     _set_request_globals_class)
-    del _get_request_globals_class, _set_request_globals_class
 
     #: The debug flag.  Set this to `True` to enable debugging of the
     #: application.  In debug mode the debugger will kick in when an unhandled
@@ -297,32 +286,8 @@ class Flagon(object):
     #: .. versionadded:: 0.8
     session_interface = SecureCookieSessionInterface()
 
-    def __init__(self, import_name, static_path=None, static_url_path=None,
-                 static_folder='static', template_folder='templates',
-                 instance_path=None, instance_relative_config=False):
-        _PackageBoundObject.__init__(self, import_name,
-                                     template_folder=template_folder)
-        if static_path is not None:
-            from warnings import warn
-            warn(DeprecationWarning('static_path is now called '
-                                    'static_url_path'), stacklevel=2)
-            static_url_path = static_path
-
-        if static_url_path is not None:
-            self.static_url_path = static_url_path
-        if static_folder is not None:
-            self.static_folder = static_folder
-        if instance_path is None:
-            instance_path = self.auto_find_instance_path()
-        elif not os.path.isabs(instance_path):
-            raise ValueError('If an instance path is provided it must be '
-                             'absolute.  A relative path was given instead.')
-
-        #: Holds the path to the instance folder.
-        #:
-        #: .. versionadded:: 0.8
-        self.instance_path = instance_path
-
+    def __init__(self, import_name, static_folder='static'):
+        self.static_folder = static_folder
         #: The configuration dictionary as :class:`Config`.  This behaves
         #: exactly like a regular dictionary but supports additional methods
         #: to load a config from files.
@@ -371,13 +336,6 @@ class Flagon(object):
         #: function here, use the :meth:`before_request` decorator.
         self.before_request_funcs = {}
 
-        #: A lists of functions that should be called at the beginning of the
-        #: first request to this instance.  To register a function here, use
-        #: the :meth:`before_first_request` decorator.
-        #:
-        #: .. versionadded:: 0.8
-        self.before_first_request_funcs = []
-
         #: A dictionary with lists of functions that should be called after
         #: each request.  The key of the dictionary is the name of the blueprint
         #: this function is active for, `None` for all requests.  This can for
@@ -397,14 +355,6 @@ class Flagon(object):
         #:
         #: .. versionadded:: 0.7
         self.teardown_request_funcs = {}
-
-        #: A list of functions that are called when the application context
-        #: is destroyed.  Since the application context is also torn down
-        #: if the request ends this is the place to store code that disconnects
-        #: from databases.
-        #:
-        #: .. versionadded:: 0.9
-        self.teardown_appcontext_funcs = []
 
         #: A dictionary with lists of functions that can be used as URL
         #: value processor functions.  Whenever a URL is built these functions
@@ -465,11 +415,6 @@ class Flagon(object):
         #:    app.url_map.converters['list'] = ListConverter
         self.url_map = Map()
 
-        # tracks internally if the application already handled at least one
-        # request.
-        self._got_first_request = False
-        self._before_request_lock = Lock()
-
         # register the static folder for the application.  Do that even
         # if the folder does not exist.  First of all it might be created
         # while the server is running (usually happens during development)
@@ -480,18 +425,7 @@ class Flagon(object):
                               endpoint='static',
                               view_func=self.send_static_file)
 
-    def _get_error_handlers(self):
-        from warnings import warn
-        warn(DeprecationWarning('error_handlers is deprecated, use the '
-            'new error_handler_spec attribute instead.'), stacklevel=1)
-        return self._error_handlers
-    def _set_error_handlers(self, value):
-        self._error_handlers = value
-        self.error_handler_spec[None] = value
-    error_handlers = property(_get_error_handlers, _set_error_handlers)
-    del _get_error_handlers, _set_error_handlers
-
-    @locked_cached_property
+    @property
     def name(self):
         """The name of the application.  This is usually the import name
         with the difference that it's guessed from the run file if the
@@ -555,15 +489,6 @@ class Flagon(object):
             self._logger = rv = create_logger(self)
             return rv
 
-    @property
-    def got_first_request(self):
-        """This attribute is set to `True` if the application started
-        handling the first request.
-
-        .. versionadded:: 0.8
-        """
-        return self._got_first_request
-
     def make_config(self, instance_relative=False):
         """Used to create the config attribute by the Flagon constructor.
         The `instance_relative` parameter is passed in from the constructor
@@ -577,31 +502,6 @@ class Flagon(object):
         if instance_relative:
             root_path = self.instance_path
         return Config(root_path, self.default_config)
-
-    def auto_find_instance_path(self):
-        """Tries to locate the instance path if it was not provided to the
-        constructor of the application class.  It will basically calculate
-        the path to a folder named ``instance`` next to your main file or
-        the package.
-
-        .. versionadded:: 0.8
-        """
-        prefix, package_path = find_package(self.import_name)
-        if prefix is None:
-            return os.path.join(package_path, 'instance')
-        return os.path.join(prefix, 'var', self.name + '-instance')
-
-    def open_instance_resource(self, resource, mode='rb'):
-        """Opens a resource from the application's instance folder
-        (:attr:`instance_path`).  Otherwise works like
-        :meth:`open_resource`.  Instance resources can also be opened for
-        writing.
-
-        :param resource: the name of the resource.  To access resources within
-                         subfolders use forward slashes as separator.
-        :param mode: resource file opening mode, default is 'rb'.
-        """
-        return open(os.path.join(self.instance_path, resource), mode)
 
 
     def run(self, host=None, port=None, debug=None, **options):
@@ -728,30 +628,6 @@ class Flagon(object):
         .. versionadded:: 0.7
         """
         return self.session_interface.make_null_session(self)
-
-    def register_module(self, module, **options):
-        """Registers a module with this application.  The keyword argument
-        of this function are the same as the ones for the constructor of the
-        :class:`Module` class and will override the values of the module if
-        provided.
-
-        .. versionchanged:: 0.7
-           The module system was deprecated in favor for the blueprint
-           system.
-        """
-        if not self.enable_modules:
-            raise RuntimeError('Module support was disabled but code '
-                'attempted to register a module named %r' % module)
-        else:
-            from warnings import warn
-            warn(DeprecationWarning('Modules are deprecated.  Upgrade to '
-                'using blueprints.  Have a look into the documentation for '
-                'more information.  If this module was registered by a '
-                'Flagon-Extension upgrade the extension or contact the author '
-                'of that extension instead.  (Registered %r)' % module),
-                stacklevel=2)
-
-        self.register_blueprint(module, **options)
 
     @setupmethod
     def register_blueprint(self, blueprint, **options):
@@ -983,14 +859,6 @@ class Flagon(object):
         self.before_request_funcs.setdefault(None, []).append(f)
         return f
 
-    @setupmethod
-    def before_first_request(self, f):
-        """Registers a function to be run before the first request to this
-        instance of the application.
-
-        .. versionadded:: 0.8
-        """
-        self.before_first_request_funcs.append(f)
 
     @setupmethod
     def after_request(self, f):
@@ -1039,35 +907,6 @@ class Flagon(object):
            by the ``PRESERVE_CONTEXT_ON_EXCEPTION`` configuration variable.
         """
         self.teardown_request_funcs.setdefault(None, []).append(f)
-        return f
-
-    @setupmethod
-    def teardown_appcontext(self, f):
-        """Registers a function to be called when the application context
-        ends.  These functions are typically also called when the request
-        context is popped.
-
-        Example::
-
-            ctx = app.app_context()
-            ctx.push()
-            ...
-            ctx.pop()
-
-        When ``ctx.pop()`` is executed in the above example, the teardown
-        functions are called just before the app context moves from the
-        stack of active contexts.  This becomes relevant if you are using
-        such constructs in tests.
-
-        Since a request context typically also manages an application
-        context it would also be called when you pop a request context.
-
-        When a teardown function was called because of an exception it will
-        be passed an error object.
-
-        .. versionadded:: 0.9
-        """
-        self.teardown_appcontext_funcs.append(f)
         return f
 
     @setupmethod
@@ -1291,16 +1130,6 @@ class Flagon(object):
         rv.allow.update(methods)
         return rv
 
-    def should_ignore_error(self, error):
-        """This is called to figure out if an error should be ignored
-        or not as far as the teardown system is concerned.  If this
-        function returns `True` then the teardown handlers will not be
-        passed the error.
-
-        .. versionadded:: 0.10
-        """
-        return False
-
     def make_response(self, rv):
         """Converts the return value from a view function to a real
         response object that is an instance of :attr:`response_class`.
@@ -1497,20 +1326,6 @@ class Flagon(object):
         for func in reversed(self.teardown_appcontext_funcs):
             func(exc)
 
-    def app_context(self):
-        """Binds the application only.  For as long as the application is bound
-        to the current context the :data:`flagon.current_app` points to that
-        application.  An application context is automatically created when a
-        request context is pushed if necessary.
-
-        Example usage::
-
-            with app.app_context():
-                ...
-
-        .. versionadded:: 0.9
-        """
-        return AppContext(self)
 
     def request_context(self, environ):
         """Creates a :class:`~flagon.ctx.RequestContext` from the given
@@ -1593,13 +1408,6 @@ class Flagon(object):
             if self.should_ignore_error(error):
                 error = None
             ctx.auto_pop(error)
-
-    @property
-    def modules(self):
-        from warnings import warn
-        warn(DeprecationWarning('Flagon.modules is deprecated, use '
-                                'Flagon.blueprints instead'), stacklevel=2)
-        return self.blueprints
 
     def __call__(self, environ, start_response):
         """Shortcut for :attr:`wsgi_app`."""
