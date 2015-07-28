@@ -16,16 +16,13 @@ from datetime import timedelta
 from itertools import chain
 from functools import update_wrapper
 
-from .datastructures import ImmutableDict
-from .routing import Map, Rule, RequestRedirect, BuildError
+from .routing import Router
 from .exceptions import HTTPException, InternalServerError, \
      MethodNotAllowed, BadRequest
 
 from .request import Request
 from .respone import Response
-from .config import ConfigAttribute, Config
 from .globals import _request_ctx_stack, request, session, g
-from .sessions import SecureCookieSessionInterface
 from ._compat import reraise, string_types, text_type, integer_types
 
 
@@ -136,88 +133,7 @@ class Flagon(object):
     #: :class:`~flagon.Response` for more information.
     response_class = Response
 
-    #: The class that is used for the :data:`~flagon.g` instance.
-    #:
-    #: Example use cases for a custom class:
-    #:
-    #: 1. Store arbitrary attributes on flagon.g.
-    #: 2. Add a property for lazy per-request database connectors.
-    #: 3. Return None instead of AttributeError on expected attributes.
-    #: 4. Raise exception if an unexpected attr is set, a "controlled" flagon.g.
-    #:
-    #: In Flagon 0.9 this property was called `request_globals_class` but it
-    #: was changed in 0.10 to :attr:`app_ctx_globals_class` because the
-    #: flagon.g object is not application context scoped.
-    #:
-    #: .. versionadded:: 0.10
-    app_ctx_globals_class = _AppCtxGlobals
-
-
-    #: The debug flag.  Set this to `True` to enable debugging of the
-    #: application.  In debug mode the debugger will kick in when an unhandled
-    #: exception occurs and the integrated server will automatically reload
-    #: the application if changes in the code are detected.
-    #:
-    #: This attribute can also be configured from the config with the `DEBUG`
-    #: configuration key.  Defaults to `False`.
-    debug = ConfigAttribute('DEBUG')
-
-    #: The testing flag.  Set this to `True` to enable the test mode of
-    #: Flagon extensions (and in the future probably also Flagon itself).
-    #: For example this might activate unittest helpers that have an
-    #: additional runtime cost which should not be enabled by default.
-    #:
-    #: If this is enabled and PROPAGATE_EXCEPTIONS is not changed from the
-    #: default it's implicitly enabled.
-    #:
-    #: This attribute can also be configured from the config with the
-    #: `TESTING` configuration key.  Defaults to `False`.
-    testing = ConfigAttribute('TESTING')
-
-    #: If a secret key is set, cryptographic components can use this to
-    #: sign cookies and other things.  Set this to a complex random value
-    #: when you want to use the secure cookie for instance.
-    #:
-    #: This attribute can also be configured from the config with the
-    #: `SECRET_KEY` configuration key.  Defaults to `None`.
-    secret_key = ConfigAttribute('SECRET_KEY')
-
-    #: The secure cookie uses this for the name of the session cookie.
-    #:
-    #: This attribute can also be configured from the config with the
-    #: `SESSION_COOKIE_NAME` configuration key.  Defaults to ``'session'``
-    session_cookie_name = ConfigAttribute('SESSION_COOKIE_NAME')
-
-    #: A :class:`~datetime.timedelta` which is used to set the expiration
-    #: date of a permanent session.  The default is 31 days which makes a
-    #: permanent session survive for roughly one month.
-    #:
-    #: This attribute can also be configured from the config with the
-    #: `PERMANENT_SESSION_LIFETIME` configuration key.  Defaults to
-    #: ``timedelta(days=31)``
-    permanent_session_lifetime = ConfigAttribute('PERMANENT_SESSION_LIFETIME',
-        get_converter=_make_timedelta)
-
-    #: Enable this if you want to use the X-Sendfile feature.  Keep in
-    #: mind that the server has to support this.  This only affects files
-    #: sent with the :func:`send_file` method.
-    #:
-    #: .. versionadded:: 0.2
-    #:
-    #: This attribute can also be configured from the config with the
-    #: `USE_X_SENDFILE` configuration key.  Defaults to `False`.
-    use_x_sendfile = ConfigAttribute('USE_X_SENDFILE')
-
-    #: The name of the logger to use.  By default the logger name is the
-    #: package name passed to the constructor.
-    #:
-    #: .. versionadded:: 0.4
-    logger_name = ConfigAttribute('LOGGER_NAME')
-
-    #: Enable the deprecated module support?  This is active by default
-    #: in 0.7 but will be changed to False in 0.8.  With Flagon 1.0 modules
-    #: will be removed in favor of Blueprints
-    enable_modules = True
+    debug = False
 
     #: The logging format used for the debug logger.  This is only used when
     #: the application is in debug mode, otherwise the attached logging
@@ -231,67 +147,10 @@ class Flagon(object):
         '-' * 80
     )
 
-    #: The JSON encoder class to use.  Defaults to :class:`~flagon.json.JSONEncoder`.
-    #:
-    #: .. versionadded:: 0.10
-    json_encoder = json.JSONEncoder
-
-    #: The JSON decoder class to use.  Defaults to :class:`~flagon.json.JSONDecoder`.
-    #:
-    #: .. versionadded:: 0.10
-    json_decoder = json.JSONDecoder
-
-
-    #: Default configuration parameters.
-    default_config = ImmutableDict({
-        'DEBUG':                                False,
-        'TESTING':                              False,
-        'PROPAGATE_EXCEPTIONS':                 None,
-        'PRESERVE_CONTEXT_ON_EXCEPTION':        None,
-        'SECRET_KEY':                           None,
-        'PERMANENT_SESSION_LIFETIME':           timedelta(days=31),
-        'USE_X_SENDFILE':                       False,
-        'LOGGER_NAME':                          None,
-        'SERVER_NAME':                          None,
-        'APPLICATION_ROOT':                     None,
-        'SESSION_COOKIE_NAME':                  'session',
-        'SESSION_COOKIE_DOMAIN':                None,
-        'SESSION_COOKIE_PATH':                  None,
-        'SESSION_COOKIE_HTTPONLY':              True,
-        'SESSION_COOKIE_SECURE':                False,
-        'MAX_CONTENT_LENGTH':                   None,
-        'SEND_FILE_MAX_AGE_DEFAULT':            12 * 60 * 60, # 12 hours
-        'TRAP_BAD_REQUEST_ERRORS':              False,
-        'TRAP_HTTP_EXCEPTIONS':                 False,
-        'PREFERRED_URL_SCHEME':                 'http',
-        'JSON_AS_ASCII':                        True,
-        'JSON_SORT_KEYS':                       True,
-        'JSONIFY_PRETTYPRINT_REGULAR':          True,
-    })
-
-    #: The rule object to use for URL rules created.  This is used by
-    #: :meth:`add_url_rule`.  Defaults to :class:`flagon.routing.Rule`.
-    #:
-    #: .. versionadded:: 0.7
-    url_rule_class = Rule
-
-    #: the test client that is used with when `test_client` is used.
-    #:
-    #: .. versionadded:: 0.7
-    test_client_class = None
-
-    #: the session interface to use.  By default an instance of
-    #: :class:`~flagon.sessions.SecureCookieSessionInterface` is used here.
-    #:
-    #: .. versionadded:: 0.8
-    session_interface = SecureCookieSessionInterface()
 
     def __init__(self, import_name, static_folder='static'):
         self.static_folder = static_folder
-        #: The configuration dictionary as :class:`Config`.  This behaves
-        #: exactly like a regular dictionary but supports additional methods
-        #: to load a config from files.
-        self.config = self.make_config(instance_relative_config)
+        self.config = {}
 
         # Prepare the deferred setup of the logger.
         self._logger = None
@@ -385,19 +244,6 @@ class Flagon(object):
         #: .. versionadded:: 0.7
         self.blueprints = {}
 
-        #: a place where extensions can store application specific state.  For
-        #: example this is where an extension could store database engines and
-        #: similar things.  For backwards compatibility extensions should register
-        #: themselves like this::
-        #:
-        #:      if not hasattr(app, 'extensions'):
-        #:          app.extensions = {}
-        #:      app.extensions['extensionname'] = SomeObject()
-        #:
-        #:
-        #: .. versionadded:: 0.7
-        self.extensions = {}
-
         #: The :class:`~flagon.routing.Map` for this instance.  You can use
         #: this to change the routing converters after the class was created
         #: but before any routes are connected.  Example::
@@ -413,7 +259,7 @@ class Flagon(object):
         #:
         #:    app = Flagon(__name__)
         #:    app.url_map.converters['list'] = ListConverter
-        self.url_map = Map()
+        self.router = Router()
 
         # register the static folder for the application.  Do that even
         # if the folder does not exist.  First of all it might be created
@@ -488,20 +334,6 @@ class Flagon(object):
             from flagon.logging import create_logger
             self._logger = rv = create_logger(self)
             return rv
-
-    def make_config(self, instance_relative=False):
-        """Used to create the config attribute by the Flagon constructor.
-        The `instance_relative` parameter is passed in from the constructor
-        of Flagon (there named `instance_relative_config`) and indicates if
-        the config should be relative to the instance path or the root path
-        of the application.
-
-        .. versionadded:: 0.8
-        """
-        root_path = self.root_path
-        if instance_relative:
-            root_path = self.instance_path
-        return Config(root_path, self.default_config)
 
 
     def run(self, host=None, port=None, debug=None, **options):

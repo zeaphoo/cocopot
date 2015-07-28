@@ -16,6 +16,11 @@ import sys
 import pkgutil
 from ._compat import unichr, text_type, string_types, iteritems, \
     reraise, PY2
+try:
+    import simplejson as json
+except:
+    import json
+
 
 _missing = object()
 
