@@ -31,22 +31,9 @@ def _make_timedelta(value):
         return timedelta(seconds=value)
     return value
 
+from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
 
-def setupmethod(f):
-    """Wraps a method so that it performs a check in debug mode if the
-    first request was already handled.
-    """
-    def wrapper_func(self, *args, **kwargs):
-        if self.debug and self._got_first_request:
-            raise AssertionError('A setup function was called after the '
-                'first request was handled.  This usually indicates a bug '
-                'in the application where a module was not imported '
-                'and decorators or other functionality was called too late.\n'
-                'To fix this make sure to import all your view modules, '
-                'database models and everything related at a central place '
-                'before the application starts serving requests.')
-        return f(self, *args, **kwargs)
-    return update_wrapper(wrapper_func, f)
+
 
 
 class Flagon(object):
@@ -96,51 +83,11 @@ class Flagon(object):
         pick up SQL queries in `yourapplication.app` and not
         `yourapplication.views.frontend`)
 
-    .. versionadded:: 0.7
-       The `static_url_path`, `static_folder`, and `template_folder`
-       parameters were added.
-
-    .. versionadded:: 0.8
-       The `instance_path` and `instance_relative_config` parameters were
-       added.
-
-    :param import_name: the name of the application package
-    :param static_url_path: can be used to specify a different path for the
-                            static files on the web.  Defaults to the name
-                            of the `static_folder` folder.
-    :param static_folder: the folder with static files that should be served
-                          at `static_url_path`.  Defaults to the ``'static'``
-                          folder in the root path of the application.
-    :param template_folder: the folder that contains the templates that should
-                            be used by the application.  Defaults to
-                            ``'templates'`` folder in the root path of the
-                            application.
-    :param instance_path: An alternative instance path for the application.
-                          By default the folder ``'instance'`` next to the
-                          package or module is assumed to be the instance
-                          path.
-    :param instance_relative_config: if set to `True` relative filenames
-                                     for loading the config are assumed to
-                                     be relative to the instance path instead
-                                     of the application root.
     """
-
-    #: The class that is used for request objects.  See :class:`~flagon.Request`
-    #: for more information.
-    request_class = Request
-
-    #: The class that is used for response objects.  See
-    #: :class:`~flagon.Response` for more information.
-    response_class = Response
 
     debug = False
 
-    #: The logging format used for the debug logger.  This is only used when
-    #: the application is in debug mode, otherwise the attached logging
-    #: handler does the formatting.
-    #:
-    #: .. versionadded:: 0.3
-    debug_log_format = (
+    log_format = (
         '-' * 80 + '\n' +
         '%(levelname)s in %(module)s [%(pathname)s:%(lineno)d]:\n' +
         '%(message)s\n' +
@@ -152,8 +99,7 @@ class Flagon(object):
         self.static_folder = static_folder
         self.config = {}
 
-        # Prepare the deferred setup of the logger.
-        self._logger = None
+        self.import_name = import_name
         self.logger_name = self.import_name
 
         #: A dictionary of all view functions registered.  The keys will
@@ -222,7 +168,7 @@ class Flagon(object):
         #: callbacks, otherwise the key is the name of the blueprint.
         #: Each of these functions has the chance to modify the dictionary
         #:
-        #: .. versionadded:: 0.7
+        #: .. versionadded:: 0.1
         self.url_value_preprocessors = {}
 
         #: A dictionary with lists of functions that can be used as URL value
@@ -234,31 +180,16 @@ class Flagon(object):
         #: provide a :meth:`url_defaults` function that adds the parameters
         #: automatically again that were removed that way.
         #:
-        #: .. versionadded:: 0.7
+        #: .. versionadded:: 0.1
         self.url_default_functions = {}
 
         #: all the attached blueprints in a dictionary by name.  Blueprints
         #: can be attached multiple times so this dictionary does not tell
         #: you how often they got attached.
         #:
-        #: .. versionadded:: 0.7
+        #: .. versionadded:: 0.1
         self.blueprints = {}
 
-        #: The :class:`~flagon.routing.Map` for this instance.  You can use
-        #: this to change the routing converters after the class was created
-        #: but before any routes are connected.  Example::
-        #:
-        #:    from flagon.routing import BaseConverter
-        #:
-        #:    class ListConverter(BaseConverter):
-        #:        def to_python(self, value):
-        #:            return value.split(',')
-        #:        def to_url(self, values):
-        #:            return ','.join(BaseConverter.to_url(value)
-        #:                            for value in values)
-        #:
-        #:    app = Flagon(__name__)
-        #:    app.url_map.converters['list'] = ListConverter
         self.router = Router()
 
         # register the static folder for the application.  Do that even
@@ -270,6 +201,37 @@ class Flagon(object):
             self.add_url_rule(self.static_url_path + '/<path:filename>',
                               endpoint='static',
                               view_func=self.send_static_file)
+        self.logger = self.create_logger()
+
+    def create_logger(self):
+        """Creates a logger for the given application.  This logger works
+        similar to a regular Python logger but changes the effective logging
+        level based on the application's debug flag.  Furthermore this
+        function also removes all attached handlers in case there was a
+        logger with the log name before.
+        """
+        Logger = getLoggerClass()
+
+        class DebugLogger(Logger):
+            def getEffectiveLevel(x):
+                if x.level == 0 and self.debug:
+                    return DEBUG
+                return Logger.getEffectiveLevel(x)
+
+        class DebugHandler(StreamHandler):
+            def emit(x, record):
+                StreamHandler.emit(x, record) if self.debug else None
+
+        handler = DebugHandler()
+        handler.setLevel(DEBUG)
+        handler.setFormatter(Formatter(self.log_format))
+        logger = getLogger(self.logger_name)
+        # just in case that was not a new logger, get rid of all the handlers
+        # already attached to it.
+        del logger.handlers[:]
+        logger.__class__ = DebugLogger
+        logger.addHandler(handler)
+        return logger
 
     @property
     def name(self):
@@ -287,53 +249,6 @@ class Flagon(object):
                 return '__main__'
             return os.path.splitext(os.path.basename(fn))[0]
         return self.import_name
-
-    @property
-    def propagate_exceptions(self):
-        """Returns the value of the `PROPAGATE_EXCEPTIONS` configuration
-        value in case it's set, otherwise a sensible default is returned.
-
-        .. versionadded:: 0.7
-        """
-        rv = self.config['PROPAGATE_EXCEPTIONS']
-        if rv is not None:
-            return rv
-        return self.testing or self.debug
-
-    @property
-    def preserve_context_on_exception(self):
-        """Returns the value of the `PRESERVE_CONTEXT_ON_EXCEPTION`
-        configuration value in case it's set, otherwise a sensible default
-        is returned.
-
-        .. versionadded:: 0.7
-        """
-        rv = self.config['PRESERVE_CONTEXT_ON_EXCEPTION']
-        if rv is not None:
-            return rv
-        return self.debug
-
-    @property
-    def logger(self):
-        """A :class:`logging.Logger` object for this application.  The
-        default configuration is to log to stderr if the application is
-        in debug mode.  This logger can be used to (surprise) log messages.
-        Here some examples::
-
-            app.logger.debug('A value for debugging')
-            app.logger.warning('A warning occurred (%d apples)', 42)
-            app.logger.error('An error occurred')
-
-        .. versionadded:: 0.3
-        """
-        if self._logger and self._logger.name == self.logger_name:
-            return self._logger
-        with _logger_lock:
-            if self._logger and self._logger.name == self.logger_name:
-                return self._logger
-            from flagon.logging import create_logger
-            self._logger = rv = create_logger(self)
-            return rv
 
 
     def run(self, host=None, port=None, debug=None, **options):
@@ -372,26 +287,16 @@ class Flagon(object):
                         :func:`flagon.serving.run_simple` for more
                         information.
         """
-        from flagon.serving import run_simple
+        from flagon.run import run_simple
         if host is None:
             host = '127.0.0.1'
         if port is None:
-            server_name = self.config['SERVER_NAME']
-            if server_name and ':' in server_name:
-                port = int(server_name.rsplit(':', 1)[1])
-            else:
-                port = 5000
+            port = 5000
         if debug is not None:
             self.debug = bool(debug)
         options.setdefault('use_reloader', self.debug)
         options.setdefault('use_debugger', self.debug)
-        try:
-            run_simple(host, port, self, **options)
-        finally:
-            # reset the first request information if the development server
-            # resetted normally.  This makes it possible to restart the server
-            # without reloader and that stuff from an interactive shell.
-            self._got_first_request = False
+        run_simple(host, port, self, **options)
 
     def test_client(self, use_cookies=True):
         """Creates a test client for this application.  For information
@@ -426,40 +331,8 @@ class Flagon(object):
            to override the client to be used by setting the
            :attr:`test_client_class` attribute.
         """
-        cls = self.test_client_class
-        if cls is None:
-            from flagon.testing import FlagonClient as cls
-        return cls(self, self.response_class, use_cookies=use_cookies)
-
-    def open_session(self, request):
-        """Creates or opens a new session.  Default implementation stores all
-        session data in a signed cookie.  This requires that the
-        :attr:`secret_key` is set.  Instead of overriding this method
-        we recommend replacing the :class:`session_interface`.
-
-        :param request: an instance of :attr:`request_class`.
-        """
-        return self.session_interface.open_session(self, request)
-
-    def save_session(self, session, response):
-        """Saves the session if it needs updates.  For the default
-        implementation, check :meth:`open_session`.  Instead of overriding this
-        method we recommend replacing the :class:`session_interface`.
-
-        :param session: the session to be saved (a
-                        :class:`~flagon.contrib.securecookie.SecureCookie`
-                        object)
-        :param response: an instance of :attr:`response_class`
-        """
-        return self.session_interface.save_session(self, session, response)
-
-    def make_null_session(self):
-        """Creates a new instance of a missing session.  Instead of overriding
-        this method we recommend replacing the :class:`session_interface`.
-
-        .. versionadded:: 0.7
-        """
-        return self.session_interface.make_null_session(self)
+        from flagon.testing import FlagonClient as cls
+        return cls(self, use_cookies=use_cookies)
 
     @setupmethod
     def register_blueprint(self, blueprint, **options):
@@ -508,11 +381,6 @@ class Flagon(object):
 
         For more information refer to :ref:`url-route-registrations`.
 
-        .. versionchanged:: 0.2
-           `view_func` parameter added.
-
-        .. versionchanged:: 0.6
-           `OPTIONS` is added automatically as method.
 
         :param rule: the URL rule as string
         :param endpoint: the endpoint for the registered URL rule.  Flagon
@@ -530,7 +398,7 @@ class Flagon(object):
                         added and handled by the standard request handling.
         """
         if endpoint is None:
-            endpoint = _endpoint_from_view_func(view_func)
+            endpoint = view_func.__name__
         options['endpoint'] = endpoint
         methods = options.pop('methods', None)
 
@@ -779,26 +647,6 @@ class Flagon(object):
             return e
         return handler(e)
 
-    def trap_http_exception(self, e):
-        """Checks if an HTTP exception should be trapped or not.  By default
-        this will return `False` for all exceptions except for a bad request
-        key error if ``TRAP_BAD_REQUEST_ERRORS`` is set to `True`.  It
-        also returns `True` if ``TRAP_HTTP_EXCEPTIONS`` is set to `True`.
-
-        This is called for all HTTP exceptions raised by a view function.
-        If it returns `True` for any exception the error handler for this
-        exception is not called and it shows up as regular exception in the
-        traceback.  This is helpful for debugging implicitly raised HTTP
-        exceptions.
-
-        .. versionadded:: 0.8
-        """
-        if self.config['TRAP_HTTP_EXCEPTIONS']:
-            return True
-        if self.config['TRAP_BAD_REQUEST_ERRORS']:
-            return isinstance(e, BadRequest)
-        return False
-
     def handle_user_exception(self, e):
         """This method is called whenever an exception occurs that should be
         handled.  A special case are
@@ -962,84 +810,6 @@ class Flagon(object):
         rv.allow.update(methods)
         return rv
 
-    def make_response(self, rv):
-        """Converts the return value from a view function to a real
-        response object that is an instance of :attr:`response_class`.
-
-        The following types are allowed for `rv`:
-
-        .. tabularcolumns:: |p{3.5cm}|p{9.5cm}|
-
-        ======================= ===========================================
-        :attr:`response_class`  the object is returned unchanged
-        :class:`str`            a response object is created with the
-                                string as body
-        :class:`unicode`        a response object is created with the
-                                string encoded to utf-8 as body
-        a WSGI function         the function is called as WSGI application
-                                and buffered as response object
-        :class:`tuple`          A tuple in the form ``(response, status,
-                                headers)`` where `response` is any of the
-                                types defined here, `status` is a string
-                                or an integer and `headers` is a list of
-                                a dictionary with header values.
-        ======================= ===========================================
-
-        :param rv: the return value from the view function
-
-        .. versionchanged:: 0.9
-           Previously a tuple was interpreted as the arguments for the
-           response object.
-        """
-        status = headers = None
-        if isinstance(rv, tuple):
-            rv, status, headers = rv + (None,) * (3 - len(rv))
-
-        if rv is None:
-            raise ValueError('View function did not return a response')
-
-        if not isinstance(rv, self.response_class):
-            # When we create a response object directly, we let the constructor
-            # set the headers and status.  We do this because there can be
-            # some extra logic involved when creating these objects with
-            # specific values (like default content type selection).
-            if isinstance(rv, (text_type, bytes, bytearray)):
-                rv = self.response_class(rv, headers=headers, status=status)
-                headers = status = None
-            else:
-                rv = self.response_class.force_type(rv, request.environ)
-
-        if status is not None:
-            if isinstance(status, string_types):
-                rv.status = status
-            else:
-                rv.status_code = status
-        if headers:
-            rv.headers.extend(headers)
-
-        return rv
-
-    def create_url_adapter(self, request):
-        """Creates a URL adapter for the given request.  The URL adapter
-        is created at a point where the request context is not yet set up
-        so the request is passed explicitly.
-
-        .. versionadded:: 0.6
-
-        .. versionchanged:: 0.9
-           This can now also be called without a request object when the
-           URL adapter is created for the application context.
-        """
-        if request is not None:
-            return self.url_map.bind_to_environ(request.environ,
-                server_name=self.config['SERVER_NAME'])
-        # We need at the very least the server name to be set for this
-        # to work.
-        if self.config['SERVER_NAME'] is not None:
-            return self.url_map.bind(
-                self.config['SERVER_NAME'],
-                script_name=self.config['APPLICATION_ROOT'] or '/',
-                url_scheme=self.config['PREFERRED_URL_SCHEME'])
 
     def inject_url_defaults(self, endpoint, values):
         """Injects the URL defaults for the given endpoint directly into
@@ -1146,19 +916,6 @@ class Flagon(object):
         for func in funcs:
             rv = func(exc)
 
-    def do_teardown_appcontext(self, exc=None):
-        """Called when an application context is popped.  This works pretty
-        much the same as :meth:`do_teardown_request` but for the application
-        context.
-
-        .. versionadded:: 0.9
-        """
-        if exc is None:
-            exc = sys.exc_info()[1]
-        for func in reversed(self.teardown_appcontext_funcs):
-            func(exc)
-
-
     def request_context(self, environ):
         """Creates a :class:`~flagon.ctx.RequestContext` from the given
         environment and binds it to the current context.  This must be used in
@@ -1188,18 +945,6 @@ class Flagon(object):
         :param environ: a WSGI environment
         """
         return RequestContext(self, environ)
-
-    def test_request_context(self, *args, **kwargs):
-        """Creates a WSGI environment from the given values (see
-        :func:`flagon.test.EnvironBuilder` for more information, this
-        function accepts the same arguments).
-        """
-        from flagon.testing import make_test_environ_builder
-        builder = make_test_environ_builder(self, *args, **kwargs)
-        try:
-            return self.request_context(builder.get_environ())
-        finally:
-            builder.close()
 
     def wsgi_app(self, environ, start_response):
         """The actual WSGI application.  This is not implemented in
