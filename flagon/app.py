@@ -298,42 +298,6 @@ class Flagon(object):
         options.setdefault('use_debugger', self.debug)
         run_simple(host, port, self, **options)
 
-    def test_client(self, use_cookies=True):
-        """Creates a test client for this application.  For information
-        about unit testing head over to :ref:`testing`.
-
-        Note that if you are testing for assertions or exceptions in your
-        application code, you must set ``app.testing = True`` in order for the
-        exceptions to propagate to the test client.  Otherwise, the exception
-        will be handled by the application (not visible to the test client) and
-        the only indication of an AssertionError or other exception will be a
-        500 status code response to the test client.  See the :attr:`testing`
-        attribute.  For example::
-
-            app.testing = True
-            client = app.test_client()
-
-        The test client can be used in a `with` block to defer the closing down
-        of the context until the end of the `with` block.  This is useful if
-        you want to access the context locals for testing::
-
-            with app.test_client() as c:
-                rv = c.get('/?vodka=42')
-                assert request.args['vodka'] == '42'
-
-        See :class:`~flagon.testing.FlagonClient` for more information.
-
-        .. versionchanged:: 0.4
-           added support for `with` block usage for the client.
-
-        .. versionadded:: 0.7
-           The `use_cookies` parameter was added as well as the ability
-           to override the client to be used by setting the
-           :attr:`test_client_class` attribute.
-        """
-        from flagon.testing import FlagonClient as cls
-        return cls(self, use_cookies=use_cookies)
-
     @setupmethod
     def register_blueprint(self, blueprint, **options):
         """Registers a blueprint on the application.
@@ -353,7 +317,7 @@ class Flagon(object):
         blueprint.register(self, options, first_registration)
 
     @setupmethod
-    def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
+    def add_url_rule(self, rule, endpoint=None, view_func=None, methods=None, **options):
         """Connects a URL rule.  Works exactly like the :meth:`route`
         decorator.  If a view_func is provided it will be registered with the
         endpoint.
@@ -381,26 +345,17 @@ class Flagon(object):
 
         For more information refer to :ref:`url-route-registrations`.
 
-
-        :param rule: the URL rule as string
-        :param endpoint: the endpoint for the registered URL rule.  Flagon
-                         itself assumes the name of the view function as
-                         endpoint
-        :param view_func: the function to call when serving a request to the
-                          provided endpoint
-        :param options: the options to be forwarded to the underlying
-                        :class:`~flagon.routing.Rule` object.  A change
-                        to Werkzeug is handling of method options.  methods
-                        is a list of methods this rule should be limited
-                        to (`GET`, `POST` etc.).  By default a rule
-                        just listens for `GET` (and implicitly `HEAD`).
-                        Starting with Flagon 0.6, `OPTIONS` is implicitly
-                        added and handled by the standard request handling.
+        Args:
+            rule : the URL rule as string
+            endpoint : the endpoint for the registered URL rule.
+                    Flagon itself assumes the name of the view function as endpoint
+            view_func: the function to call when serving a request to the
+                    provided endpoint
+            options: methods is a list of methods this rule should be limited
+                    to (`GET`, `POST` etc.).
         """
         if endpoint is None:
             endpoint = view_func.__name__
-        options['endpoint'] = endpoint
-        methods = options.pop('methods', None)
 
         # if the methods are not given and the view_func object knows its
         # methods we can use that instead.  If neither exists, we go with
@@ -412,30 +367,12 @@ class Flagon(object):
         # Methods that should always be added
         required_methods = set(getattr(view_func, 'required_methods', ()))
 
-        # starting with Flagon 0.8 the view_func object can disable and
-        # force-enable the automatic options handling.
-        provide_automatic_options = getattr(view_func,
-            'provide_automatic_options', None)
-
-        if provide_automatic_options is None:
-            if 'OPTIONS' not in methods:
-                provide_automatic_options = True
-                required_methods.add('OPTIONS')
-            else:
-                provide_automatic_options = False
-
         # Add the required methods now.
         methods |= required_methods
+        
+        defaults = options.get('defaults') or {}
 
-        # due to a flagon. bug we need to make sure that the defaults are
-        # None if they are an empty dictionary.  This should not be necessary
-        # with Werkzeug 0.7
-        options['defaults'] = options.get('defaults') or None
-
-        rule = self.url_rule_class(rule, methods=methods, **options)
-        rule.provide_automatic_options = provide_automatic_options
-
-        self.url_map.add(rule)
+        self.router.add(rule, endpoint, methods=methods, defaults=defaults)
         if view_func is not None:
             old_func = self.view_functions.get(endpoint)
             if old_func is not None and old_func != view_func:
@@ -631,8 +568,6 @@ class Flagon(object):
         """Handles an HTTP exception.  By default this will invoke the
         registered error handlers and fall back to returning the
         exception as response.
-
-        .. versionadded:: 0.3
         """
         handlers = self.error_handler_spec.get(request.blueprint)
         # Proxy exceptions don't have error codes.  We want to always return
@@ -655,7 +590,6 @@ class Flagon(object):
         function will either return a response value or reraise the
         exception with the same traceback.
 
-        .. versionadded:: 0.7
         """
         exc_type, exc_value, tb = sys.exc_info()
         assert exc_value is e
@@ -938,10 +872,6 @@ class Flagon(object):
             finally:
                 ctx.pop()
 
-        .. versionchanged:: 0.3
-           Added support for non-with statement usage and `with` statement
-           is now passed the ctx object.
-
         :param environ: a WSGI environment
         """
         return RequestContext(self, environ)
@@ -959,12 +889,6 @@ class Flagon(object):
 
         Then you still have the original application object around and
         can continue to call methods on it.
-
-        .. versionchanged:: 0.7
-           The behavior of the before and after request callbacks was changed
-           under error conditions and a new callback was added that will
-           always execute at the end of the request, independent on if an
-           error occurred or not.  See :ref:`callbacks-and-errors`.
 
         :param environ: a WSGI environment
         :param start_response: a callable accepting a status code,
