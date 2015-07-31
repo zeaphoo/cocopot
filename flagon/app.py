@@ -15,6 +15,7 @@ from threading import Lock
 from datetime import timedelta
 from itertools import chain
 from functools import update_wrapper
+from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
 
 from .routing import Router
 from .exceptions import HTTPException, InternalServerError, \
@@ -24,16 +25,6 @@ from .request import Request
 from .respone import Response
 from .globals import _request_ctx_stack, request, session, g
 from ._compat import reraise, string_types, text_type, integer_types
-
-
-def _make_timedelta(value):
-    if not isinstance(value, timedelta):
-        return timedelta(seconds=value)
-    return value
-
-from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
-
-
 
 
 class Flagon(object):
@@ -108,10 +99,6 @@ class Flagon(object):
         #: To register a view function, use the :meth:`route` decorator.
         self.view_functions = {}
 
-        # support for the now deprecated `error_handlers` attribute.  The
-        # :attr:`error_handler_spec` shall be used now.
-        self._error_handlers = {}
-
         #: A dictionary of all registered error handlers.  The key is `None`
         #: for error handlers active on the application, otherwise the key is
         #: the name of the blueprint.  Each key points to another dictionary
@@ -122,7 +109,7 @@ class Flagon(object):
         #:
         #: To register a error handler, use the :meth:`errorhandler`
         #: decorator.
-        self.error_handler_spec = {None: self._error_handlers}
+        self.error_handler_spec = {}
 
         #: A list of functions that are called when :meth:`url_for` raises a
         #: :exc:`~flagon.routing.BuildError`.  Each function registered here
@@ -298,7 +285,6 @@ class Flagon(object):
         options.setdefault('use_debugger', self.debug)
         run_simple(host, port, self, **options)
 
-    @setupmethod
     def register_blueprint(self, blueprint, **options):
         """Registers a blueprint on the application.
 
@@ -316,7 +302,6 @@ class Flagon(object):
             first_registration = True
         blueprint.register(self, options, first_registration)
 
-    @setupmethod
     def add_url_rule(self, rule, endpoint=None, view_func=None, methods=None, **options):
         """Connects a URL rule.  Works exactly like the :meth:`route`
         decorator.  If a view_func is provided it will be registered with the
@@ -369,7 +354,7 @@ class Flagon(object):
 
         # Add the required methods now.
         methods |= required_methods
-        
+
         defaults = options.get('defaults') or {}
 
         self.router.add(rule, endpoint, methods=methods, defaults=defaults)
@@ -406,11 +391,11 @@ class Flagon(object):
         """
         def decorator(f):
             endpoint = options.pop('endpoint', None)
-            self.add_url_rule(rule, endpoint, f, **options)
+            methods = options.pop('methods', None)
+            self.add_url_rule(rule, endpoint, f, methods, **options)
             return f
         return decorator
 
-    @setupmethod
     def endpoint(self, endpoint):
         """A decorator to register a function as an endpoint.
         Example::
@@ -426,7 +411,6 @@ class Flagon(object):
             return f
         return decorator
 
-    @setupmethod
     def errorhandler(self, code_or_exception):
         """A decorator that is used to register a function give a given
         error code.  Example::
@@ -477,7 +461,6 @@ class Flagon(object):
         """
         self._register_error_handler(None, code_or_exception, f)
 
-    @setupmethod
     def _register_error_handler(self, key, code_or_exception, f):
         if isinstance(code_or_exception, HTTPException):
             code_or_exception = code_or_exception.code
@@ -490,14 +473,12 @@ class Flagon(object):
             self.error_handler_spec.setdefault(key, {}).setdefault(None, []) \
                 .append((code_or_exception, f))
 
-    @setupmethod
     def before_request(self, f):
         """Registers a function to run before each request."""
         self.before_request_funcs.setdefault(None, []).append(f)
         return f
 
 
-    @setupmethod
     def after_request(self, f):
         """Register a function to be run after each request.  Your function
         must take one parameter, a :attr:`response_class` object and return
@@ -509,7 +490,6 @@ class Flagon(object):
         self.after_request_funcs.setdefault(None, []).append(f)
         return f
 
-    @setupmethod
     def teardown_request(self, f):
         """Register a function to be run at the end of each request,
         regardless of whether there was an exception or not.  These functions
@@ -546,7 +526,6 @@ class Flagon(object):
         self.teardown_request_funcs.setdefault(None, []).append(f)
         return f
 
-    @setupmethod
     def url_value_preprocessor(self, f):
         """Registers a function as URL value preprocessor for all view
         functions of the application.  It's called before the view functions
@@ -555,7 +534,6 @@ class Flagon(object):
         self.url_value_preprocessors.setdefault(None, []).append(f)
         return f
 
-    @setupmethod
     def url_defaults(self, f):
         """Callback function for URL defaults for all view functions of the
         application.  It's called with the endpoint and values and should
@@ -705,22 +683,6 @@ class Flagon(object):
         response = self.process_response(response)
         return response
 
-    def try_trigger_before_first_request_functions(self):
-        """Called before each request and will ensure that it triggers
-        the :attr:`before_first_request_funcs` and only exactly once per
-        application instance (which means process usually).
-
-        :internal:
-        """
-        if self._got_first_request:
-            return
-        with self._before_request_lock:
-            if self._got_first_request:
-                return
-            self._got_first_request = True
-            for func in self.before_first_request_funcs:
-                func()
-
     def make_default_options_response(self):
         """This method is called to create the default `OPTIONS` response.
         This can be changed through subclassing to change the default
@@ -850,31 +812,6 @@ class Flagon(object):
         for func in funcs:
             rv = func(exc)
 
-    def request_context(self, environ):
-        """Creates a :class:`~flagon.ctx.RequestContext` from the given
-        environment and binds it to the current context.  This must be used in
-        combination with the `with` statement because the request is only bound
-        to the current context for the duration of the `with` block.
-
-        Example usage::
-
-            with app.request_context(environ):
-                do_something_with(request)
-
-        The object returned can also be used without the `with` statement
-        which is useful for working in the shell.  The example above is
-        doing exactly the same as this code::
-
-            ctx = app.request_context(environ)
-            ctx.push()
-            try:
-                do_something_with(request)
-            finally:
-                ctx.pop()
-
-        :param environ: a WSGI environment
-        """
-        return RequestContext(self, environ)
 
     def wsgi_app(self, environ, start_response):
         """The actual WSGI application.  This is not implemented in
