@@ -4,97 +4,24 @@
     ~~~~~~~~~~~~~~~~
 
     Blueprints are the recommended way to implement larger or more
-    pluggable applications in Flagon 0.7 and later.
+    pluggable applications.
 
     :copyright: (c) 2011 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 from functools import update_wrapper
 
-class BlueprintSetupState(object):
-    """Temporary holder object for registering a blueprint with the
-    application.  An instance of this class is created by the
-    :meth:`~flagon.Blueprint.make_setup_state` method and later passed
-    to all register callback functions.
-    """
-
-    def __init__(self, blueprint, app, options, first_registration):
-        #: a reference to the current application
-        self.app = app
-
-        #: a reference to the blueprint that created this setup state.
-        self.blueprint = blueprint
-
-        #: a dictionary with all options that were passed to the
-        #: :meth:`~flagon.Flagon.register_blueprint` method.
-        self.options = options
-
-        #: as blueprints can be registered multiple times with the
-        #: application and not everything wants to be registered
-        #: multiple times on it, this attribute can be used to figure
-        #: out if the blueprint was registered in the past already.
-        self.first_registration = first_registration
-
-        subdomain = self.options.get('subdomain')
-        if subdomain is None:
-            subdomain = self.blueprint.subdomain
-
-        #: The subdomain that the blueprint should be active for, `None`
-        #: otherwise.
-        self.subdomain = subdomain
-
-        url_prefix = self.options.get('url_prefix')
-        if url_prefix is None:
-            url_prefix = self.blueprint.url_prefix
-
-        #: The prefix that should be used for all URLs defined on the
-        #: blueprint.
-        self.url_prefix = url_prefix
-
-        #: A dictionary with URL defaults that is added to each and every
-        #: URL that was defined with the blueprint.
-        self.url_defaults = dict(self.blueprint.url_values_defaults)
-        self.url_defaults.update(self.options.get('url_defaults', ()))
-
-    def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
-        """A helper method to register a rule (and optionally a view function)
-        to the application.  The endpoint is automatically prefixed with the
-        blueprint's name.
-        """
-        if self.url_prefix:
-            rule = self.url_prefix + rule
-        options.setdefault('subdomain', self.subdomain)
-        if endpoint is None:
-            endpoint = _endpoint_from_view_func(view_func)
-        defaults = self.url_defaults
-        if 'defaults' in options:
-            defaults = dict(defaults, **options.pop('defaults'))
-        self.app.add_url_rule(rule, '%s.%s' % (self.blueprint.name, endpoint),
-                              view_func, defaults=defaults, **options)
-
-
 class Blueprint(object):
-    """Represents a blueprint.  A blueprint is an object that records
-    functions that will be called with the
-    :class:`~flagon.blueprint.BlueprintSetupState` later to register functions
-    or other things on the main application.  See :ref:`blueprints` for more
-    information.
+    """Represents a blueprint.
 
-    .. versionadded:: 0.7
+    .. versionadded:: 0.1
     """
 
-    warn_on_modifications = False
-    _got_registered_once = False
-
-    def __init__(self, name, import_name, static_folder=None,
-                 static_url_path=None, template_folder=None,
-                 url_prefix=None, subdomain=None, url_defaults=None):
-        _PackageBoundObject.__init__(self, import_name, template_folder)
+    def __init__(self, name, import_name,
+                 url_prefix=None, url_defaults=None):
+        self.app = None
         self.name = name
         self.url_prefix = url_prefix
-        self.subdomain = subdomain
-        self.static_folder = static_folder
-        self.static_url_path = static_url_path
         self.deferred_functions = []
         self.view_functions = {}
         if url_defaults is None:
@@ -107,30 +34,13 @@ class Blueprint(object):
         state as argument as returned by the :meth:`make_setup_state`
         method.
         """
-        if self._got_registered_once and self.warn_on_modifications:
+        if self.app:
             from warnings import warn
             warn(Warning('The blueprint was already registered once '
                          'but is getting modified now.  These changes '
                          'will not show up.'))
         self.deferred_functions.append(func)
 
-    def record_once(self, func):
-        """Works like :meth:`record` but wraps the function in another
-        function that will ensure the function is only called once.  If the
-        blueprint is registered a second time on the application, the
-        function passed is not called.
-        """
-        def wrapper(state):
-            if state.first_registration:
-                func(state)
-        return self.record(update_wrapper(wrapper, func))
-
-    def make_setup_state(self, app, options, first_registration=False):
-        """Creates an instance of :meth:`~flagon.blueprints.BlueprintSetupState`
-        object that is later passed to the register callback functions.
-        Subclasses can override this to return a subclass of the setup state.
-        """
-        return BlueprintSetupState(self, app, options, first_registration)
 
     def register(self, app, options, first_registration=False):
         """Called by :meth:`Flagon.register_blueprint` to register a blueprint
@@ -139,15 +49,9 @@ class Blueprint(object):
         :func:`~flagon.Flagon.register_blueprint` are directly forwarded to this
         method in the `options` dictionary.
         """
-        self._got_registered_once = True
-        state = self.make_setup_state(app, options, first_registration)
-        if self.has_static_folder:
-            state.add_url_rule(self.static_url_path + '/<path:filename>',
-                               view_func=self.send_static_file,
-                               endpoint='static')
-
+        self.app = app
         for deferred in self.deferred_functions:
-            deferred(state)
+            deferred(self)
 
     def route(self, rule, **options):
         """Like :meth:`Flagon.route` but for a blueprint.  The endpoint for the
@@ -166,7 +70,22 @@ class Blueprint(object):
         if endpoint:
             assert '.' not in endpoint, "Blueprint endpoint's should not contain dot's"
         self.record(lambda s:
-            s.add_url_rule(rule, endpoint, view_func, **options))
+            s.app_add_url_rule(rule, endpoint, view_func, **options))
+
+    def app_add_url_rule(self, rule, endpoint=None, view_func=None, **options):
+        """A helper method to register a rule (and optionally a view function)
+        to the application.  The endpoint is automatically prefixed with the
+        blueprint's name.
+        """
+        if self.url_prefix:
+            rule = self.url_prefix + rule
+        if endpoint is None:
+            endpoint = view_func.__name__
+        defaults = self.url_defaults
+        if 'defaults' in options:
+            defaults = dict(defaults, **options.pop('defaults'))
+        self.app.add_url_rule(rule, '%s.%s' % (self.blueprint.name, endpoint),
+                              view_func, defaults=defaults, **options)
 
     def endpoint(self, endpoint):
         """Like :meth:`Flagon.endpoint` but for a blueprint.  This does not
@@ -178,7 +97,7 @@ class Blueprint(object):
         def decorator(f):
             def register_endpoint(state):
                 state.app.view_functions[endpoint] = f
-            self.record_once(register_endpoint)
+            self.record(register_endpoint)
             return f
         return decorator
 
@@ -188,7 +107,7 @@ class Blueprint(object):
         is only executed before each request that is handled by a function of
         that blueprint.
         """
-        self.record_once(lambda s: s.app.before_request_funcs
+        self.record(lambda s: s.app.before_request_funcs
             .setdefault(self.name, []).append(f))
         return f
 
@@ -196,7 +115,7 @@ class Blueprint(object):
         """Like :meth:`Flagon.before_request`.  Such a function is executed
         before each request, even if outside of a blueprint.
         """
-        self.record_once(lambda s: s.app.before_request_funcs
+        self.record(lambda s: s.app.before_request_funcs
             .setdefault(None, []).append(f))
         return f
 
@@ -204,7 +123,7 @@ class Blueprint(object):
         """Like :meth:`Flagon.before_first_request`.  Such a function is
         executed before the first request to the application.
         """
-        self.record_once(lambda s: s.app.before_first_request_funcs.append(f))
+        self.record(lambda s: s.app.before_first_request_funcs.append(f))
         return f
 
     def after_request(self, f):
@@ -212,7 +131,7 @@ class Blueprint(object):
         is only executed after each request that is handled by a function of
         that blueprint.
         """
-        self.record_once(lambda s: s.app.after_request_funcs
+        self.record(lambda s: s.app.after_request_funcs
             .setdefault(self.name, []).append(f))
         return f
 
@@ -220,7 +139,7 @@ class Blueprint(object):
         """Like :meth:`Flagon.after_request` but for a blueprint.  Such a function
         is executed after each request, even if outside of the blueprint.
         """
-        self.record_once(lambda s: s.app.after_request_funcs
+        self.record(lambda s: s.app.after_request_funcs
             .setdefault(None, []).append(f))
         return f
 
@@ -231,7 +150,7 @@ class Blueprint(object):
         when the request context is popped, even when no actual request was
         performed.
         """
-        self.record_once(lambda s: s.app.teardown_request_funcs
+        self.record(lambda s: s.app.teardown_request_funcs
             .setdefault(self.name, []).append(f))
         return f
 
@@ -240,7 +159,7 @@ class Blueprint(object):
         function is executed when tearing down each request, even if outside of
         the blueprint.
         """
-        self.record_once(lambda s: s.app.teardown_request_funcs
+        self.record(lambda s: s.app.teardown_request_funcs
             .setdefault(None, []).append(f))
         return f
 
@@ -249,7 +168,7 @@ class Blueprint(object):
         handler is used for all requests, even if outside of the blueprint.
         """
         def decorator(f):
-            self.record_once(lambda s: s.app.errorhandler(code)(f))
+            self.record(lambda s: s.app.errorhandler(code)(f))
             return f
         return decorator
 
@@ -258,7 +177,7 @@ class Blueprint(object):
         blueprint.  It's called before the view functions are called and
         can modify the url values provided.
         """
-        self.record_once(lambda s: s.app.url_value_preprocessors
+        self.record(lambda s: s.app.url_value_preprocessors
             .setdefault(self.name, []).append(f))
         return f
 
@@ -267,21 +186,21 @@ class Blueprint(object):
         with the endpoint and values and should update the values passed
         in place.
         """
-        self.record_once(lambda s: s.app.url_default_functions
+        self.record(lambda s: s.app.url_default_functions
             .setdefault(self.name, []).append(f))
         return f
 
     def app_url_value_preprocessor(self, f):
         """Same as :meth:`url_value_preprocessor` but application wide.
         """
-        self.record_once(lambda s: s.app.url_value_preprocessors
+        self.record(lambda s: s.app.url_value_preprocessors
             .setdefault(None, []).append(f))
         return f
 
     def app_url_defaults(self, f):
         """Same as :meth:`url_defaults` but application wide.
         """
-        self.record_once(lambda s: s.app.url_default_functions
+        self.record(lambda s: s.app.url_default_functions
             .setdefault(None, []).append(f))
         return f
 
@@ -297,7 +216,7 @@ class Blueprint(object):
         of the :class:`~flagon.Flagon` object.
         """
         def decorator(f):
-            self.record_once(lambda s: s.app._register_error_handler(
+            self.record(lambda s: s.app._register_error_handler(
                 self.name, code_or_exception, f))
             return f
         return decorator

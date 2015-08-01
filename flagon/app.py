@@ -18,14 +18,60 @@ from functools import update_wrapper
 from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
 
 from .routing import Router
-from .exceptions import HTTPException, InternalServerError, \
-     MethodNotAllowed, BadRequest
+from .exceptions import HTTPException, InternalServerError, MethodNotAllowed, BadRequest
 
 from .request import Request
 from .respone import Response
 from .globals import _request_ctx_stack, request, session, g
 from ._compat import reraise, string_types, text_type, integer_types
 
+
+class RequestContextGlobals(object):
+    """A plain object."""
+
+    def get(self, name, default=None):
+        return self.__dict__.get(name, default)
+
+    def __contains__(self, item):
+        return item in self.__dict__
+
+    def __iter__(self):
+        return iter(self.__dict__)
+
+    def __repr__(self):
+        return '<flagon.g of %r>' % object.__repr__(self)
+
+
+class RequestContext(object):
+    """The application context binds an application object implicitly
+    to the current thread or greenlet, similar to how the
+    :class:`RequestContext` binds request information.  The application
+    context is also implicitly created if a request context is created
+    but the application is not on top of the individual application
+    context.
+    """
+
+    def __init__(self, **kwargs):
+        self.g = RequestContextGlobals()
+        for k, v in kwargs.items():
+            setattr(self.g, k, v)
+
+    def push(self):
+        if hasattr(sys, 'exc_clear'):
+            sys.exc_clear()
+        _request_ctx_stack.push(self)
+
+    def pop(self, exc=None):
+        rv = _request_ctx_stack.pop()
+        assert rv is self, 'Popped wrong request context.  (%r instead of %r)' \
+            % (rv, self)
+
+    def __enter__(self):
+        self.push()
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.pop(exc_value)
 
 class Flagon(object):
     """The flagon object implements a WSGI application and acts as the central
@@ -657,11 +703,6 @@ class Flagon(object):
         if req.routing_exception is not None:
             self.raise_routing_exception(req)
         rule = req.url_rule
-        # if we provide automatic options for this URL and the
-        # request came with the OPTIONS method, reply automatically
-        if getattr(rule, 'provide_automatic_options', False) \
-           and req.method == 'OPTIONS':
-            return self.make_default_options_response()
         # otherwise dispatch to the handler for that endpoint
         return self.view_functions[rule.endpoint](**req.view_args)
 
@@ -672,7 +713,6 @@ class Flagon(object):
 
         .. versionadded:: 0.7
         """
-        self.try_trigger_before_first_request_functions()
         try:
             rv = self.preprocess_request()
             if rv is None:

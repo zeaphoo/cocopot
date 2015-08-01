@@ -15,9 +15,6 @@ from ._compat import to_bytes, string_types, text_type, \
 
 from .exceptions import BadRequest
 
-from .globals import current_app
-
-
 class Request(object):
     """
     """
