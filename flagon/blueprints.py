@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    flagon.blueprints
-    ~~~~~~~~~~~~~~~~
+    #flagon.blueprints
 
     Blueprints are the recommended way to implement larger or more
     pluggable applications.

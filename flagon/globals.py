@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    flagon.globals
-    ~~~~~~~~~~~~~
+    #flagon.globals
 
     Defines all the global objects that are proxies to the current
     active context.
@@ -22,5 +21,4 @@ def _lookup_req_object(name):
 # context locals
 _request_ctx_stack = LocalStack()
 request = LocalProxy(partial(_lookup_req_object, 'request'))
-session = LocalProxy(partial(_lookup_req_object, 'session'))
 g = LocalProxy(partial(_lookup_req_object, 'g'))

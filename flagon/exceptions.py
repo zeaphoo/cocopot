@@ -1,70 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-    flagon.exceptions
-    ~~~~~~~~~~~~~~~~~~~
+    #flagon.exceptions
 
     This module implements a number of Python exceptions you can raise from
     within your views to trigger a standard non-200 response.
 
-
-    Usage Example
-    -------------
-
-    ::
-
-        from flagon.wrappers import BaseRequest
-        from flagon.wsgi import responder
-        from flagon.exceptions import HTTPException, NotFound
-
-        def view(request):
-            raise NotFound()
-
-        @responder
-        def application(environ, start_response):
-            request = BaseRequest(environ)
-            try:
-                return view(request)
-            except HTTPException as e:
-                return e
-
-
-    As you can see from this example those exceptions are callable WSGI
-    applications.  Because of Python 2.4 compatibility those do not extend
-    from the response objects but only from the python exception class.
-
-    As a matter of fact they are not Werkzeug response objects.  However you
-    can get a response object by calling ``get_response()`` on a HTTP
-    exception.
-
-    Keep in mind that you have to pass an environment to ``get_response()``
-    because some errors fetch additional information from the WSGI
-    environment.
-
-    If you want to hook in a different exception page to say, a 404 status
-    code, you can add a second except for a specific subclass of an error::
-
-        @responder
-        def application(environ, start_response):
-            request = BaseRequest(environ)
-            try:
-                return view(request)
-            except NotFound, e:
-                return not_found(request)
-            except HTTPException, e:
-                return e
-
-
-    :copyright: (c) 2014 by the Werkzeug Team, see AUTHORS for more details.
-    :license: BSD, see LICENSE for more details.
 """
 import sys
 
-from ._compat import iteritems, integer_types, text_type, \
-     implements_to_string
-from .http.base import HTTP_STATUS_CODES
+from ._compat import iteritems, integer_types, text_type
+from .http import HTTP_STATUS_CODES
 
 
-@implements_to_string
 class HTTPException(Exception):
     """
     Baseclass for all HTTP exceptions.  This exception can be called as WSGI
