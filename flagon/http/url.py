@@ -21,7 +21,7 @@ from flagon._compat import text_type, PY2, to_unicode, \
      to_native, try_coerce_native, \
      normalize_string_tuple, make_literal_wrapper, \
      fix_tuple_repr
-from flagon.datastructures import MultiDict, iter_multi_items
+from flagon.datastructures import MultiDict
 from collections import namedtuple
 
 
@@ -314,8 +314,6 @@ class BaseURL(_URLTuple):
             return host, rest[1:]
         return host, None
 
-
-@implements_to_string
 class URL(BaseURL):
     """Represents a parsed URL.  This behaves like a regular tuple but
     also has some extra attributes that give further insight into the

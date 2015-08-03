@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-    flagon.app
-    ~~~~~~~~~
-
     This module implements the central WSGI application object.
 
     :copyright: (c) 2011 by Armin Ronacher.
@@ -21,8 +18,8 @@ from .routing import Router
 from .exceptions import HTTPException, InternalServerError, MethodNotAllowed, BadRequest
 
 from .request import Request
-from .respone import Response
-from .globals import _request_ctx_stack, request, session, g
+from .response import Response
+from .globals import _request_ctx_stack, request, g
 from ._compat import reraise, string_types, text_type, integer_types
 
 
@@ -51,7 +48,10 @@ class RequestContext(object):
     context.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, app, environ, request=None, **kwargs):
+        self.app = app
+        self.environ = environ
+        self.request = request
         self.g = RequestContextGlobals()
         for k, v in kwargs.items():
             setattr(self.g, k, v)
@@ -84,8 +84,6 @@ class Flagon(object):
     package parameter resolves to an actual python package (a folder with
     an `__init__.py` file inside) or a standard module (just a `.py` file).
 
-    For more information about resource loading, see :func:`open_resource`.
-
     Usually you create a :class:`Flagon` instance in your main module or
     in the `__init__.py` file of your package like this::
 
@@ -93,11 +91,6 @@ class Flagon(object):
         app = Flagon(__name__)
 
     .. admonition:: About the First Parameter
-
-        The idea of the first parameter is to give Flagon an idea what
-        belongs to your application.  This name is used to find resources
-        on the file system, can be used by extensions to improve debugging
-        information and a lot more.
 
         So it's important what you provide there.  If you are using a single
         module, `__name__` is always the correct value.  If you however are
@@ -224,16 +217,7 @@ class Flagon(object):
         self.blueprints = {}
 
         self.router = Router()
-
-        # register the static folder for the application.  Do that even
-        # if the folder does not exist.  First of all it might be created
-        # while the server is running (usually happens during development)
-        # but also because google appengine stores static files somewhere
-        # else when mapped with the .yml file.
-        if self.has_static_folder:
-            self.add_url_rule(self.static_url_path + '/<path:filename>',
-                              endpoint='static',
-                              view_func=self.send_static_file)
+        
         self.logger = self.create_logger()
 
     def create_logger(self):
@@ -643,7 +627,7 @@ class Flagon(object):
         for a 500 internal server error is used.  If no such handler
         exists, a default 500 internal server error message is displayed.
 
-        .. versionadded:: 0.3
+        .. versionadded:: 0.1
         """
         exc_type, exc_value, tb = sys.exc_info()
 
@@ -722,29 +706,6 @@ class Flagon(object):
         response = self.make_response(rv)
         response = self.process_response(response)
         return response
-
-    def make_default_options_response(self):
-        """This method is called to create the default `OPTIONS` response.
-        This can be changed through subclassing to change the default
-        behavior of `OPTIONS` responses.
-
-        .. versionadded:: 0.7
-        """
-        adapter = _request_ctx_stack.top.url_adapter
-        if hasattr(adapter, 'allowed_methods'):
-            methods = adapter.allowed_methods()
-        else:
-            # fallback for Werkzeug < 0.7
-            methods = []
-            try:
-                adapter.match(method='--')
-            except MethodNotAllowed as e:
-                methods = e.valid_methods
-            except HTTPException as e:
-                pass
-        rv = self.response_class()
-        rv.allow.update(methods)
-        return rv
 
 
     def inject_url_defaults(self, endpoint, values):
@@ -872,7 +833,13 @@ class Flagon(object):
                                a list of headers and an optional
                                exception context to start the response
         """
-        ctx = self.request_context(environ)
+        req = Request(environ)
+        ctx = RequestContext(self, environ, req)
+        try:
+            endpoint, view_args = self.router.match(environ.get('PATH_INFO', ''))
+        except HTTPException as e:
+            req.routing_exception = e
+
         ctx.push()
         error = None
         try:

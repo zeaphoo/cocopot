@@ -5,19 +5,9 @@
 from functools import update_wrapper
 from datetime import datetime, timedelta
 
-from flagon.http import HTTP_STATUS_CODES
-from flagon.http.urls import url_decode, iri_to_uri, url_join
-from flagon.formparser import FormDataParser, default_stream_factory
-from flagon.utils import cached_property, environ_property, \
-     header_property, get_content_type
-from flagon.wsgi import get_current_url, get_host, \
-     ClosingIterator, get_input_stream, get_content_length
-from flagon.datastructures import MultiDict, CombinedMultiDict, Headers, \
-     EnvironHeaders, ImmutableMultiDict, ImmutableTypeConversionDict, \
-     ImmutableList, MIMEAccept, CharsetAccept, LanguageAccept, \
-     ResponseCacheControl, RequestCacheControl, CallbackDict, \
-     ContentRange, iter_multi_items
-from flagon._compat import to_bytes, string_types, text_type, \
+from .http import HTTP_STATUS_CODES
+from .utils import cached_property
+from ._compat import to_bytes, string_types, text_type, \
      integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
      to_unicode, to_native, BytesIO
 
@@ -786,13 +776,6 @@ class ETagResponseMixin(object):
             self.add_etag()
         super(ETagResponseMixin, self).freeze()
 
-    accept_ranges = header_property('Accept-Ranges', doc='''
-        The `Accept-Ranges` header.  Even though the name would indicate
-        that multiple values are supported, it must be one string token only.
-
-        The values ``'bytes'`` and ``'none'`` are common.
-
-        .. versionadded:: 0.7''')
 
     def _get_content_range(self):
         def on_update(rng):
@@ -906,57 +889,6 @@ class CommonResponseDescriptorsMixin(object):
 
         .. versionadded:: 0.5
         ''')
-    location = header_property('Location', doc='''
-        The Location response-header field is used to redirect the recipient
-        to a location other than the Request-URI for completion of the request
-        or identification of a new resource.''')
-    age = header_property('Age', None, parse_date, http_date, doc='''
-        The Age response-header field conveys the sender's estimate of the
-        amount of time since the response (or its revalidation) was
-        generated at the origin server.
-
-        Age values are non-negative decimal integers, representing time in
-        seconds.''')
-    content_type = header_property('Content-Type', doc='''
-        The Content-Type entity-header field indicates the media type of the
-        entity-body sent to the recipient or, in the case of the HEAD method,
-        the media type that would have been sent had the request been a GET.
-    ''')
-    content_length = header_property('Content-Length', None, int, str, doc='''
-        The Content-Length entity-header field indicates the size of the
-        entity-body, in decimal number of OCTETs, sent to the recipient or,
-        in the case of the HEAD method, the size of the entity-body that would
-        have been sent had the request been a GET.''')
-    content_location = header_property('Content-Location', doc='''
-        The Content-Location entity-header field MAY be used to supply the
-        resource location for the entity enclosed in the message when that
-        entity is accessible from a location separate from the requested
-        resource's URI.''')
-    content_encoding = header_property('Content-Encoding', doc='''
-        The Content-Encoding entity-header field is used as a modifier to the
-        media-type.  When present, its value indicates what additional content
-        codings have been applied to the entity-body, and thus what decoding
-        mechanisms must be applied in order to obtain the media-type
-        referenced by the Content-Type header field.''')
-    content_md5 = header_property('Content-MD5', doc='''
-         The Content-MD5 entity-header field, as defined in RFC 1864, is an
-         MD5 digest of the entity-body for the purpose of providing an
-         end-to-end message integrity check (MIC) of the entity-body.  (Note:
-         a MIC is good for detecting accidental modification of the
-         entity-body in transit, but is not proof against malicious attacks.)
-        ''')
-    date = header_property('Date', None, parse_date, http_date, doc='''
-        The Date general-header field represents the date and time at which
-        the message was originated, having the same semantics as orig-date
-        in RFC 822.''')
-    expires = header_property('Expires', None, parse_date, http_date, doc='''
-        The Expires entity-header field gives the date/time after which the
-        response is considered stale. A stale cache entry may not normally be
-        returned by a cache.''')
-    last_modified = header_property('Last-Modified', None, parse_date,
-                                    http_date, doc='''
-        The Last-Modified entity-header field indicates the date and time at
-        which the origin server believes the variant was last modified.''')
 
     def _get_retry_after(self):
         value = self.headers.get('retry-after')
@@ -1034,21 +966,6 @@ class WWWAuthenticateMixin(object):
                 self.headers['WWW-Authenticate'] = www_auth.to_header()
         header = self.headers.get('www-authenticate')
         return parse_www_authenticate_header(header, on_update)
-
-
-class ResponseBase(BaseResponse, ETagResponseMixin, ResponseStreamMixin,
-               CommonResponseDescriptorsMixin,
-               WWWAuthenticateMixin):
-    """Full featured response object implementing the following mixins:
-
-    - :class:`ETagResponseMixin` for etag and cache control handling
-    - :class:`ResponseStreamMixin` to add support for the `stream` property
-    - :class:`CommonResponseDescriptorsMixin` for various HTTP descriptors
-    - :class:`WWWAuthenticateMixin` for HTTP authentication support
-    """
-
-
-_missing = object()
 
 
 def _get_data(req, cache):

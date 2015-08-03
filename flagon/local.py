@@ -198,9 +198,6 @@ class LocalProxy(object):
        The class can be instanciated with a callable as well now.
     """
     __slots__ = ('__local', '__dict__', '__name__')
-    if PY2:
-        __nonzero__ = __bool__
-        del __bool__
 
     def __init__(self, local, name=None):
         object.__setattr__(self, '_LocalProxy__local', local)
@@ -269,6 +266,9 @@ class LocalProxy(object):
 
         def __delslice__(self, i, j):
             del self._get_current_object()[i:j]
+
+        __nonzero__ = __bool__
+        del __bool__
 
     __setattr__ = lambda x, n, v: setattr(x._get_current_object(), n, v)
     __delattr__ = lambda x, n: delattr(x._get_current_object(), n)

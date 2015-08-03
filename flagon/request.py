@@ -6,7 +6,7 @@ from functools import update_wrapper
 from datetime import datetime, timedelta
 
 from .http import HTTP_STATUS_CODES
-from .http.urls import url_decode, iri_to_uri, url_join
+from .http.url import url_decode, iri_to_uri, url_join
 from .utils import cached_property
 from .datastructures import MultiDict
 from ._compat import to_bytes, string_types, text_type, \
@@ -257,9 +257,9 @@ class Request(object):
         """
         return get_input_stream(self.environ)
 
-    input_stream = environ_property('wsgi.input', 'The WSGI input stream.\n'
-        'In general it\'s a bad idea to use this one because you can easily '
-        'read past the boundary.  Use the :attr:`stream` instead.')
+    @property
+    def input_stream(self):
+        return self.environ.get('wsgi.input')
 
     @cached_property
     def args(self):
@@ -437,12 +437,13 @@ class Request(object):
         """
         return get_host(self.environ, trusted_hosts=self.trusted_hosts)
 
-    query_string = environ_property('QUERY_STRING', '', read_only=True,
-        load_func=wsgi_get_bytes, doc=
-        '''The URL parameters as raw bytestring.''')
-    method = environ_property('REQUEST_METHOD', 'GET', read_only=True,
-        load_func=lambda x: x.upper(), doc=
-        '''The transmission method. (For example ``'GET'`` or ``'POST'``).''')
+    @property
+    def query_string(self):
+        pass
+
+    @property
+    def method(self):
+        pass
 
     @cached_property
     def access_route(self):
@@ -461,15 +462,6 @@ class Request(object):
         """The remote address of the client."""
         return self.environ.get('REMOTE_ADDR')
 
-    remote_user = environ_property('REMOTE_USER', doc='''
-        If the server supports user authentication, and the script is
-        protected, this attribute contains the username the user has
-        authenticated as.''')
-
-    scheme = environ_property('wsgi.url_scheme', doc='''
-        URL scheme (http or https).
-
-        .. versionadded:: 0.7''')
 
     is_xhr = property(lambda x: x.environ.get('HTTP_X_REQUESTED_WITH', '')
                       .lower() == 'xmlhttprequest', doc='''
@@ -479,12 +471,6 @@ class Request(object):
         prototype, jQuery and Mochikit and probably some more.''')
     is_secure = property(lambda x: x.environ['wsgi.url_scheme'] == 'https',
                          doc='`True` if the request is secure.')
-    is_multithread = environ_property('wsgi.multithread', doc='''
-        boolean that is `True` if the application is served by
-        a multithreaded WSGI server.''')
-    is_multiprocess = environ_property('wsgi.multiprocess', doc='''
-        boolean that is `True` if the application is served by
-        a WSGI server that spawns multiple processes.''')
 
 
     @cached_property
@@ -589,11 +575,10 @@ class Request(object):
     disable_data_descriptor = True
     want_form_data_parsed = False
 
-    content_type = environ_property('CONTENT_TYPE', doc='''
-        The Content-Type entity-header field indicates the media type of
-        the entity-body sent to the recipient or, in the case of the HEAD
-        method, the media type that would have been sent had the request
-        been a GET.''')
+    @property
+    def content_type(self):
+        return self.environ.get('CONTENT_TYPE', '')
+
 
     @cached_property
     def content_length(self):
@@ -603,36 +588,6 @@ class Request(object):
         GET.
         """
         return get_content_length(self.environ)
-
-    content_encoding = environ_property('HTTP_CONTENT_ENCODING', doc='''
-        The Content-Encoding entity-header field is used as a modifier to the
-        media-type.  When present, its value indicates what additional content
-        codings have been applied to the entity-body, and thus what decoding
-        mechanisms must be applied in order to obtain the media-type
-        referenced by the Content-Type header field.
-
-        .. versionadded:: 0.9''')
-    content_md5 = environ_property('HTTP_CONTENT_MD5', doc='''
-         The Content-MD5 entity-header field, as defined in RFC 1864, is an
-         MD5 digest of the entity-body for the purpose of providing an
-         end-to-end message integrity check (MIC) of the entity-body.  (Note:
-         a MIC is good for detecting accidental modification of the
-         entity-body in transit, but is not proof against malicious attacks.)
-
-        .. versionadded:: 0.9''')
-    referrer = environ_property('HTTP_REFERER', doc='''
-        The Referer[sic] request-header field allows the client to specify,
-        for the server's benefit, the address (URI) of the resource from which
-        the Request-URI was obtained (the "referrer", although the header
-        field is misspelled).''')
-    date = environ_property('HTTP_DATE', None, parse_date, doc='''
-        The Date general-header field represents the date and time at which
-        the message was originated, having the same semantics as orig-date
-        in RFC 822.''')
-    max_forwards = environ_property('HTTP_MAX_FORWARDS', None, int, doc='''
-         The Max-Forwards request-header field provides a mechanism with the
-         TRACE and OPTIONS methods to limit the number of proxies or gateways
-         that can forward the request to the next inbound server.''')
 
     def _parse_content_type(self):
         if not hasattr(self, '_parsed_content_type'):
