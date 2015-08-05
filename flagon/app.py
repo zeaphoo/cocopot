@@ -217,7 +217,7 @@ class Flagon(object):
         self.blueprints = {}
 
         self.router = Router()
-        
+
         self.logger = self.create_logger()
 
     def create_logger(self):
@@ -297,12 +297,6 @@ class Flagon(object):
         :param port: the port of the webserver. Defaults to ``5000`` or the
                      port defined in the ``SERVER_NAME`` config variable if
                      present.
-        :param debug: if given, enable or disable debug mode.
-                      See :attr:`debug`.
-        :param options: the options to be forwarded to the underlying
-                        Werkzeug server.  See
-                        :func:`flagon.serving.run_simple` for more
-                        information.
         """
         from flagon.run import run_simple
         if host is None:
