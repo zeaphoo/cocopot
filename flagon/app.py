@@ -148,7 +148,7 @@ class Flagon(object):
         #:
         #: To register a error handler, use the :meth:`errorhandler`
         #: decorator.
-        self.error_handler_spec = {}
+        self.error_handler_spec = {None: {}}
 
         #: A list of functions that are called when :meth:`url_for` raises a
         #: :exc:`~flagon.routing.BuildError`.  Each function registered here
@@ -627,16 +627,6 @@ class Flagon(object):
 
         handler = self.error_handler_spec[None].get(500)
 
-        if self.propagate_exceptions:
-            # if we want to repropagate the exception, we can attempt to
-            # raise it with the whole traceback in case we can do that
-            # (the function was actually called from the except part)
-            # otherwise, we just raise the error again
-            if exc_value is e:
-                reraise(exc_type, exc_value, tb)
-            else:
-                raise e
-
         self.log_exception((exc_type, exc_value, tb))
         if handler is None:
             return InternalServerError()
@@ -680,7 +670,6 @@ class Flagon(object):
         req = _request_ctx_stack.top.request
         if req.routing_exception is not None:
             self.raise_routing_exception(req)
-        rule = req.url_rule
         # otherwise dispatch to the handler for that endpoint
         return self.view_functions[rule.endpoint](**req.view_args)
 
@@ -831,6 +820,7 @@ class Flagon(object):
         ctx = RequestContext(self, environ, req)
         try:
             endpoint, view_args = self.router.match(environ.get('PATH_INFO', ''))
+            req.endpoint, req.view_args = endpoint, view_args
         except HTTPException as e:
             req.routing_exception = e
 
@@ -841,12 +831,10 @@ class Flagon(object):
                 response = self.full_dispatch_request()
             except Exception as e:
                 error = e
-                response = self.make_response(self.handle_exception(e))
+                response = Response(self.handle_exception(e))
             return response(environ, start_response)
         finally:
-            if self.should_ignore_error(error):
-                error = None
-            ctx.auto_pop(error)
+            ctx.pop(error)
 
     def __call__(self, environ, start_response):
         """Shortcut for :attr:`wsgi_app`."""
