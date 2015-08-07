@@ -10,8 +10,7 @@ def run_simple(hostname, port, application, **kwargs):
             return self.client_address[0]
 
         def log_request(*args, **kw):
-            if not self.quiet:
-                return WSGIRequestHandler.log_request(*args, **kw)
+            return WSGIRequestHandler.log_request(*args, **kw)
 
     srv = make_server(hostname, port, application, WSGIServer, FixedHandler)
     try:

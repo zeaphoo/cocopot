@@ -15,7 +15,7 @@ from functools import update_wrapper
 from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
 
 from .routing import Router
-from .exceptions import HTTPException, InternalServerError, MethodNotAllowed, BadRequest
+from .exceptions import HTTPException, InternalServerError, MethodNotAllowed, BadRequest, RequestRedirect
 
 from .request import Request
 from .response import Response
@@ -388,6 +388,7 @@ class Flagon(object):
                 raise AssertionError('View function mapping is overwriting an '
                                      'existing endpoint function: %s' % endpoint)
             self.view_functions[endpoint] = view_func
+        print self.view_functions
 
     def route(self, rule, **options):
         """A decorator that is used to register a view function for a
@@ -600,7 +601,7 @@ class Flagon(object):
         # wants the traceback preserved in handle_http_exception.  Of course
         # we cannot prevent users from trashing it themselves in a custom
         # trap_http_exception method so that's their fault then.
-        if isinstance(e, HTTPException) and not self.trap_http_exception(e):
+        if isinstance(e, HTTPException):
             return self.handle_http_exception(e)
 
         blueprint_handlers = ()
@@ -671,7 +672,8 @@ class Flagon(object):
         if req.routing_exception is not None:
             self.raise_routing_exception(req)
         # otherwise dispatch to the handler for that endpoint
-        return self.view_functions[rule.endpoint](**req.view_args)
+        print 'dispatch', self.view_functions[req.endpoint]
+        return self.view_functions[req.endpoint](**req.view_args)
 
     def full_dispatch_request(self):
         """Dispatches the request and on top of that performs request
@@ -685,8 +687,10 @@ class Flagon(object):
             if rv is None:
                 rv = self.dispatch_request()
         except Exception as e:
+            import traceback
+            print(traceback.format_exc())
             rv = self.handle_user_exception(e)
-        response = self.make_response(rv)
+        response = Response(rv)
         response = self.process_response(response)
         return response
 
@@ -735,7 +739,6 @@ class Flagon(object):
         the actual :meth:`before_request` functions are called.
         """
         bp = _request_ctx_stack.top.request.blueprint
-
         funcs = self.url_value_preprocessors.get(None, ())
         if bp is not None and bp in self.url_value_preprocessors:
             funcs = chain(funcs, self.url_value_preprocessors[bp])
@@ -765,15 +768,13 @@ class Flagon(object):
         """
         ctx = _request_ctx_stack.top
         bp = ctx.request.blueprint
-        funcs = ctx._after_request_functions
+        funcs = []
         if bp is not None and bp in self.after_request_funcs:
             funcs = chain(funcs, reversed(self.after_request_funcs[bp]))
         if None in self.after_request_funcs:
             funcs = chain(funcs, reversed(self.after_request_funcs[None]))
         for handler in funcs:
             response = handler(response)
-        if not self.session_interface.is_null_session(ctx.session):
-            self.save_session(ctx.session, response)
         return response
 
     def do_teardown_request(self, exc=None):
@@ -830,6 +831,8 @@ class Flagon(object):
             try:
                 response = self.full_dispatch_request()
             except Exception as e:
+                import traceback
+                print(traceback.format_exc())
                 error = e
                 response = Response(self.handle_exception(e))
             return response(environ, start_response)
