@@ -8,8 +8,7 @@ from datetime import datetime, timedelta
 from .http import HTTP_STATUS_CODES
 from .utils import cached_property
 from ._compat import PY2, to_bytes, string_types, text_type, \
-     integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
-     to_unicode, to_native, BytesIO
+     integer_types, to_unicode, to_native, BytesIO
 
 from .exceptions import HTTPException
 

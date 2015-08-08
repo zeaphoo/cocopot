@@ -5,13 +5,10 @@
 from functools import update_wrapper
 from datetime import datetime, timedelta
 
-from .http import HTTP_STATUS_CODES
-from .http.url import url_decode, iri_to_uri, url_join
 from .utils import cached_property
 from .datastructures import MultiDict
 from ._compat import to_bytes, string_types, text_type, \
-     integer_types, wsgi_decoding_dance, wsgi_get_bytes, \
-     to_unicode, to_native, BytesIO
+     integer_types, to_unicode, to_native, BytesIO
 
 from .exceptions import BadRequest
 
