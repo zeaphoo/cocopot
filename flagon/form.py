@@ -16,12 +16,10 @@ from tempfile import TemporaryFile
 from itertools import chain, repeat, tee
 from functools import update_wrapper
 
-from flagon._compat import to_native, text_type
-from flagon.urls import url_decode_stream
-from flagon.wsgi import make_line_iter, \
-     get_input_stream, get_content_length
-from flagon.datastructures import Headers, FileStorage, MultiDict
-from flagon.http import parse_options_header
+from ._compat import to_native, text_type
+from .wsgi import get_content_length
+from .datastructures import Headers, FileStorage, MultiDict
+from .http import parse_options_header
 
 
 #: an iterator that yields empty strings

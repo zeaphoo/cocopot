@@ -118,13 +118,6 @@ class Blueprint(object):
             .setdefault(None, []).append(f))
         return f
 
-    def before_app_first_request(self, f):
-        """Like :meth:`Flagon.before_first_request`.  Such a function is
-        executed before the first request to the application.
-        """
-        self.record(lambda s: s.app.before_first_request_funcs.append(f))
-        return f
-
     def after_request(self, f):
         """Like :meth:`Flagon.after_request` but for a blueprint.  This function
         is only executed after each request that is handled by a function of
@@ -171,37 +164,6 @@ class Blueprint(object):
             return f
         return decorator
 
-    def url_value_preprocessor(self, f):
-        """Registers a function as URL value preprocessor for this
-        blueprint.  It's called before the view functions are called and
-        can modify the url values provided.
-        """
-        self.record(lambda s: s.app.url_value_preprocessors
-            .setdefault(self.name, []).append(f))
-        return f
-
-    def url_defaults(self, f):
-        """Callback function for URL defaults for this blueprint.  It's called
-        with the endpoint and values and should update the values passed
-        in place.
-        """
-        self.record(lambda s: s.app.url_default_functions
-            .setdefault(self.name, []).append(f))
-        return f
-
-    def app_url_value_preprocessor(self, f):
-        """Same as :meth:`url_value_preprocessor` but application wide.
-        """
-        self.record(lambda s: s.app.url_value_preprocessors
-            .setdefault(None, []).append(f))
-        return f
-
-    def app_url_defaults(self, f):
-        """Same as :meth:`url_defaults` but application wide.
-        """
-        self.record(lambda s: s.app.url_default_functions
-            .setdefault(None, []).append(f))
-        return f
 
     def errorhandler(self, code_or_exception):
         """Registers an error handler that becomes active for this blueprint

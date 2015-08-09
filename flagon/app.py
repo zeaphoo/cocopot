@@ -150,15 +150,6 @@ class Flagon(object):
         #: decorator.
         self.error_handler_spec = {None: {}}
 
-        #: A list of functions that are called when :meth:`url_for` raises a
-        #: :exc:`~flagon.routing.BuildError`.  Each function registered here
-        #: is called with `error`, `endpoint` and `values`.  If a function
-        #: returns `None` or raises a `BuildError` the next function is
-        #: tried.
-        #:
-        #: .. versionadded:: 0.9
-        self.url_build_error_handlers = []
-
         #: A dictionary with lists of functions that should be called at the
         #: beginning of the request.  The key of the dictionary is the name of
         #: the blueprint this function is active for, `None` for all requests.
@@ -174,28 +165,6 @@ class Flagon(object):
         #: currently logged in user.  To register a function here, use the
         #: :meth:`after_request` decorator.
         self.after_request_funcs = {}
-
-        #: A dictionary with lists of functions that are called after
-        #: each request, even if an exception has occurred. The key of the
-        #: dictionary is the name of the blueprint this function is active for,
-        #: `None` for all requests. These functions are not allowed to modify
-        #: the request, and their return values are ignored. If an exception
-        #: occurred while processing the request, it gets passed to each
-        #: teardown_request function. To register a function here, use the
-        #: :meth:`teardown_request` decorator.
-        #:
-        #: .. versionadded:: 0.7
-        self.teardown_request_funcs = {}
-
-        #: A dictionary with lists of functions that can be used as URL
-        #: value processor functions.  Whenever a URL is built these functions
-        #: are called to modify the dictionary of values in place.  The key
-        #: `None` here is used for application wide
-        #: callbacks, otherwise the key is the name of the blueprint.
-        #: Each of these functions has the chance to modify the dictionary
-        #:
-        #: .. versionadded:: 0.1
-        self.url_value_preprocessors = {}
 
         #: A dictionary with lists of functions that can be used as URL value
         #: preprocessors.  The key `None` here is used for application wide
@@ -551,21 +520,6 @@ class Flagon(object):
         self.teardown_request_funcs.setdefault(None, []).append(f)
         return f
 
-    def url_value_preprocessor(self, f):
-        """Registers a function as URL value preprocessor for all view
-        functions of the application.  It's called before the view functions
-        are called and can modify the url values provided.
-        """
-        self.url_value_preprocessors.setdefault(None, []).append(f)
-        return f
-
-    def url_defaults(self, f):
-        """Callback function for URL defaults for all view functions of the
-        application.  It's called with the endpoint and values and should
-        update the values passed in place.
-        """
-        self.url_default_functions.setdefault(None, []).append(f)
-        return f
 
     def handle_http_exception(self, e):
         """Handles an HTTP exception.  By default this will invoke the
@@ -694,40 +648,6 @@ class Flagon(object):
         response = self.process_response(response)
         return response
 
-
-    def inject_url_defaults(self, endpoint, values):
-        """Injects the URL defaults for the given endpoint directly into
-        the values dictionary passed.  This is used internally and
-        automatically called on URL building.
-
-        .. versionadded:: 0.7
-        """
-        funcs = self.url_default_functions.get(None, ())
-        if '.' in endpoint:
-            bp = endpoint.rsplit('.', 1)[0]
-            funcs = chain(funcs, self.url_default_functions.get(bp, ()))
-        for func in funcs:
-            func(endpoint, values)
-
-    def handle_url_build_error(self, error, endpoint, values):
-        """Handle :class:`~flagon.routing.BuildError` on :meth:`url_for`.
-        """
-        exc_type, exc_value, tb = sys.exc_info()
-        for handler in self.url_build_error_handlers:
-            try:
-                rv = handler(error, endpoint, values)
-                if rv is not None:
-                    return rv
-            except BuildError as error:
-                pass
-
-        # At this point we want to reraise the exception.  If the error is
-        # still the same one we can reraise it with the original traceback,
-        # otherwise we raise it from here.
-        if error is exc_value:
-            reraise(exc_type, exc_value, tb)
-        raise error
-
     def preprocess_request(self):
         """Called before the actual request dispatching and will
         call every as :meth:`before_request` decorated function.
@@ -739,12 +659,6 @@ class Flagon(object):
         the actual :meth:`before_request` functions are called.
         """
         bp = _request_ctx_stack.top.request.blueprint
-        funcs = self.url_value_preprocessors.get(None, ())
-        if bp is not None and bp in self.url_value_preprocessors:
-            funcs = chain(funcs, self.url_value_preprocessors[bp])
-        for func in funcs:
-            func(request.endpoint, request.view_args)
-
         funcs = self.before_request_funcs.get(None, ())
         if bp is not None and bp in self.before_request_funcs:
             funcs = chain(funcs, self.before_request_funcs[bp])
