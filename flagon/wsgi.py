@@ -1,6 +1,7 @@
 import os
 import re
 from ._compat import text_type, PY2, to_unicode, to_native
+import cgi
 if PY2:
     from urlparse import urljoin, SplitResult as UrlSplitResult
     from urllib import urlencode, quote as urlquote, unquote as urlunquote
@@ -96,3 +97,33 @@ def get_current_url(environ, root_only=False, strip_querystring=False,
             if qs:
                 cat('?' + qs)
     return uri_to_iri(''.join(tmp))
+
+
+def parse_form_data(body, environ, content_type='application/x-www-form-urlencoded', charset='utf-8',
+                    errors='replace', max_content_length=None, silent=True):
+
+    post = FormsDict()
+    # We default to application/x-www-form-urlencoded for everything that
+    # is not multipart and take the fast path (also: 3.1 workaround)
+    if not content_type.startswith('multipart/'):
+        pairs = urldecode(to_native(body, 'latin1'))
+        for key, value in pairs:
+            post[key] = value
+        return post
+
+    safe_env = {'QUERY_STRING': ''}  # Build a safe environment for cgi
+    for key in ('REQUEST_METHOD', 'CONTENT_TYPE', 'CONTENT_LENGTH'):
+        if key in environ: safe_env[key] = environ[key]
+    args = dict(fp=body, environ=safe_env, keep_blank_values=True)
+    if not PY2:
+        args['encoding'] = 'utf8'
+    data = cgi.FieldStorage(**args)
+    environ['_cgi.FieldStorage'] = data  #http://bugs.python.org/issue18394
+    data = data.list or []
+    for item in data:
+        if item.filename:
+            post[item.name] = FileUpload(item.file, item.name,
+                                         item.filename, item.headers)
+        else:
+            post[item.name] = item.value
+    return post
