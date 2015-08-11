@@ -22,47 +22,6 @@ class Request(object):
     #: the error handling procedure for errors, defaults to 'replace'
     encoding_errors = 'replace'
 
-    #: the maximum content length.  This is forwarded to the form data
-    #: parsing function (:func:`parse_form_data`).  When set and the
-    #: :attr:`form` or :attr:`files` attribute is accessed and the
-    #: parsing fails because more than the specified value is transmitted
-    #: a :exc:`~flagon.exceptions.RequestEntityTooLarge` exception is raised.
-    #:
-    #: Have a look at :ref:`dealing-with-request-data` for more details.
-    #:
-    #: .. versionadded:: 0.5
-    max_content_length = None
-
-    #: the maximum form field size.  This is forwarded to the form data
-    #: parsing function (:func:`parse_form_data`).  When set and the
-    #: :attr:`form` or :attr:`files` attribute is accessed and the
-    #: data in memory for post data is longer than the specified value a
-    #: :exc:`~flagon.exceptions.RequestEntityTooLarge` exception is raised.
-    #:
-    #: Have a look at :ref:`dealing-with-request-data` for more details.
-    #:
-    #: .. versionadded:: 0.5
-    max_form_memory_size = None
-
-
-    #: Optionally a list of hosts that is trusted by this request.  By default
-    #: all hosts are trusted which means that whatever the client sends the
-    #: host is will be accepted.
-    #:
-    #: This is the recommended setup as a webserver should manually be set up
-    #: to only route correct hosts to the application, and remove the
-    #: `X-Forwarded-Host` header if it is not being used (see
-    #: :func:`flagon.wsgi.get_host`).
-    #:
-    #: .. versionadded:: 0.9
-    trusted_hosts = None
-
-    #: Indicates whether the data descriptor should be allowed to read and
-    #: buffer up the input stream.  By default it's enabled.
-    #:
-    #: .. versionadded:: 0.9
-    disable_data_descriptor = False
-
     endpoint = ''
 
     #: a dict of view arguments that matched the request.  If an exception
@@ -105,31 +64,6 @@ class Request(object):
         """
         return self.charset
 
-    @classmethod
-    def application(cls, f):
-        """Decorate a function as responder that accepts the request as first
-        argument.  This works like the :func:`responder` decorator but the
-        function is passed the request object as first argument and the
-        request object will be closed automatically::
-
-            @Request.application
-            def my_wsgi_app(request):
-                return Response('Hello World!')
-
-        :param f: the WSGI callable to decorate
-        :return: a new WSGI callable
-        """
-        #: return a callable that wraps the -2nd argument with the request
-        #: and calls the function with all the arguments up to that one and
-        #: the request.  The return value is then called with the latest
-        #: two arguments.  This makes it possible to use this decorator for
-        #: both methods and standalone WSGI functions.
-        def application(*args):
-            request = cls(args[-2])
-            with request:
-                return f(*args[:-2] + (request,))(*args[-2:])
-        return update_wrapper(application, f)
-
     def _get_file_stream(self, total_content_length, content_type, filename=None,
                         content_length=None):
         """Called to get a stream for the file upload.
@@ -154,27 +88,6 @@ class Request(object):
         return default_stream_factory(total_content_length, content_type,
                                       filename, content_length)
 
-    @property
-    def want_form_data_parsed(self):
-        """Returns True if the request method carries content.  As of
-        Werkzeug 0.9 this will be the case if a content type is transmitted.
-
-        .. versionadded:: 0.8
-        """
-        return bool(self.environ.get('CONTENT_TYPE'))
-
-    def make_form_data_parser(self):
-        """Creates the form data parser.  Instanciates the
-        :attr:`form_data_parser_class` with some parameters.
-
-        .. versionadded:: 0.8
-        """
-        return self.form_data_parser_class(self._get_file_stream,
-                                           self.charset,
-                                           self.encoding_errors,
-                                           self.max_form_memory_size,
-                                           self.max_content_length,
-                                           self.parameter_storage_class)
 
     def _load_form_data(self):
         """Method used internally to retrieve submitted data.  After calling
@@ -563,10 +476,6 @@ class Request(object):
         header = self.environ.get('HTTP_AUTHORIZATION')
         return parse_authorization_header(header)
 
-
-    disable_data_descriptor = True
-    want_form_data_parsed = False
-
     @property
     def content_type(self):
         return self.environ.get('CONTENT_TYPE', '')
@@ -625,13 +534,6 @@ class Request(object):
                 self.headers['WWW-Authenticate'] = www_auth.to_header()
         header = self.headers.get('www-authenticate')
         return parse_www_authenticate_header(header, on_update)
-
-    @property
-    def max_content_length(self):
-        """Read-only view of the `MAX_CONTENT_LENGTH` config key."""
-        app = current_app
-        if app is not None:
-            return app.config['MAX_CONTENT_LENGTH']
 
     @property
     def blueprint(self):

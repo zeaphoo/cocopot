@@ -10,6 +10,7 @@ from copy import deepcopy
 from itertools import repeat
 from collections import MutableMapping as DictMixin
 from ._compat import PY2, to_unicode
+from .utils import cached_property
 
 
 
@@ -592,6 +593,23 @@ class HeaderSet(object):
             self.__class__.__name__,
             self._headers
         )
+
+class HeaderProperty(object):
+    def __init__(self, name, reader=None, writer=str, default=''):
+        self.name, self.default = name, default
+        self.reader, self.writer = reader, writer
+        self.__doc__ = 'Current value of the %r header.' % name.title()
+
+    def __get__(self, obj, _):
+        if obj is None: return self
+        value = obj.headers.get(self.name, self.default)
+        return self.reader(value) if self.reader else value
+
+    def __set__(self, obj, value):
+        obj.headers[self.name] = self.writer(value)
+
+    def __delete__(self, obj):
+        del obj.headers[self.name]
 
 class FileUpload(object):
     def __init__(self, fileobj, name, filename, headers=None):

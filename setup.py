@@ -34,7 +34,7 @@ from setuptools import setup
 
 setup(
     name='Flagon',
-    version='0.10.1',
+    version='0.1',
     url='http://github.com/zeaphoo/flagon/',
     license='BSD',
     author='zeaphoo',
