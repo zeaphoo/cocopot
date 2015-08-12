@@ -191,7 +191,7 @@ class Request(object):
         # this will make behavior explicit.
         return self.get_data(parse_form_data=True)
 
-    def get_data(self, cache=True, as_text=False, parse_form_data=False):
+    def get_data(self, cache=True, as_text=False):
         """This reads the buffered incoming data from the client into one
         bytestring.  By default this is cached but that behavior can be
         changed by setting `cache` to `False`.
@@ -218,8 +218,6 @@ class Request(object):
         """
         rv = getattr(self, '_cached_data', None)
         if rv is None:
-            if parse_form_data:
-                self._load_form_data()
             rv = self.stream.read()
             if cache:
                 self._cached_data = rv
@@ -286,9 +284,7 @@ class Request(object):
         info in the WSGI environment but will always include a leading slash,
         even if the URL root is accessed.
         """
-        raw_path = wsgi_decoding_dance(self.environ.get('PATH_INFO') or '',
-                                       self.charset, self.encoding_errors)
-        return '/' + raw_path.lstrip('/')
+         return '/' + self.environ.get('PATH_INFO', '').lstrip('/')
 
     @cached_property
     def full_path(self):
@@ -305,7 +301,6 @@ class Request(object):
     @cached_property
     def url(self):
         """The reconstructed current URL as IRI.
-        See also: :attr:`trusted_hosts`.
         """
         return get_current_url(self.environ,
                                trusted_hosts=self.trusted_hosts)
@@ -344,11 +339,11 @@ class Request(object):
 
     @property
     def query_string(self):
-        pass
+        return self.environ.get('QUERY_STRING', '')
 
     @property
     def method(self):
-        pass
+        return self.environ.get('REQUEST_METHOD', 'GET').upper()
 
     @cached_property
     def access_route(self):
@@ -357,10 +352,10 @@ class Request(object):
         """
         if 'HTTP_X_FORWARDED_FOR' in self.environ:
             addr = self.environ['HTTP_X_FORWARDED_FOR'].split(',')
-            return self.list_storage_class([x.strip() for x in addr])
+            return list([x.strip() for x in addr])
         elif 'REMOTE_ADDR' in self.environ:
-            return self.list_storage_class([self.environ['REMOTE_ADDR']])
-        return self.list_storage_class()
+            return list([self.environ['REMOTE_ADDR']])
+        return list()
 
     @property
     def remote_addr(self):
@@ -495,15 +490,14 @@ class Request(object):
             self._parsed_content_type = \
                 parse_options_header(self.environ.get('CONTENT_TYPE', ''))
 
-    @property
+    @cached_property
     def mimetype(self):
         """Like :attr:`content_type` but without parameters (eg, without
         charset, type etc.).  For example if the content
         type is ``text/html; charset=utf-8`` the mimetype would be
         ``'text/html'``.
         """
-        self._parse_content_type()
-        return self._parsed_content_type[0]
+        return parse_options_header(self.environ.get('CONTENT_TYPE', ''))[0]
 
     @property
     def mimetype_params(self):
@@ -548,7 +542,6 @@ class Request(object):
 
         The :meth:`get_json` method should be used instead.
         """
-        # XXX: deprecate property
         return self.get_json()
 
     def get_json(self, force=False, silent=False, cache=True):
@@ -586,21 +579,7 @@ class Request(object):
             if silent:
                 rv = None
             else:
-                rv = self.on_json_loading_failed(e)
+                raise BadRequest()
         if cache:
             self._cached_json = rv
         return rv
-
-    def on_json_loading_failed(self, e):
-        """Called if decoding of the JSON data failed.  The return value of
-        this method is used by :meth:`get_json` when an error occurred.  The
-        default implementation just raises a :class:`BadRequest` exception.
-
-        .. versionchanged:: 0.10
-           Removed buggy previous behavior of generating a random JSON
-           response.  If you want that behavior back you can trivially
-           add it by subclassing.
-
-        .. versionadded:: 0.8
-        """
-        raise BadRequest()

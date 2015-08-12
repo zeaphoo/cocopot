@@ -61,8 +61,7 @@ def get_content_length(environ):
         except (ValueError, TypeError):
             pass
 
-def get_current_url(environ, root_only=False, strip_querystring=False,
-                    host_only=False, trusted_hosts=None):
+def get_current_url(environ, root_only=False, strip_querystring=False, host_only=False):
     """A handy helper function that recreates the full URL as IRI for the
     current request or parts of it.  Here an example:
 
@@ -84,7 +83,7 @@ def get_current_url(environ, root_only=False, strip_querystring=False,
     :param trusted_hosts: a list of trusted hosts, see :func:`host_is_trusted`
                           for more information.
     """
-    tmp = [environ['wsgi.url_scheme'], '://', get_host(environ, trusted_hosts)]
+    tmp = [environ['wsgi.url_scheme'], '://', get_host(environ)]
     cat = tmp.append
     if host_only:
         return uri_to_iri(''.join(tmp) + '/')
@@ -97,6 +96,27 @@ def get_current_url(environ, root_only=False, strip_querystring=False,
             if qs:
                 cat('?' + qs)
     return uri_to_iri(''.join(tmp))
+
+
+def get_input_stream(environ):
+    try:
+        read_func = environ['wsgi.input'].read
+    except KeyError:
+        environ['wsgi.input'] = BytesIO()
+        return self.environ['wsgi.input']
+    body_iter = self._iter_chunked if self.chunked else self._iter_body
+    body, body_size, is_temp_file = BytesIO(), 0, False
+    for part in body_iter(read_func, self.MEMFILE_MAX):
+        body.write(part)
+        body_size += len(part)
+        if not is_temp_file and body_size > self.MEMFILE_MAX:
+            body, tmp = TemporaryFile(mode='w+b'), body
+            body.write(tmp.getvalue())
+            del tmp
+            is_temp_file = True
+    self.environ['wsgi.input'] = body
+    body.seek(0)
+    return body
 
 
 def parse_form_data(body, environ, content_type='application/x-www-form-urlencoded', charset='utf-8',

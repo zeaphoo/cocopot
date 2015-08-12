@@ -11,6 +11,7 @@
 
 from functools import partial
 from .local import LocalStack, LocalProxy
+from .utils import ConfigDict
 
 def _lookup_req_object(name):
     top = _request_ctx_stack.top
@@ -22,3 +23,4 @@ def _lookup_req_object(name):
 _request_ctx_stack = LocalStack()
 request = LocalProxy(partial(_lookup_req_object, 'request'))
 g = LocalProxy(partial(_lookup_req_object, 'g'))
+config = ConfigDict()
