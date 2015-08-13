@@ -64,72 +64,6 @@ class Request(object):
         """
         return self.charset
 
-    def _get_file_stream(self, total_content_length, content_type, filename=None,
-                        content_length=None):
-        """Called to get a stream for the file upload.
-
-        This must provide a file-like class with `read()`, `readline()`
-        and `seek()` methods that is both writeable and readable.
-
-        The default implementation returns a temporary file if the total
-        content length is higher than 500KB.  Because many browsers do not
-        provide a content length for the files only the total content
-        length matters.
-
-        :param total_content_length: the total content length of all the
-                                     data in the request combined.  This value
-                                     is guaranteed to be there.
-        :param content_type: the mimetype of the uploaded file.
-        :param filename: the filename of the uploaded file.  May be `None`.
-        :param content_length: the length of this file.  This value is usually
-                               not provided because webbrowsers do not provide
-                               this value.
-        """
-        return default_stream_factory(total_content_length, content_type,
-                                      filename, content_length)
-
-
-    def _load_form_data(self):
-        """Method used internally to retrieve submitted data.  After calling
-        this sets `form` and `files` on the request object to multi dicts
-        filled with the incoming form data.  As a matter of fact the input
-        stream will be empty afterwards.  You can also call this method to
-        force the parsing of the form data.
-
-        .. versionadded:: 0.8
-        """
-        # abort early if we have already consumed the stream
-        if 'form' in self.__dict__:
-            return
-
-        if self.want_form_data_parsed:
-            content_type = self.environ.get('CONTENT_TYPE', '')
-            content_length = get_content_length(self.environ)
-            mimetype, options = parse_options_header(content_type)
-            parser = self.make_form_data_parser()
-            data = parser.parse(self._get_stream_for_parsing(),
-                                mimetype, content_length, options)
-        else:
-            data = (self.stream, self.parameter_storage_class(),
-                    self.parameter_storage_class())
-
-        # inject the values into the instance dict so that we bypass
-        # our cached_property non-data descriptor.
-        d = self.__dict__
-        d['stream'], d['form'], d['files'] = data
-
-    def _get_stream_for_parsing(self):
-        """This is the same as accessing :attr:`stream` with the difference
-        that if it finds cached data from calling :meth:`get_data` first it
-        will create a new stream out of the cached data.
-
-        .. versionadded:: 0.9.3
-        """
-        cached_data = getattr(self, '_cached_data', None)
-        if cached_data is not None:
-            return BytesIO(cached_data)
-        return self.stream
-
     def close(self):
         """Closes associated resources of this request object.  This
         closes all file handles explicitly.  You can also use the request
@@ -178,18 +112,9 @@ class Request(object):
                           self.url_charset, errors=self.encoding_errors,
                           cls=self.parameter_storage_class)
 
-    @cached_property
+    @property
     def data(self):
-        if self.disable_data_descriptor:
-            raise AttributeError('data descriptor is disabled')
-        # XXX: this should eventually be deprecated.
-
-        # We trigger form data parsing first which means that the descriptor
-        # will not cache the data that would otherwise be .form or .files
-        # data.  This restores the behavior that was there in Werkzeug
-        # before 0.9.  New code should use :meth:`get_data` explicitly as
-        # this will make behavior explicit.
-        return self.get_data(parse_form_data=True)
+        return self.get_data()
 
     def get_data(self, cache=True, as_text=False):
         """This reads the buffered incoming data from the client into one
@@ -199,17 +124,6 @@ class Request(object):
         Usually it's a bad idea to call this method without checking the
         content length first as a client could send dozens of megabytes or more
         to cause memory problems on the server.
-
-        Note that if the form data was already parsed this method will not
-        return anything as form data parsing does not cache the data like
-        this method does.  To implicitly invoke form data parsing function
-        set `parse_form_data` to `True`.  When this is done the return value
-        of this method will be an empty string if the form parser handles
-        the data.  This generally is not necessary as if the whole data is
-        cached (which is the default) the form parser will used the cached
-        data to parse the form data.  Please be generally aware of checking
-        the content length first in any case before calling this method
-        to avoid exhausting server memory.
 
         If `as_text` is set to `True` the return value will be a decoded
         unicode string.
@@ -261,7 +175,6 @@ class Request(object):
         :class:`~flagon.datastructures.FileStorage` documentation for
         more details about the used data structure.
         """
-        self._load_form_data()
         return self.files
 
     @cached_property
@@ -274,9 +187,9 @@ class Request(object):
     @cached_property
     def headers(self):
         """The headers from the WSGI environ as immutable
-        :class:`~flagon.datastructures.EnvironHeaders`.
+        `~flagon.datastructures.WSGIHeaders`.
         """
-        return EnvironHeaders(self.environ)
+        return WSGIHeaders(self.environ)
 
     @cached_property
     def path(self):
@@ -371,52 +284,6 @@ class Request(object):
         prototype, jQuery and Mochikit and probably some more.''')
     is_secure = property(lambda x: x.environ['wsgi.url_scheme'] == 'https',
                          doc='`True` if the request is secure.')
-
-
-    @cached_property
-    def accept_mimetypes(self):
-        """List of mimetypes this client supports as
-        :class:`~flagon.datastructures.MIMEAccept` object.
-        """
-        return parse_accept_header(self.environ.get('HTTP_ACCEPT'), MIMEAccept)
-
-    @cached_property
-    def accept_charsets(self):
-        """List of charsets this client supports as
-        :class:`~flagon.datastructures.CharsetAccept` object.
-        """
-        return parse_accept_header(self.environ.get('HTTP_ACCEPT_CHARSET'),
-                                   CharsetAccept)
-
-    @cached_property
-    def accept_encodings(self):
-        """List of encodings this client accepts.  Encodings in a HTTP term
-        are compression encodings such as gzip.  For charsets have a look at
-        :attr:`accept_charset`.
-        """
-        return parse_accept_header(self.environ.get('HTTP_ACCEPT_ENCODING'))
-
-    @cached_property
-    def accept_languages(self):
-        """List of languages this client accepts as
-        :class:`~flagon.datastructures.LanguageAccept` object.
-
-        .. versionchanged 0.5
-           In previous versions this was a regular
-           :class:`~flagon.datastructures.Accept` object.
-        """
-        return parse_accept_header(self.environ.get('HTTP_ACCEPT_LANGUAGE'),
-                                   LanguageAccept)
-
-
-    @cached_property
-    def cache_control(self):
-        """A :class:`~flagon.datastructures.RequestCacheControl` object
-        for the incoming cache control headers.
-        """
-        cache_control = self.environ.get('HTTP_CACHE_CONTROL')
-        return parse_cache_control_header(cache_control, None,
-                                          RequestCacheControl)
 
     @cached_property
     def if_match(self):
@@ -570,7 +437,7 @@ class Request(object):
         # and strict in what we send out.
         request_charset = self.mimetype_params.get('charset')
         try:
-            data = self.get_data(self, cache)
+            data = self.get_data(self, cache=False)
             if request_charset is not None:
                 rv = json.loads(data, encoding=request_charset)
             else:
