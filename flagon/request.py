@@ -7,8 +7,10 @@ from datetime import datetime, timedelta
 
 from .utils import cached_property
 from .datastructures import MultiDict
-from ._compat import to_bytes, string_types, text_type, \
-     integer_types, to_unicode, to_native, BytesIO
+from ._compat import (to_bytes, string_types, text_type,
+     integer_types, to_unicode, to_native, BytesIO)
+from .wsgi import (get_input_stream, parse_form_data, urlencode, urldecode,
+                    urlquote, urlunquote)
 
 from .exceptions import BadRequest
 
@@ -94,7 +96,9 @@ class Request(object):
            form parser later on.  Previously the stream was only set if no
            parsing happened.
         """
-        return get_input_stream(self.environ)
+        stream = get_input_stream(self.environ)
+        stream.seek(0)
+        return stream
 
     @property
     def input_stream(self):
@@ -108,9 +112,7 @@ class Request(object):
         :attr:`parameter_storage_class` to a different type.  This might
         be necessary if the order of the form data is important.
         """
-        return url_decode(wsgi_get_bytes(self.environ.get('QUERY_STRING', '')),
-                          self.url_charset, errors=self.encoding_errors,
-                          cls=self.parameter_storage_class)
+        return urldecode(self.environ.get('QUERY_STRING', ''))
 
     @property
     def data(self):
@@ -147,8 +149,7 @@ class Request(object):
         :attr:`parameter_storage_class` to a different type.  This might
         be necessary if the order of the form data is important.
         """
-        self._load_form_data()
-        return self.form
+        return parse_form_data(self.environ)
 
     @cached_property
     def values(self):

@@ -9,6 +9,9 @@ else:
     from urllib.parse import urljoin, SplitResult as UrlSplitResult
     from urllib.parse import urlencode, quote as urlquote, unquote as urlunquote
     urlunquote = functools.partial(urlunquote, encoding='latin1')
+from tempfile import TemporaryFile
+
+MEMFILE_MAX = 4*1024*1024
 
 def urldecode(qs):
     r = []
@@ -109,7 +112,7 @@ def get_input_stream(environ):
     for part in body_iter(read_func, self.MEMFILE_MAX):
         body.write(part)
         body_size += len(part)
-        if not is_temp_file and body_size > self.MEMFILE_MAX:
+        if not is_temp_file and body_size > MEMFILE_MAX:
             body, tmp = TemporaryFile(mode='w+b'), body
             body.write(tmp.getvalue())
             del tmp
