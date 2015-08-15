@@ -108,3 +108,11 @@ def parse_range_header(header, maxlen=0):
                 yield start, end
         except ValueError:
             pass
+
+def parse_content_type(content_type):
+    parts = content_type.split(';')
+    params = {}
+    for part in parts[1:]:
+        k, v = part.strip().split('=')
+        params[k] = v
+    return (parts[0], params)

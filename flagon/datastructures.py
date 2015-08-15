@@ -13,6 +13,14 @@ from ._compat import PY2, to_unicode
 from .utils import cached_property
 
 
+def iter_multi_items(mapping):
+    for key, value in mapping.iteritems():
+        if isinstance(value, (tuple, list)):
+            for value in value:
+                yield key, value
+        else:
+            yield key, value
+
 
 class MultiDict(DictMixin):
     """ This dict stores multiple values per key, but behaves exactly like a

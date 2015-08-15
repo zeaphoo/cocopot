@@ -31,15 +31,6 @@ if PY2:
     integer_types = (int, long)
     int_to_byte = chr
 
-    iterkeys = lambda d, *args, **kwargs: d.iterkeys(*args, **kwargs)
-    itervalues = lambda d, *args, **kwargs: d.itervalues(*args, **kwargs)
-    iteritems = lambda d, *args, **kwargs: d.iteritems(*args, **kwargs)
-
-    iterlists = lambda d, *args, **kwargs: d.iterlists(*args, **kwargs)
-    iterlistvalues = lambda d, *args, **kwargs: d.iterlistvalues(*args, **kwargs)
-
-    iter_bytes = lambda x: iter(x)
-
     exec('def reraise(tp, value, tb=None):\n raise tp, value, tb')
 
     from itertools import imap, izip, ifilter
@@ -53,18 +44,6 @@ else:
     text_type = str
     string_types = (str, )
     integer_types = (int, )
-
-    iterkeys = lambda d, *args, **kwargs: iter(d.keys(*args, **kwargs))
-    itervalues = lambda d, *args, **kwargs: iter(d.values(*args, **kwargs))
-    iteritems = lambda d, *args, **kwargs: iter(d.items(*args, **kwargs))
-
-    iterlists = lambda d, *args, **kwargs: iter(d.lists(*args, **kwargs))
-    iterlistvalues = lambda d, *args, **kwargs: iter(d.listvalues(*args, **kwargs))
-
-    int_to_byte = operator.methodcaller('to_bytes', 1, 'big')
-
-    def iter_bytes(b):
-        return map(int_to_byte, b)
 
     def reraise(tp, value, tb=None):
         if value.__traceback__ is not tb:

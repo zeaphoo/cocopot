@@ -6,11 +6,12 @@ from functools import update_wrapper
 from datetime import datetime, timedelta
 
 from .utils import cached_property
-from .datastructures import MultiDict
+from .datastructures import MultiDict, iter_multi_items
 from ._compat import (to_bytes, string_types, text_type,
      integer_types, to_unicode, to_native, BytesIO)
 from .wsgi import (get_input_stream, parse_form_data, urlencode, urldecode,
-                    urlquote, urlunquote)
+                    urlquote, urlunquote, get_content_length)
+from .http import (parse_content_type)
 
 from .exceptions import BadRequest
 
@@ -85,17 +86,6 @@ class Request(object):
 
     @cached_property
     def stream(self):
-        """The stream to read incoming data from.  Unlike :attr:`input_stream`
-        this stream is properly guarded that you can't accidentally read past
-        the length of the input.  Werkzeug will internally always refer to
-        this stream to read data which makes it possible to wrap this
-        object with a stream that does filtering.
-
-        .. versionchanged:: 0.9
-           This stream is now always available but might be consumed by the
-           form parser later on.  Previously the stream was only set if no
-           parsing happened.
-        """
         stream = get_input_stream(self.environ)
         stream.seek(0)
         return stream
@@ -106,12 +96,6 @@ class Request(object):
 
     @cached_property
     def args(self):
-        """The parsed URL parameters.  By default an
-        :class:`~flagon.datastructures.ImmutableMultiDict`
-        is returned from this function.  This can be changed by setting
-        :attr:`parameter_storage_class` to a different type.  This might
-        be necessary if the order of the form data is important.
-        """
         return urldecode(self.environ.get('QUERY_STRING', ''))
 
     @property
@@ -130,7 +114,6 @@ class Request(object):
         If `as_text` is set to `True` the return value will be a decoded
         unicode string.
 
-        .. versionadded:: 0.9
         """
         rv = getattr(self, '_cached_data', None)
         if rv is None:
@@ -143,17 +126,11 @@ class Request(object):
 
     @cached_property
     def form(self):
-        """The form parameters.  By default an
-        :class:`~flagon.datastructures.ImmutableMultiDict`
-        is returned from this function.  This can be changed by setting
-        :attr:`parameter_storage_class` to a different type.  This might
-        be necessary if the order of the form data is important.
-        """
         return parse_form_data(self.environ)
 
     @cached_property
     def values(self):
-        """Combined multi dict for :attr:`args` and :attr:`form`."""
+        """Combined multi dict for `args` and `form`."""
         args = []
         for d in self.args, self.form:
             if not isinstance(d, MultiDict):
@@ -163,19 +140,6 @@ class Request(object):
 
     @cached_property
     def files(self):
-        """:class:`~flagon.datastructures.MultiDict` object containing
-        all uploaded files.  Each key in :attr:`files` is the name from the
-        ``<input type="file" name="">``.  Each value in :attr:`files` is a
-        Werkzeug :class:`~flagon.datastructures.FileStorage` object.
-
-        Note that :attr:`files` will only contain data if the request method was
-        POST, PUT or PATCH and the ``<form>`` that posted to the request had
-        ``enctype="multipart/form-data"``.  It will be empty otherwise.
-
-        See the :class:`~flagon.datastructures.MultiDict` /
-        :class:`~flagon.datastructures.FileStorage` documentation for
-        more details about the used data structure.
-        """
         return self.files
 
     @cached_property
@@ -353,19 +317,18 @@ class Request(object):
         """
         return get_content_length(self.environ)
 
-    def _parse_content_type(self):
-        if not hasattr(self, '_parsed_content_type'):
-            self._parsed_content_type = \
-                parse_options_header(self.environ.get('CONTENT_TYPE', ''))
-
     @cached_property
+    def parsed_content_type(self):
+        return parse_content_type(self.environ.get('CONTENT_TYPE', ''))
+
+    @property
     def mimetype(self):
         """Like :attr:`content_type` but without parameters (eg, without
         charset, type etc.).  For example if the content
         type is ``text/html; charset=utf-8`` the mimetype would be
         ``'text/html'``.
         """
-        return parse_options_header(self.environ.get('CONTENT_TYPE', ''))[0]
+        return self.parsed_content_type[0]
 
     @property
     def mimetype_params(self):
@@ -373,18 +336,7 @@ class Request(object):
         type is ``text/html; charset=utf-8`` the params would be
         ``{'charset': 'utf-8'}``.
         """
-        self._parse_content_type()
-        return self._parsed_content_type[1]
-
-    @cached_property
-    def pragma(self):
-        """The Pragma general-header field is used to include
-        implementation-specific directives that might apply to any recipient
-        along the request/response chain.  All pragma directives specify
-        optional behavior from the viewpoint of the protocol; however, some
-        systems MAY require that behavior be consistent with the directives.
-        """
-        return parse_set_header(self.environ.get('HTTP_PRAGMA', ''))
+        return self.parsed_content_type[1].get('charset', 'utf-8')
 
     @property
     def www_authenticate(self):
