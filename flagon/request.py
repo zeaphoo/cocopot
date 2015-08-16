@@ -10,7 +10,7 @@ from .datastructures import MultiDict, iter_multi_items
 from ._compat import (to_bytes, string_types, text_type,
      integer_types, to_unicode, to_native, BytesIO)
 from .wsgi import (get_input_stream, parse_form_data, urlencode, urldecode,
-                    urlquote, urlunquote, get_content_length)
+                    urlquote, urlunquote, get_content_length, get_host, get_current_url)
 from .http import (parse_content_type)
 
 from .exceptions import BadRequest
@@ -63,7 +63,6 @@ class Request(object):
         """The charset that is assumed for URLs.  Defaults to the value
         of :attr:`charset`.
 
-        .. versionadded:: 0.6
         """
         return self.charset
 
@@ -72,7 +71,6 @@ class Request(object):
         closes all file handles explicitly.  You can also use the request
         object in a with statement with will automatically close it.
 
-        .. versionadded:: 0.9
         """
         files = self.__dict__.get('files')
         for key, value in iter_multi_items(files or ()):
@@ -131,12 +129,17 @@ class Request(object):
     @cached_property
     def values(self):
         """Combined multi dict for `args` and `form`."""
-        args = []
+        args = {}
         for d in self.args, self.form:
             if not isinstance(d, MultiDict):
-                d = MultiDict(d)
-            args.append(d)
-        return CombinedMultiDict(args)
+                for k, v in d.items():
+                    l = args.setdefault(k, [])
+                    l.append(v)
+            else:
+                for k, v in d.items():
+                    l = args.setdefault(k, [])
+                    l.extend(v)
+        return MultiDict(args)
 
     @cached_property
     def files(self):
@@ -146,8 +149,7 @@ class Request(object):
     def cookies(self):
         """Read only access to the retrieved cookie values as dictionary."""
         return parse_cookie(self.environ, self.charset,
-                            self.encoding_errors,
-                            cls=self.dict_storage_class)
+                            self.encoding_errors)
 
     @cached_property
     def headers(self):
@@ -172,7 +174,7 @@ class Request(object):
     @cached_property
     def script_root(self):
         """The root path of the script without the trailing slash."""
-        raw_path = wsgi_decoding_dance(self.environ.get('SCRIPT_NAME') or '',
+        raw_path = to_unicode(self.environ.get('SCRIPT_NAME') or '',
                                        self.charset, self.encoding_errors)
         return raw_path.rstrip('/')
 
@@ -180,40 +182,32 @@ class Request(object):
     def url(self):
         """The reconstructed current URL as IRI.
         """
-        return get_current_url(self.environ,
-                               trusted_hosts=self.trusted_hosts)
+        return get_current_url(self.environ)
 
     @cached_property
     def base_url(self):
         """Like :attr:`url` but without the querystring
-        See also: :attr:`trusted_hosts`.
         """
-        return get_current_url(self.environ, strip_querystring=True,
-                               trusted_hosts=self.trusted_hosts)
+        return get_current_url(self.environ, strip_querystring=True)
 
     @cached_property
     def url_root(self):
         """The full URL root (with hostname), this is the application
         root as IRI.
-        See also: :attr:`trusted_hosts`.
         """
-        return get_current_url(self.environ, True,
-                               trusted_hosts=self.trusted_hosts)
+        return get_current_url(self.environ, root_only=True)
 
     @cached_property
     def host_url(self):
         """Just the host with scheme as IRI.
-        See also: :attr:`trusted_hosts`.
         """
-        return get_current_url(self.environ, host_only=True,
-                               trusted_hosts=self.trusted_hosts)
+        return get_current_url(self.environ, host_only=True)
 
     @cached_property
     def host(self):
         """Just the host including the port if available.
-        See also: :attr:`trusted_hosts`.
         """
-        return get_host(self.environ, trusted_hosts=self.trusted_hosts)
+        return get_host(self.environ)
 
     @property
     def query_string(self):
@@ -250,21 +244,6 @@ class Request(object):
     is_secure = property(lambda x: x.environ['wsgi.url_scheme'] == 'https',
                          doc='`True` if the request is secure.')
 
-    @cached_property
-    def if_match(self):
-        """An object containing all the etags in the `If-Match` header.
-
-        :rtype: :class:`~flagon.datastructures.ETags`
-        """
-        return parse_etags(self.environ.get('HTTP_IF_MATCH'))
-
-    @cached_property
-    def if_none_match(self):
-        """An object containing all the etags in the `If-None-Match` header.
-
-        :rtype: :class:`~flagon.datastructures.ETags`
-        """
-        return parse_etags(self.environ.get('HTTP_IF_NONE_MATCH'))
 
     @cached_property
     def if_modified_since(self):
@@ -276,15 +255,6 @@ class Request(object):
         """The parsed `If-Unmodified-Since` header as datetime object."""
         return parse_date(self.environ.get('HTTP_IF_UNMODIFIED_SINCE'))
 
-    @cached_property
-    def if_range(self):
-        """The parsed `If-Range` header.
-
-        .. versionadded:: 0.7
-
-        :rtype: :class:`~flagon.datastructures.IfRange`
-        """
-        return parse_if_range_header(self.environ.get('HTTP_IF_RANGE'))
 
     @cached_property
     def range(self):
@@ -336,18 +306,7 @@ class Request(object):
         type is ``text/html; charset=utf-8`` the params would be
         ``{'charset': 'utf-8'}``.
         """
-        return self.parsed_content_type[1].get('charset', 'utf-8')
-
-    @property
-    def www_authenticate(self):
-        """The `WWW-Authenticate` header in a parsed form."""
-        def on_update(www_auth):
-            if not www_auth and 'www-authenticate' in self.headers:
-                del self.headers['www-authenticate']
-            elif www_auth:
-                self.headers['WWW-Authenticate'] = www_auth.to_header()
-        header = self.headers.get('www-authenticate')
-        return parse_www_authenticate_header(header, on_update)
+        return self.parsed_content_type[1]
 
     @property
     def blueprint(self):
@@ -388,7 +347,7 @@ class Request(object):
         # certain clients have been using this in the past.  This
         # fits our general approach of being nice in what we accept
         # and strict in what we send out.
-        request_charset = self.mimetype_params.get('charset')
+        request_charset = self.mimetype_params.get('charset', 'utf-8')
         try:
             data = self.get_data(self, cache=False)
             if request_charset is not None:

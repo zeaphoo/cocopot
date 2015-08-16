@@ -116,3 +116,15 @@ def parse_content_type(content_type):
         k, v = part.strip().split('=')
         params[k] = v
     return (parts[0], params)
+
+
+def html_escape(string):
+    """ Escape HTML special characters ``&<>`` and quotes ``'"``. """
+    return string.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')\
+                 .replace('"', '&quot;').replace("'", '&#039;')
+
+
+def html_quote(string):
+    """ Escape and quote a string to be used as an HTTP attribute."""
+    return '"%s"' % html_escape(string).replace('\n', '&#10;')\
+                    .replace('\r', '&#13;').replace('\t', '&#9;')
