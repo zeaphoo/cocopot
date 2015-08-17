@@ -6,12 +6,16 @@ from functools import update_wrapper
 from datetime import datetime, timedelta
 
 from .utils import cached_property
-from .datastructures import MultiDict, iter_multi_items
-from ._compat import (to_bytes, string_types, text_type,
+from .datastructures import MultiDict, iter_multi_items, FileUpload, FormsDict
+from ._compat import (PY2, to_bytes, string_types, text_type,
      integer_types, to_unicode, to_native, BytesIO)
+if PY2:
+    from Cookie import SimpleCookie
+else:
+    from http.cookies import SimpleCookie
 from .wsgi import (get_input_stream, parse_form_data, urlencode, urldecode,
                     urlquote, urlunquote, get_content_length, get_host, get_current_url)
-from .http import (parse_content_type)
+from .http import (parse_content_type, parse_date, parse_auth, parse_content_type, parse_range_header)
 
 from .exceptions import BadRequest
 
@@ -123,8 +127,16 @@ class Request(object):
         return rv
 
     @cached_property
-    def form(self):
+    def parsed_form_data(self):
         return parse_form_data(self.environ)
+
+    @cached_property
+    def form(self):
+        form = FormsDict()
+        for name, item in self.parsed_form_data.allitems():
+            if not isinstance(item, FileUpload):
+                form[name] = item
+        return form
 
     @cached_property
     def values(self):
@@ -143,13 +155,17 @@ class Request(object):
 
     @cached_property
     def files(self):
-        return self.files
+        files = FormsDict()
+        for name, item in self.parsed_form_data.allitems():
+            if isinstance(item, FileUpload):
+                files[name] = item
+        return files
 
     @cached_property
     def cookies(self):
         """Read only access to the retrieved cookie values as dictionary."""
-        return parse_cookie(self.environ, self.charset,
-                            self.encoding_errors)
+        cookies = SimpleCookie(self.environ.get('HTTP_COOKIE', '')).values()
+        return FormsDict((c.key, c.value) for c in cookies)
 
     @cached_property
     def headers(self):
@@ -271,7 +287,7 @@ class Request(object):
     def authorization(self):
         """The `Authorization` object in parsed form."""
         header = self.environ.get('HTTP_AUTHORIZATION')
-        return parse_authorization_header(header)
+        return parse_auth(header)
 
     @property
     def content_type(self):
