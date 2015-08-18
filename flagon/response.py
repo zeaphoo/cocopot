@@ -5,30 +5,12 @@
 from functools import update_wrapper
 from datetime import datetime, timedelta
 
-from .http import HTTP_STATUS_CODES
+from .http import HTTP_STATUS_CODES, http_date
 from .utils import cached_property
 from ._compat import PY2, to_bytes, string_types, text_type, \
      integer_types, to_unicode, to_native, BytesIO
-
+from .datastructures import HeaderProperty
 from .exceptions import HTTPException
-
-
-class HeaderProperty(object):
-    def __init__(self, name, reader=None, writer=str, default=''):
-        self.name, self.default = name, default
-        self.reader, self.writer = reader, writer
-        self.__doc__ = 'Current value of the %r header.' % name.title()
-
-    def __get__(self, obj, _):
-        if obj is None: return self
-        value = obj.headers.get(self.name, self.default)
-        return self.reader(value) if self.reader else value
-
-    def __set__(self, obj, value):
-        obj.headers[self.name] = self.writer(value)
-
-    def __delete__(self, obj):
-        del obj.headers[self.name]
 
 
 class Response(object):
@@ -45,7 +27,7 @@ class Response(object):
     """
 
     default_status = 200
-    default_content_type = 'text/html; charset=UTF-8'
+    default_content_type = 'application/json; charset=UTF-8'
 
     # Header blacklist for specific response codes
     # (rfc2616 section 10.2.3 and 10.3.5)
@@ -238,7 +220,7 @@ class Response(object):
             self._cookies = SimpleCookie()
 
         if secret:
-            value = touni(cookie_encode((name, value), secret))
+            value = to_unicode(cookie_encode((name, value), secret))
         elif not isinstance(value, basestring):
             raise TypeError('Secret key missing for non-string Cookie.')
 
