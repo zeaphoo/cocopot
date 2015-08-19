@@ -98,7 +98,7 @@ class Request(object):
 
     @cached_property
     def args(self):
-        return urldecode(self.environ.get('QUERY_STRING', ''))
+        return MultiDict(urldecode(self.environ.get('QUERY_STRING', '')))
 
     @property
     def data(self):
@@ -128,7 +128,7 @@ class Request(object):
 
     @cached_property
     def parsed_form_data(self):
-        return parse_form_data(self.environ)
+        return parse_form_data(self.stream, self.environ)
 
     @cached_property
     def form(self):
@@ -141,16 +141,15 @@ class Request(object):
     @cached_property
     def values(self):
         """Combined multi dict for `args` and `form`."""
-        args = {}
+        args = []
         for d in self.args, self.form:
             if not isinstance(d, MultiDict):
                 for k, v in d.items():
-                    l = args.setdefault(k, [])
-                    l.append(v)
+                    args.append((k, v))
             else:
                 for k, v in d.items():
-                    l = args.setdefault(k, [])
-                    l.extend(v)
+                    for lv in v:
+                        args.append((k, lv))
         return MultiDict(args)
 
     @cached_property
@@ -180,7 +179,7 @@ class Request(object):
         info in the WSGI environment but will always include a leading slash,
         even if the URL root is accessed.
         """
-         return '/' + self.environ.get('PATH_INFO', '').lstrip('/')
+        return '/' + self.environ.get('PATH_INFO', '').lstrip('/')
 
     @cached_property
     def full_path(self):

@@ -8,7 +8,7 @@
 """
 import sys
 
-from ._compat import iteritems, integer_types, text_type
+from ._compat import integer_types, text_type
 from .http import HTTP_STATUS_CODES
 
 
@@ -519,7 +519,7 @@ default_exceptions = {}
 __all__ = ['HTTPException']
 
 def _find_exceptions():
-    for name, obj in iteritems(globals()):
+    for name, obj in globals().iteritems():
         try:
             is_http_exception = issubclass(obj, HTTPException)
         except TypeError:

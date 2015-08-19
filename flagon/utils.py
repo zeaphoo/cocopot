@@ -14,8 +14,7 @@ import re
 import os
 import sys
 import pkgutil
-from ._compat import unichr, text_type, string_types, iteritems, \
-    reraise, PY2
+from ._compat import unichr, text_type, string_types, reraise, PY2
 try:
     import simplejson as json
 except:

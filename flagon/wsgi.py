@@ -1,6 +1,6 @@
 import os
 import re
-from ._compat import text_type, PY2, to_unicode, to_native
+from ._compat import text_type, PY2, to_unicode, to_native, BytesIO
 import cgi
 if PY2:
     from urlparse import urljoin, SplitResult as UrlSplitResult
@@ -106,10 +106,10 @@ def get_input_stream(environ):
         read_func = environ['wsgi.input'].read
     except KeyError:
         environ['wsgi.input'] = BytesIO()
-        return self.environ['wsgi.input']
+        return environ['wsgi.input']
     body_iter = self._iter_chunked if self.chunked else self._iter_body
     body, body_size, is_temp_file = BytesIO(), 0, False
-    for part in body_iter(read_func, self.MEMFILE_MAX):
+    for part in body_iter(read_func, MEMFILE_MAX):
         body.write(part)
         body_size += len(part)
         if not is_temp_file and body_size > MEMFILE_MAX:
@@ -117,7 +117,7 @@ def get_input_stream(environ):
             body.write(tmp.getvalue())
             del tmp
             is_temp_file = True
-    self.environ['wsgi.input'] = body
+    environ['wsgi.input'] = body
     body.seek(0)
     return body
 

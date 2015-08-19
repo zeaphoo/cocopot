@@ -2,6 +2,7 @@ import pytest
 
 from flagon.request import Request
 from flagon.exceptions import BadRequest, NotFound, MethodNotAllowed
+from flagon.datastructures import MultiDict
 import copy
 
 env1 = {
@@ -22,3 +23,5 @@ def test_basic_request():
     env = dict(copy.deepcopy(env1))
     req = Request(env)
     assert 'flagon.request' in env
+    assert req.args == MultiDict({'a':'1', 'b':'2'}.items())
+    assert req.values == MultiDict({'a':'1', 'b':'2'}.items())
