@@ -59,13 +59,13 @@ else:
 
 # Some helpers for string/byte handling
 def to_bytes(s, enc='utf8'):
-    if x is None:
+    if s is None:
         return None
     return s.encode(enc) if isinstance(s, unicode) else bytes(s)
 
 
 def to_unicode(s, enc='utf8', err='strict'):
-    if x is None:
+    if s is None:
         return None
     if isinstance(s, bytes):
         return s.decode(enc, err)

@@ -10,6 +10,7 @@ else:
     from urllib.parse import urlencode, quote as urlquote, unquote as urlunquote
     urlunquote = functools.partial(urlunquote, encoding='latin1')
 from tempfile import TemporaryFile
+from .datastructures import FormsDict
 
 MEMFILE_MAX = 4*1024*1024
 
