@@ -4,7 +4,7 @@
 """
 from functools import update_wrapper
 from datetime import datetime, timedelta
-
+import cgi
 from .utils import cached_property
 from .datastructures import MultiDict, iter_multi_items, FileUpload, FormsDict
 from ._compat import (PY2, to_bytes, string_types, text_type,
@@ -13,11 +13,13 @@ if PY2:
     from Cookie import SimpleCookie
 else:
     from http.cookies import SimpleCookie
-from .wsgi import (get_input_stream, parse_form_data, urlencode, urldecode,
+from .wsgi import (urlencode, urldecode,
                     urlquote, urlunquote, get_content_length, get_host, get_current_url)
 from .http import (parse_content_type, parse_date, parse_auth, parse_content_type, parse_range_header)
 
 from .exceptions import BadRequest
+
+MEMFILE_MAX = 4*1024*1024
 
 class Request(object):
     """
@@ -88,7 +90,7 @@ class Request(object):
 
     @cached_property
     def stream(self):
-        stream = get_input_stream(self.environ)
+        stream = self.get_input_stream()
         stream.seek(0)
         return stream
 
@@ -127,8 +129,103 @@ class Request(object):
         return rv
 
     @cached_property
+    def chunked(self):
+        """ True if Chunked transfer encoding was. """
+        return 'chunked' in self.environ.get('HTTP_TRANSFER_ENCODING', '').lower()
+
+    def iter_body(self, read, bufsize):
+        maxread = max(0, self.content_length)
+        while maxread:
+            part = read(min(maxread, bufsize))
+            if not part: break
+            yield part
+            maxread -= len(part)
+
+    def iter_chunked(self, read, bufsize):
+        err = HTTPException(400, 'Error while parsing chunked transfer body.')
+        rn, sem, bs = to_byte('\r\n'), to_byte(';'), to_byte('')
+        while True:
+            header = read(1)
+            while header[-2:] != rn:
+                c = read(1)
+                header += c
+                if not c: raise err
+                if len(header) > bufsize: raise err
+            size, _, _ = header.partition(sem)
+            try:
+                maxread = int(to_native(size.strip()), 16)
+            except ValueError:
+                raise err
+            if maxread == 0: break
+            buff = bs
+            while maxread > 0:
+                if not buff:
+                    buff = read(min(maxread, bufsize))
+                part, buff = buff[:maxread], buff[maxread:]
+                if not part: raise err
+                yield part
+                maxread -= len(part)
+            if read(2) != rn:
+                raise err
+
+    def get_input_stream(self):
+        try:
+            read_func = self.environ['wsgi.input'].read
+        except KeyError:
+            self.environ['wsgi.input'] = BytesIO()
+            return self.environ['wsgi.input']
+        if self.chunked:
+            body, body_size, is_temp_file = BytesIO(), 0, False
+            for part in self.iter_chunked(read_func, MEMFILE_MAX):
+                body.write(part)
+                body_size += len(part)
+                if not is_temp_file and body_size > MEMFILE_MAX:
+                    body, tmp = TemporaryFile(mode='w+b'), body
+                    body.write(tmp.getvalue())
+                    del tmp
+                    is_temp_file = True
+        else:
+            if self.content_length > MEMFILE_MAX:
+                body = TemporaryFile(mode='w+b')
+            else:
+                body = BytesIO()
+                for part in self.iter_body(read_func, MEMFILE_MAX):
+                    body.write(part)
+        environ['wsgi.input'] = body
+        body.seek(0)
+        return body
+
+    def parse_form_data(self):
+        post = FormsDict()
+        # We default to application/x-www-form-urlencoded for everything that
+        # is not multipart and take the fast path (also: 3.1 workaround)
+        if not self.content_type.startswith('multipart/'):
+            pairs = urldecode(self.get_data())
+            for key, value in pairs:
+                post[key] = value
+            return post
+
+        safe_env = {'QUERY_STRING': ''}  # Build a safe environment for cgi
+        for key in ('REQUEST_METHOD', 'CONTENT_TYPE', 'CONTENT_LENGTH'):
+            if key in self.environ:
+                safe_env[key] = self.environ[key]
+        args = dict(fp=self.stream, environ=safe_env, keep_blank_values=True)
+        if not PY2:
+            args['encoding'] = 'utf8'
+        data = cgi.FieldStorage(**args)
+        environ['_cgi.FieldStorage'] = data  #http://bugs.python.org/issue18394
+        data = data.list or []
+        for item in data:
+            if item.filename:
+                post[item.name] = FileUpload(item.file, item.name,
+                                             item.filename, item.headers)
+            else:
+                post[item.name] = item.value
+        return post
+
+    @cached_property
     def parsed_form_data(self):
-        return parse_form_data(self.stream, self.environ)
+        return self.parse_form_data()
 
     @cached_property
     def form(self):
