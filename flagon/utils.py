@@ -14,12 +14,31 @@ import re
 import os
 import sys
 import pkgutil
-from ._compat import unichr, text_type, string_types, reraise, PY2
+from ._compat import unichr, text_type, string_types, reraise, PY2, to_unicode, to_native, BytesIO
 try:
     import simplejson as json
 except:
     import json
 
+if PY2:
+    from urlparse import urljoin, SplitResult as UrlSplitResult
+    from urllib import urlencode, quote as urlquote, unquote as urlunquote
+else:
+    from urllib.parse import urljoin, SplitResult as UrlSplitResult
+    from urllib.parse import urlencode, quote as urlquote, unquote as urlunquote
+    urlunquote = functools.partial(urlunquote, encoding='latin1')
+
+
+def urldecode(qs):
+    r = []
+    for pair in qs.replace(';', '&').split('&'):
+        if not pair: continue
+        nv = pair.split('=', 1)
+        if len(nv) != 2: nv.append('')
+        key = urlunquote(nv[0].replace('+', ' '))
+        value = urlunquote(nv[1].replace('+', ' '))
+        r.append((key, value))
+    return r
 
 _missing = object()
 

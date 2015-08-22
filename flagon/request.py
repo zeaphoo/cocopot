@@ -5,6 +5,8 @@
 from functools import update_wrapper
 from datetime import datetime, timedelta
 import cgi
+from tempfile import TemporaryFile
+from .exceptions import HTTPException
 from .utils import cached_property
 from .datastructures import MultiDict, iter_multi_items, FileUpload, FormsDict
 from ._compat import (PY2, to_bytes, string_types, text_type,
@@ -13,8 +15,7 @@ if PY2:
     from Cookie import SimpleCookie
 else:
     from http.cookies import SimpleCookie
-from .wsgi import (urlencode, urldecode,
-                    urlquote, urlunquote, get_content_length, get_host, get_current_url)
+from .utils import (urlencode, urldecode, urlquote, urlunquote)
 from .http import (parse_content_type, parse_date, parse_auth, parse_content_type, parse_range_header)
 
 from .exceptions import BadRequest
@@ -257,6 +258,63 @@ class Request(object):
                 files[name] = item
         return files
 
+    def get_host(self):
+        """Return the real host for the given WSGI environment.  This first checks
+        the `X-Forwarded-Host` header, then the normal `Host` header, and finally
+        the `SERVER_NAME` environment variable (using the first one it finds).
+        """
+        environ = self.environ
+        if 'HTTP_X_FORWARDED_HOST' in environ:
+            rv = environ['HTTP_X_FORWARDED_HOST'].split(',', 1)[0].strip()
+        elif 'HTTP_HOST' in environ:
+            rv = environ['HTTP_HOST']
+        else:
+            rv = environ['SERVER_NAME']
+            if (environ['wsgi.url_scheme'], environ['SERVER_PORT']) not \
+               in (('https', '443'), ('http', '80')):
+                rv += ':' + environ['SERVER_PORT']
+        return rv
+
+
+    def get_content_length(environ):
+        """Returns the content length from the WSGI environment as
+        integer.  If it's not available `None` is returned.
+        """
+        content_length = self.environ.get('CONTENT_LENGTH')
+        if content_length is not None:
+            try:
+                return max(0, int(content_length))
+            except (ValueError, TypeError):
+                pass
+
+    def get_current_url(self, root_only=False, strip_querystring=False, host_only=False):
+        """A handy helper function that recreates the full URL as IRI for the
+        current request or parts of it.  Here an example:
+
+        >>> get_current_url()
+        'http://localhost/script/?param=foo'
+        >>> get_current_url(root_only=True)
+        'http://localhost/script/'
+        >>> get_current_url(host_only=True)
+        'http://localhost/'
+        >>> get_current_url(strip_querystring=True)
+        'http://localhost/script/'
+        """
+        environ = self.environ
+        tmp = [environ['wsgi.url_scheme'], '://', self.get_host()]
+        cat = tmp.append
+        if host_only:
+            return ''.join(tmp) + '/'
+        cat(url_quote(environ.get('SCRIPT_NAME', '')).rstrip('/'))
+        cat('/')
+        if not root_only:
+            cat(url_quote(environ.get('PATH_INFO', '').lstrip(b'/')))
+            if not strip_querystring:
+                qs = get_query_string(environ)
+                if qs:
+                    cat('?' + qs)
+        return uri_to_iri(''.join(tmp))
+
     @cached_property
     def cookies(self):
         """Read only access to the retrieved cookie values as dictionary."""
@@ -294,32 +352,32 @@ class Request(object):
     def url(self):
         """The reconstructed current URL as IRI.
         """
-        return get_current_url(self.environ)
+        return self.get_current_url()
 
     @cached_property
     def base_url(self):
         """Like :attr:`url` but without the querystring
         """
-        return get_current_url(self.environ, strip_querystring=True)
+        return self.get_current_url(strip_querystring=True)
 
     @cached_property
     def url_root(self):
         """The full URL root (with hostname), this is the application
         root as IRI.
         """
-        return get_current_url(self.environ, root_only=True)
+        return self.get_current_url(root_only=True)
 
     @cached_property
     def host_url(self):
         """Just the host with scheme as IRI.
         """
-        return get_current_url(self.environ, host_only=True)
+        return self.get_current_url(host_only=True)
 
     @cached_property
     def host(self):
         """Just the host including the port if available.
         """
-        return get_host(self.environ)
+        return self.get_host()
 
     @property
     def query_string(self):
@@ -397,7 +455,7 @@ class Request(object):
         the entity-body that would have been sent had the request been a
         GET.
         """
-        return get_content_length(self.environ)
+        return self.get_content_length()
 
     @cached_property
     def parsed_content_type(self):
