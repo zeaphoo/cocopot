@@ -8,7 +8,7 @@ import copy
 env1 = {
     'REQUEST_METHOD':       'GET',
     'SCRIPT_NAME':          '/foo',
-    'PATH_INFO':            '/foo/bar',
+    'PATH_INFO':            '/bar',
     'QUERY_STRING':         'a=1&b=2',
     'SERVER_NAME':          'test.flagon.org',
     'SERVER_PORT':          80,
@@ -25,3 +25,11 @@ def test_basic_request():
     assert 'flagon.request' in env
     assert req.args == MultiDict({'a':'1', 'b':'2'}.items())
     assert req.values == MultiDict({'a':'1', 'b':'2'}.items())
+    assert req.path == '/bar'
+    assert req.full_path == '/foo/bar'
+    assert req.script_root == '/foo'
+    assert req.url == 'http://test.flagon.org/foo/bar?a=1&b=2'
+    assert req.base_url == 'http://test.flagon.org/foo/bar'
+    assert req.root_url == 'http://test.flagon.org/foo/'
+    assert req.host_url == 'http://test.flagon.org/'
+    assert req.host == 'test.flagon.org'

@@ -8,14 +8,14 @@ import cgi
 from tempfile import TemporaryFile
 from .exceptions import HTTPException
 from .utils import cached_property
-from .datastructures import MultiDict, iter_multi_items, FileUpload, FormsDict
+from .datastructures import MultiDict, iter_multi_items, FileUpload, FormsDict, WSGIHeaders
 from ._compat import (PY2, to_bytes, string_types, text_type,
      integer_types, to_unicode, to_native, BytesIO)
 if PY2:
     from Cookie import SimpleCookie
 else:
     from http.cookies import SimpleCookie
-from .utils import (urlencode, urldecode, urlquote, urlunquote)
+from .utils import (urlencode, urldecode, urlquote, urlunquote, urljoin)
 from .http import (parse_content_type, parse_date, parse_auth, parse_content_type, parse_range_header)
 
 from .exceptions import BadRequest
@@ -305,15 +305,15 @@ class Request(object):
         cat = tmp.append
         if host_only:
             return ''.join(tmp) + '/'
-        cat(url_quote(environ.get('SCRIPT_NAME', '')).rstrip('/'))
+        cat(urlquote(environ.get('SCRIPT_NAME', '')).rstrip('/'))
         cat('/')
         if not root_only:
-            cat(url_quote(environ.get('PATH_INFO', '').lstrip(b'/')))
+            cat(urlquote(environ.get('PATH_INFO', '').lstrip(b'/')))
             if not strip_querystring:
-                qs = get_query_string(environ)
+                qs = self.query_string
                 if qs:
                     cat('?' + qs)
-        return uri_to_iri(''.join(tmp))
+        return ''.join(tmp)
 
     @cached_property
     def cookies(self):
@@ -337,9 +337,18 @@ class Request(object):
         return '/' + self.environ.get('PATH_INFO', '').lstrip('/')
 
     @cached_property
+    def script_name(self):
+        """ The initial portion of the URL's `path` that was removed by a higher
+            level (server or routing middleware) before the application was
+            called. This script path is returned with leading and tailing
+            slashes. """
+        script_name = self.environ.get('SCRIPT_NAME', '').strip('/')
+        return '/' + script_name + '/' if script_name else '/'
+
+    @cached_property
     def full_path(self):
         """Requested path as unicode, including the query string."""
-        return self.path + u'?' + to_unicode(self.query_string, self.url_charset)
+        return urljoin(self.script_name, self.path.lstrip('/'))
 
     @cached_property
     def script_root(self):
@@ -361,7 +370,7 @@ class Request(object):
         return self.get_current_url(strip_querystring=True)
 
     @cached_property
-    def url_root(self):
+    def root_url(self):
         """The full URL root (with hostname), this is the application
         root as IRI.
         """

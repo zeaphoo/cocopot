@@ -262,6 +262,8 @@ class FileMultiDict(MultiDict):
 
         self.add(name, value)
 
+def _hkey(s):
+    return s.title().replace('_', '-')
 
 class WSGIHeaders(DictMixin):
     """ This dict-like class wraps a WSGI environ dict and provides convenient
@@ -292,7 +294,7 @@ class WSGIHeaders(DictMixin):
 
     def __getitem__(self, key):
         val = self.environ[self._ekey(key)]
-        if py3k:
+        if not PY2:
             if isinstance(val, unicode):
                 val = val.encode('latin1').decode('utf8')
             else:
