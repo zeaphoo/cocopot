@@ -21,6 +21,9 @@ def iter_multi_items(mapping):
         else:
             yield key, value
 
+def _hkey(s):
+    return s.title().replace('_', '-')
+
 
 class MultiDict(DictMixin):
     """ This dict stores multiple values per key, but behaves exactly like a
@@ -261,9 +264,6 @@ class FileMultiDict(MultiDict):
             value = FileStorage(file, filename, name, content_type)
 
         self.add(name, value)
-
-def _hkey(s):
-    return s.title().replace('_', '-')
 
 class WSGIHeaders(DictMixin):
     """ This dict-like class wraps a WSGI environ dict and provides convenient
