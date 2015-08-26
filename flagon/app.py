@@ -75,43 +75,14 @@ class RequestContext(object):
 
 class Flagon(object):
     """The flagon object implements a WSGI application and acts as the central
-    object.  It is passed the name of the module or package of the
-    application.  Once it is created it will act as a central registry for
-    the view functions, the URL rules, template configuration and much more.
+    object.  Once it is created it will act as a central registry for
+    the view functions, the URL rules,  and more.
 
-    The name of the package is used to resolve resources from inside the
-    package or the folder the module is contained in depending on if the
-    package parameter resolves to an actual python package (a folder with
-    an `__init__.py` file inside) or a standard module (just a `.py` file).
-
-    Usually you create a :class:`Flagon` instance in your main module or
+    Usually you create a `Flagon` instance in your main module or
     in the `__init__.py` file of your package like this::
 
         from flagon import Flagon
-        app = Flagon(__name__)
-
-    .. admonition:: About the First Parameter
-
-        So it's important what you provide there.  If you are using a single
-        module, `__name__` is always the correct value.  If you however are
-        using a package, it's usually recommended to hardcode the name of
-        your package there.
-
-        For example if your application is defined in `yourapplication/app.py`
-        you should create it with one of the two versions below::
-
-            app = Flagon('yourapplication')
-            app = Flagon(__name__.split('.')[0])
-
-        Why is that?  The application will work even with `__name__`, thanks
-        to how resources are looked up.  However it will make debugging more
-        painful.  Certain extensions can make assumptions based on the
-        import name of your application.  For example the Flagon-SQLAlchemy
-        extension will look for the code in your application that triggered
-        an SQL query in debug mode.  If the import name is not properly set
-        up, that debugging information is lost.  (For example it would only
-        pick up SQL queries in `yourapplication.app` and not
-        `yourapplication.views.frontend`)
+        app = Flagon()
 
     """
 
@@ -125,8 +96,7 @@ class Flagon(object):
     )
 
 
-    def __init__(self, import_name, static_folder='static'):
-        self.static_folder = static_folder
+    def __init__(self, import_name=''):
         self.config = {}
 
         self.import_name = import_name
@@ -135,7 +105,6 @@ class Flagon(object):
         #: A dictionary of all view functions registered.  The keys will
         #: be function names which are also used to generate URLs and
         #: the values are the function objects themselves.
-        #: To register a view function, use the :meth:`route` decorator.
         self.view_functions = {}
 
         #: A dictionary of all registered error handlers.  The key is `None`
@@ -146,43 +115,25 @@ class Flagon(object):
         #: is the class for the instance check and the second the error handler
         #: function.
         #:
-        #: To register a error handler, use the :meth:`errorhandler`
-        #: decorator.
         self.error_handler_spec = {None: {}}
 
         #: A dictionary with lists of functions that should be called at the
         #: beginning of the request.  The key of the dictionary is the name of
         #: the blueprint this function is active for, `None` for all requests.
         #: This can for example be used to open database connections or
-        #: getting hold of the currently logged in user.  To register a
-        #: function here, use the :meth:`before_request` decorator.
+        #: getting hold of the currently logged in user.
         self.before_request_funcs = {}
 
         #: A dictionary with lists of functions that should be called after
         #: each request.  The key of the dictionary is the name of the blueprint
         #: this function is active for, `None` for all requests.  This can for
         #: example be used to open database connections or getting hold of the
-        #: currently logged in user.  To register a function here, use the
-        #: :meth:`after_request` decorator.
+        #: currently logged in user.
         self.after_request_funcs = {}
-
-        #: A dictionary with lists of functions that can be used as URL value
-        #: preprocessors.  The key `None` here is used for application wide
-        #: callbacks, otherwise the key is the name of the blueprint.
-        #: Each of these functions has the chance to modify the dictionary
-        #: of URL values before they are used as the keyword arguments of the
-        #: view function.  For each function registered this one should also
-        #: provide a :meth:`url_defaults` function that adds the parameters
-        #: automatically again that were removed that way.
-        #:
-        #: .. versionadded:: 0.1
-        self.url_default_functions = {}
 
         #: all the attached blueprints in a dictionary by name.  Blueprints
         #: can be attached multiple times so this dictionary does not tell
         #: you how often they got attached.
-        #:
-        #: .. versionadded:: 0.1
         self.blueprints = {}
 
         self.router = Router()
@@ -226,8 +177,6 @@ class Flagon(object):
         import name is main.  This name is used as a display name when
         Flagon needs the name of the application.  It can be set and overridden
         to change the value.
-
-        .. versionadded:: 0.8
         """
         if self.import_name == '__main__':
             fn = getattr(sys.modules['__main__'], '__file__', None)
@@ -238,33 +187,13 @@ class Flagon(object):
 
 
     def run(self, host=None, port=None, debug=None, **options):
-        """Runs the application on a local development server.  If the
-        :attr:`debug` flag is set the server will automatically reload
-        for code changes and show a debugger in case an exception happened.
-
-        If you want to run the application in debug mode, but disable the
-        code execution on the interactive debugger, you can pass
-        ``use_evalex=False`` as parameter.  This will keep the debugger's
-        traceback screen active, but disable code execution.
-
-        .. admonition:: Keep in Mind
-
-           Flagon will suppress any server error with a generic error page
-           unless it is in debug mode.  As such to enable just the
-           interactive debugger without the code reloading, you have to
-           invoke :meth:`run` with ``debug=True`` and ``use_reloader=False``.
-           Setting ``use_debugger`` to `True` without being in debug mode
-           won't catch any exceptions because there won't be any to
-           catch.
-
-        .. versionchanged:: 0.10
-           The default port is now picked from the ``SERVER_NAME`` variable.
-
-        :param host: the hostname to listen on. Set this to ``'0.0.0.0'`` to
+        """Runs the application on a local development server.
+        Args:
+            host: the hostname to listen on. Set this to '0.0.0.0'` to
                      have the server available externally as well. Defaults to
-                     ``'127.0.0.1'``.
-        :param port: the port of the webserver. Defaults to ``5000`` or the
-                     port defined in the ``SERVER_NAME`` config variable if
+                     '127.0.0.1'`.
+            port: the port of the webserver. Defaults to 5000 or the
+                     port defined in the SERVER_NAME` config variable if
                      present.
         """
         from flagon.run import run_simple
@@ -280,8 +209,6 @@ class Flagon(object):
 
     def register_blueprint(self, blueprint, **options):
         """Registers a blueprint on the application.
-
-        .. versionadded:: 0.7
         """
         first_registration = False
         if blueprint.name in self.blueprints:
@@ -370,18 +297,11 @@ class Flagon(object):
 
         For more information refer to :ref:`url-route-registrations`.
 
-        :param rule: the URL rule as string
-        :param endpoint: the endpoint for the registered URL rule.  Flagon
+        Args:
+            rule: the URL rule as string
+            endpoint: the endpoint for the registered URL rule.  Flagon
                          itself assumes the name of the view function as
                          endpoint
-        :param options: the options to be forwarded to the underlying
-                        :class:`~flagon.routing.Rule` object.  A change
-                        to Werkzeug is handling of method options.  methods
-                        is a list of methods this rule should be limited
-                        to (`GET`, `POST` etc.).  By default a rule
-                        just listens for `GET` (and implicitly `HEAD`).
-                        Starting with Flagon 0.6, `OPTIONS` is implicitly
-                        added and handled by the standard request handling.
         """
         def decorator(f):
             endpoint = options.pop('endpoint', None)
@@ -392,13 +312,13 @@ class Flagon(object):
 
     def endpoint(self, endpoint):
         """A decorator to register a function as an endpoint.
-        Example::
+        Example:
 
             @app.endpoint('example.endpoint')
             def example():
                 return "example"
-
-        :param endpoint: the name of the endpoint
+        Args:
+            endpoint: the name of the endpoint
         """
         def decorator(f):
             self.view_functions[endpoint] = f
@@ -450,8 +370,6 @@ class Flagon(object):
         """Alternative error attach function to the :meth:`errorhandler`
         decorator that is more straightforward to use for non decorator
         usage.
-
-        .. versionadded:: 0.7
         """
         self._register_error_handler(None, code_or_exception, f)
 
@@ -475,11 +393,9 @@ class Flagon(object):
 
     def after_request(self, f):
         """Register a function to be run after each request.  Your function
-        must take one parameter, a :attr:`response_class` object and return
-        a new response object or the same (see :meth:`process_response`).
+        must take one parameter, a `Response` object and return
+        a new response object.
 
-        As of Flagon 0.7 this function might not be executed at the end of the
-        request in case an unhandled exception occurred.
         """
         self.after_request_funcs.setdefault(None, []).append(f)
         return f
@@ -490,7 +406,7 @@ class Flagon(object):
         are executed when the request context is popped, even if not an
         actual request was performed.
 
-        Example::
+        Example:
 
             ctx = app.test_request_context()
             ctx.push()
@@ -509,13 +425,6 @@ class Flagon(object):
 
         When a teardown function was called because of a exception it will
         be passed an error object.
-
-        .. admonition:: Debug Note
-
-           In debug mode Flagon will not tear down a request on an exception
-           immediately.  Instead if will keep it alive so that the interactive
-           debugger can still access it.  This behavior can be controlled
-           by the ``PRESERVE_CONTEXT_ON_EXCEPTION`` configuration variable.
         """
         self.teardown_request_funcs.setdefault(None, []).append(f)
         return f
@@ -541,8 +450,7 @@ class Flagon(object):
 
     def handle_user_exception(self, e):
         """This method is called whenever an exception occurs that should be
-        handled.  A special case are
-        :class:`~flagon.exception.HTTPException`\s which are forwarded by
+        handled.  A special case are `~flagon.exception.HTTPException`\s which are forwarded by
         this function to the :meth:`handle_http_exception` method.  This
         function will either return a response value or reraise the
         exception with the same traceback.
@@ -592,8 +500,6 @@ class Flagon(object):
         if debugging is disabled and right before the handler is called.
         The default implementation logs the exception as error on the
         :attr:`logger`.
-
-        .. versionadded:: 0.8
         """
         self.logger.error('Exception on %s [%s]' % (
             request.path,
@@ -605,8 +511,6 @@ class Flagon(object):
         this method.  During debug we are not reraising redirect requests
         for non ``GET``, ``HEAD``, or ``OPTIONS`` requests and we're raising
         a different error instead to help debug situations.
-
-        :internal:
         """
         if not isinstance(request.routing_exception, RequestRedirect) \
            or request.method in ('GET', 'HEAD', 'OPTIONS'):
@@ -617,10 +521,6 @@ class Flagon(object):
         return value of the view or error handler.  This does not have to
         be a response object.  In order to convert the return value to a
         proper response object, call :func:`make_response`.
-
-        .. versionchanged:: 0.7
-           This no longer does the exception handling, this code was
-           moved to the new :meth:`full_dispatch_request`.
         """
         req = _request_ctx_stack.top.request
         if req.routing_exception is not None:
@@ -633,8 +533,6 @@ class Flagon(object):
         """Dispatches the request and on top of that performs request
         pre and postprocessing as well as HTTP exception catching and
         error handling.
-
-        .. versionadded:: 0.7
         """
         try:
             rv = self.preprocess_request()
@@ -697,10 +595,6 @@ class Flagon(object):
         not actually called by the :class:`Flagon` object itself but is always
         triggered when the request context is popped.  That way we have a
         tighter control over certain resources under testing environments.
-
-        .. versionchanged:: 0.9
-           Added the `exc` argument.  Previously this was always using the
-           current exception information.
         """
         if exc is None:
             exc = sys.exc_info()[1]
@@ -734,7 +628,7 @@ class Flagon(object):
         req = Request(environ)
         ctx = RequestContext(self, environ, req)
         try:
-            endpoint, view_args = self.router.match(environ.get('PATH_INFO', ''))
+            endpoint, view_args = self.router.match(req.full_path)
             req.endpoint, req.view_args = endpoint, view_args
         except HTTPException as e:
             req.routing_exception = e
