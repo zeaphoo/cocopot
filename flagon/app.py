@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """
     This module implements the central WSGI application object.
-
-    :copyright: (c) 2011 by Armin Ronacher.
-    :license: BSD, see LICENSE for more details.
 """
 
 import os
@@ -223,7 +220,7 @@ class Flagon(object):
         blueprint.register(self, options, first_registration)
 
     def add_url_rule(self, rule, endpoint=None, view_func=None, methods=None, **options):
-        """Connects a URL rule.  Works exactly like the :meth:`route`
+        """Connects a URL rule.  Works exactly like the `route`
         decorator.  If a view_func is provided it will be registered with the
         endpoint.
 
@@ -244,11 +241,11 @@ class Flagon(object):
 
             app.view_functions['index'] = index
 
-        Internally :meth:`route` invokes :meth:`add_url_rule` so if you want
+        Internally `route` invokes `add_url_rule` so if you want
         to customize the behavior via subclassing you only need to change
         this method.
 
-        For more information refer to :ref:`url-route-registrations`.
+        For more information refer to `url-route-registrations`.
 
         Args:
             rule : the URL rule as string
@@ -288,14 +285,14 @@ class Flagon(object):
 
     def route(self, rule, **options):
         """A decorator that is used to register a view function for a
-        given URL rule.  This does the same thing as :meth:`add_url_rule`
+        given URL rule.  This does the same thing as `add_url_rule`
         but is intended for decorator usage::
 
             @app.route('/')
             def index():
                 return 'Hello World'
 
-        For more information refer to :ref:`url-route-registrations`.
+        For more information refer to `url-route-registrations`.
 
         Args:
             rule: the URL rule as string
@@ -340,7 +337,7 @@ class Flagon(object):
                 return 'Database connection failed', 500
 
         You can also register a function as error handler without using
-        the :meth:`errorhandler` decorator.  The following example is
+        the `errorhandler` decorator.  The following example is
         equivalent to the one above::
 
             def page_not_found(error):
@@ -354,12 +351,6 @@ class Flagon(object):
         The first `None` refers to the active blueprint.  If the error
         handler should be application wide `None` shall be used.
 
-        .. versionadded:: 0.7
-           One can now additionally also register custom exception types
-           that do not necessarily have to be a subclass of the
-           :class:`~flagon.exceptions.HTTPException` class.
-
-        :param code: the code as integer for the handler
         """
         def decorator(f):
             self._register_error_handler(None, code_or_exception, f)
@@ -367,7 +358,7 @@ class Flagon(object):
         return decorator
 
     def register_error_handler(self, code_or_exception, f):
-        """Alternative error attach function to the :meth:`errorhandler`
+        """Alternative error attach function to the `errorhandler`
         decorator that is more straightforward to use for non decorator
         usage.
         """
@@ -451,7 +442,7 @@ class Flagon(object):
     def handle_user_exception(self, e):
         """This method is called whenever an exception occurs that should be
         handled.  A special case are `~flagon.exception.HTTPException`\s which are forwarded by
-        this function to the :meth:`handle_http_exception` method.  This
+        this function to the `handle_http_exception` method.  This
         function will either return a response value or reraise the
         exception with the same traceback.
 
@@ -483,8 +474,6 @@ class Flagon(object):
         be re-raised immediately, otherwise it is logged and the handler
         for a 500 internal server error is used.  If no such handler
         exists, a default 500 internal server error message is displayed.
-
-        .. versionadded:: 0.1
         """
         exc_type, exc_value, tb = sys.exc_info()
 
@@ -496,7 +485,7 @@ class Flagon(object):
         return handler(e)
 
     def log_exception(self, exc_info):
-        """Logs an exception.  This is called by :meth:`handle_exception`
+        """Logs an exception.  This is called by `handle_exception`
         if debugging is disabled and right before the handler is called.
         The default implementation logs the exception as error on the
         :attr:`logger`.
@@ -548,13 +537,13 @@ class Flagon(object):
 
     def preprocess_request(self):
         """Called before the actual request dispatching and will
-        call every as :meth:`before_request` decorated function.
+        call every as `before_request` decorated function.
         If any of these function returns a value it's handled as
         if it was the return value from the view and further
         request handling is stopped.
 
-        This also triggers the :meth:`url_value_processor` functions before
-        the actual :meth:`before_request` functions are called.
+        This also triggers the `url_value_processor` functions before
+        the actual `before_request` functions are called.
         """
         bp = _request_ctx_stack.top.request.blueprint
         funcs = self.before_request_funcs.get(None, ())
@@ -568,7 +557,7 @@ class Flagon(object):
     def process_response(self, response):
         """Can be overridden in order to modify the response object
         before it's sent to the WSGI server.  By default this will
-        call all the :meth:`after_request` decorated functions.
+        call all the `after_request` decorated functions.
 
         .. versionchanged:: 0.5
            As of Flagon 0.5 the functions registered for after request
@@ -591,7 +580,7 @@ class Flagon(object):
 
     def do_teardown_request(self, exc=None):
         """Called after the actual request dispatching and will
-        call every as :meth:`teardown_request` decorated function.  This is
+        call every as `teardown_request` decorated function.  This is
         not actually called by the :class:`Flagon` object itself but is always
         triggered when the request context is popped.  That way we have a
         tighter control over certain resources under testing environments.

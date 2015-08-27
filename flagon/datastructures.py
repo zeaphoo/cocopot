@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    flagon.datastructures
-"""
 import re
 import sys
 import codecs

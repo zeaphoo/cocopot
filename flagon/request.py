@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    flagon.request
-"""
 from functools import update_wrapper
 from datetime import datetime, timedelta
 import cgi
@@ -438,17 +435,12 @@ class Request(object):
     @cached_property
     def range(self):
         """The parsed `Range` header.
-
-        .. versionadded:: 0.7
-
-        :rtype: :class:`~flagon.datastructures.Range`
         """
         return parse_range_header(self.environ.get('HTTP_RANGE'))
 
 
     @cached_property
     def authorization(self):
-        """The `Authorization` object in parsed form."""
         header = self.environ.get('HTTP_AUTHORIZATION')
         return parse_auth(header)
 

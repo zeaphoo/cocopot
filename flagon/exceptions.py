@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-    #flagon.exceptions
-
     This module implements a number of Python exceptions you can raise from
     within your views to trigger a standard non-200 response.
 
@@ -139,7 +137,6 @@ class ClientDisconnected(BadRequest):
     by WSGI to a large extent this might or might not be raised if a client
     is gone.
 
-    .. versionadded:: 0.8
     """
 
 
@@ -147,7 +144,6 @@ class SecurityError(BadRequest):
     """Raised if something triggers a security error.  This is otherwise
     exactly like a bad request error.
 
-    .. versionadded:: 0.9
     """
 
 
@@ -252,7 +248,6 @@ class Conflict(HTTPException):
     Raise to signal that a request cannot be completed because it conflicts
     with the current state on the server.
 
-    .. versionadded:: 0.7
     """
     code = 409
     description = (
@@ -343,7 +338,6 @@ class RequestedRangeNotSatisfiable(HTTPException):
     The client asked for a part of the file that lies beyond the end
     of the file.
 
-    .. versionadded:: 0.7
     """
     code = 416
     description = (
@@ -356,7 +350,6 @@ class ExpectationFailed(HTTPException):
 
     The server cannot meet the requirements of the Expect request-header.
 
-    .. versionadded:: 0.7
     """
     code = 417
     description = (
@@ -370,7 +363,6 @@ class ImATeapot(HTTPException):
     The server should return this if it is a teapot and someone attempted
     to brew coffee with it.
 
-    .. versionadded:: 0.7
     """
     code = 418
     description = (

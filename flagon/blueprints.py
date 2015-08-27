@@ -1,19 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-    #flagon.blueprints
-
     Blueprints are the recommended way to implement larger or more
     pluggable applications.
 
-    :copyright: (c) 2011 by Armin Ronacher.
-    :license: BSD, see LICENSE for more details.
 """
 from functools import update_wrapper
 
 class Blueprint(object):
     """Represents a blueprint.
-
-    .. versionadded:: 0.1
     """
 
     def __init__(self, name, import_name,
@@ -30,7 +24,7 @@ class Blueprint(object):
     def record(self, func):
         """Registers a function that is called when the blueprint is
         registered on the application.  This function is called with the
-        state as argument as returned by the :meth:`make_setup_state`
+        state as argument as returned by the `make_setup_state`
         method.
         """
         if self.app:
@@ -42,7 +36,7 @@ class Blueprint(object):
 
 
     def register(self, app, options, first_registration=False):
-        """Called by :meth:`Flagon.register_blueprint` to register a blueprint
+        """Called by `Flagon.register_blueprint` to register a blueprint
         on the application.  This can be overridden to customize the register
         behavior.  Keyword arguments from
         :func:`~flagon.Flagon.register_blueprint` are directly forwarded to this
@@ -53,7 +47,7 @@ class Blueprint(object):
             deferred(self)
 
     def route(self, rule, **options):
-        """Like :meth:`Flagon.route` but for a blueprint.  The endpoint for the
+        """Like `Flagon.route` but for a blueprint.  The endpoint for the
         :func:`url_for` function is prefixed with the name of the blueprint.
         """
         def decorator(f):
@@ -63,7 +57,7 @@ class Blueprint(object):
         return decorator
 
     def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
-        """Like :meth:`Flagon.add_url_rule` but for a blueprint.  The endpoint for
+        """Like `Flagon.add_url_rule` but for a blueprint.  The endpoint for
         the :func:`url_for` function is prefixed with the name of the blueprint.
         """
         if endpoint:
@@ -87,7 +81,7 @@ class Blueprint(object):
                               view_func, defaults=defaults, **options)
 
     def endpoint(self, endpoint):
-        """Like :meth:`Flagon.endpoint` but for a blueprint.  This does not
+        """Like `Flagon.endpoint` but for a blueprint.  This does not
         prefix the endpoint with the blueprint name, this has to be done
         explicitly by the user of this method.  If the endpoint is prefixed
         with a `.` it will be registered to the current blueprint, otherwise
@@ -102,7 +96,7 @@ class Blueprint(object):
 
 
     def before_request(self, f):
-        """Like :meth:`Flagon.before_request` but for a blueprint.  This function
+        """Like `Flagon.before_request` but for a blueprint.  This function
         is only executed before each request that is handled by a function of
         that blueprint.
         """
@@ -111,7 +105,7 @@ class Blueprint(object):
         return f
 
     def before_app_request(self, f):
-        """Like :meth:`Flagon.before_request`.  Such a function is executed
+        """Like `Flagon.before_request`.  Such a function is executed
         before each request, even if outside of a blueprint.
         """
         self.record(lambda s: s.app.before_request_funcs
@@ -119,7 +113,7 @@ class Blueprint(object):
         return f
 
     def after_request(self, f):
-        """Like :meth:`Flagon.after_request` but for a blueprint.  This function
+        """Like `Flagon.after_request` but for a blueprint.  This function
         is only executed after each request that is handled by a function of
         that blueprint.
         """
@@ -128,7 +122,7 @@ class Blueprint(object):
         return f
 
     def after_app_request(self, f):
-        """Like :meth:`Flagon.after_request` but for a blueprint.  Such a function
+        """Like `Flagon.after_request` but for a blueprint.  Such a function
         is executed after each request, even if outside of the blueprint.
         """
         self.record(lambda s: s.app.after_request_funcs
@@ -136,7 +130,7 @@ class Blueprint(object):
         return f
 
     def teardown_request(self, f):
-        """Like :meth:`Flagon.teardown_request` but for a blueprint.  This
+        """Like `Flagon.teardown_request` but for a blueprint.  This
         function is only executed when tearing down requests handled by a
         function of that blueprint.  Teardown request functions are executed
         when the request context is popped, even when no actual request was
@@ -147,7 +141,7 @@ class Blueprint(object):
         return f
 
     def teardown_app_request(self, f):
-        """Like :meth:`Flagon.teardown_request` but for a blueprint.  Such a
+        """Like `Flagon.teardown_request` but for a blueprint.  Such a
         function is executed when tearing down each request, even if outside of
         the blueprint.
         """
@@ -156,7 +150,7 @@ class Blueprint(object):
         return f
 
     def app_errorhandler(self, code):
-        """Like :meth:`Flagon.errorhandler` but for a blueprint.  This
+        """Like `Flagon.errorhandler` but for a blueprint.  This
         handler is used for all requests, even if outside of the blueprint.
         """
         def decorator(f):
@@ -173,8 +167,8 @@ class Blueprint(object):
         special case is the 500 internal server error which is always looked
         up from the application.
 
-        Otherwise works as the :meth:`~flagon.Flagon.errorhandler` decorator
-        of the :class:`~flagon.Flagon` object.
+        Otherwise works as the `~flagon.Flagon.errorhandler` decorator
+        of the `~flagon.Flagon` object.
         """
         def decorator(f):
             self.record(lambda s: s.app._register_error_handler(

@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-    #flagon.globals
-
     Defines all the global objects that are proxies to the current
     active context.
 
-    :copyright: (c) 2011 by Armin Ronacher.
-    :license: BSD, see LICENSE for more details.
 """
 
 from functools import partial

@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-    flagon.utils
-    ~~~~~~~~~~~~~~
-
     This module implements various utilities for WSGI applications.  Most of
     them are used by the request and response wrappers but especially for
     middleware development it makes sense to use them without the wrappers.
-
-    :copyright: (c) 2014 by the Werkzeug Team, see AUTHORS for more details.
-    :license: BSD, see LICENSE for more details.
 """
 import re
 import os

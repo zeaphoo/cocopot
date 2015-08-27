@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-    flagon.response
-"""
 from functools import update_wrapper
 from datetime import datetime, timedelta
 

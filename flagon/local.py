@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-    flagon.local
-    ~~~~~~~~~~~~~~
-
     This module implements context-local objects.
-
-    :copyright: (c) 2014 by the Werkzeug Team, see AUTHORS for more details.
-    :license: BSD, see LICENSE for more details.
 """
 from ._compat import PY2
 
@@ -40,7 +34,6 @@ def release_local(local):
     a reference to the underlying local object in order to be able
     to release it.
 
-    .. versionadded:: 0.6.1
     """
     local.__release_local__()
 
@@ -106,8 +99,6 @@ class LocalStack(object):
 
     By calling the stack without arguments it returns a proxy that resolves to
     the topmost item on the stack.
-
-    .. versionadded:: 0.6.1
     """
 
     def __init__(self):
