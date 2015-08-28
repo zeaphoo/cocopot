@@ -37,7 +37,7 @@ class Request(object):
 
     #: if matching the URL failed, this is the exception that will be
     #: raised / was raised as part of the request handling.  This is
-    #: usually a :exc:`~flagon.exceptions.NotFound` exception or
+    #: usually a `~flagon.exceptions.NotFound` exception or
     #: something similar.
     routing_exception = None
 
@@ -65,7 +65,7 @@ class Request(object):
     @property
     def url_charset(self):
         """The charset that is assumed for URLs.  Defaults to the value
-        of :attr:`charset`.
+        of `charset`.
 
         """
         return self.charset
@@ -362,7 +362,7 @@ class Request(object):
 
     @cached_property
     def base_url(self):
-        """Like :attr:`url` but without the querystring
+        """Like `url` but without the querystring
         """
         return self.get_current_url(strip_querystring=True)
 
@@ -464,7 +464,7 @@ class Request(object):
 
     @property
     def mimetype(self):
-        """Like :attr:`content_type` but without parameters (eg, without
+        """Like `content_type` but without parameters (eg, without
         charset, type etc.).  For example if the content
         type is ``text/html; charset=utf-8`` the mimetype would be
         ``'text/html'``.
@@ -490,21 +490,22 @@ class Request(object):
         """If the mimetype is `application/json` this will contain the
         parsed JSON data.  Otherwise this will be `None`.
 
-        The :meth:`get_json` method should be used instead.
+        The `get_json` method should be used instead.
         """
         return self.get_json()
 
     def get_json(self, force=False, silent=False, cache=True):
         """Parses the incoming JSON request data and returns it.  If
-        parsing fails the :meth:`on_json_loading_failed` method on the
+        parsing fails the `on_json_loading_failed` method on the
         request object will be invoked.  By default this function will
         only load the json data if the mimetype is ``application/json``
         but this can be overriden by the `force` parameter.
 
-        :param force: if set to `True` the mimetype is ignored.
-        :param silent: if set to `False` this method will fail silently
+        Args:
+            force: if set to `True` the mimetype is ignored.
+            silent: if set to `False` this method will fail silently
                        and return `False`.
-        :param cache: if set to `True` the parsed JSON data is remembered
+            cache: if set to `True` the parsed JSON data is remembered
                       on the request.
         """
         rv = getattr(self, '_cached_json', _missing)

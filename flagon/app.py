@@ -39,7 +39,7 @@ class RequestContextGlobals(object):
 class RequestContext(object):
     """The application context binds an application object implicitly
     to the current thread or greenlet, similar to how the
-    :class:`RequestContext` binds request information.  The application
+    `RequestContext` binds request information.  The application
     context is also implicitly created if a request context is created
     but the application is not on top of the individual application
     context.
@@ -344,7 +344,7 @@ class Flagon(object):
                 return 'This page does not exist', 404
             app.error_handler_spec[None][404] = page_not_found
 
-        Setting error handlers via assignments to :attr:`error_handler_spec`
+        Setting error handlers via assignments to `error_handler_spec`
         however is discouraged as it requires fiddling with nested dictionaries
         and the special case for arbitrary exception types.
 
@@ -488,7 +488,7 @@ class Flagon(object):
         """Logs an exception.  This is called by `handle_exception`
         if debugging is disabled and right before the handler is called.
         The default implementation logs the exception as error on the
-        :attr:`logger`.
+        `logger`.
         """
         self.logger.error('Exception on %s [%s]' % (
             request.path,
@@ -509,7 +509,7 @@ class Flagon(object):
         """Does the request dispatching.  Matches the URL and returns the
         return value of the view or error handler.  This does not have to
         be a response object.  In order to convert the return value to a
-        proper response object, call :func:`make_response`.
+        proper response object, call `make_response`.
         """
         req = _request_ctx_stack.top.request
         if req.routing_exception is not None:
@@ -559,13 +559,12 @@ class Flagon(object):
         before it's sent to the WSGI server.  By default this will
         call all the `after_request` decorated functions.
 
-        .. versionchanged:: 0.5
-           As of Flagon 0.5 the functions registered for after request
-           execution are called in reverse order of registration.
+        Args:
+            response: a `response_class` object.
 
-        :param response: a :attr:`response_class` object.
-        :return: a new response object or the same, has to be an
-                 instance of :attr:`response_class`.
+        Returns:
+            a new response object or the same, has to be an
+                 instance of `response_class`.
         """
         ctx = _request_ctx_stack.top
         bp = ctx.request.blueprint
@@ -581,7 +580,7 @@ class Flagon(object):
     def do_teardown_request(self, exc=None):
         """Called after the actual request dispatching and will
         call every as `teardown_request` decorated function.  This is
-        not actually called by the :class:`Flagon` object itself but is always
+        not actually called by the `Flagon` object itself but is always
         triggered when the request context is popped.  That way we have a
         tighter control over certain resources under testing environments.
         """
@@ -609,8 +608,9 @@ class Flagon(object):
         Then you still have the original application object around and
         can continue to call methods on it.
 
-        :param environ: a WSGI environment
-        :param start_response: a callable accepting a status code,
+        Args:
+            environ: a WSGI environment
+            start_response: a callable accepting a status code,
                                a list of headers and an optional
                                exception context to start the response
         """
@@ -637,7 +637,7 @@ class Flagon(object):
             ctx.pop(error)
 
     def __call__(self, environ, start_response):
-        """Shortcut for :attr:`wsgi_app`."""
+        """Shortcut for `wsgi_app`."""
         return self.wsgi_app(environ, start_response)
 
     def __repr__(self):

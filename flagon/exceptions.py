@@ -68,10 +68,12 @@ class HTTPException(Exception):
         """Get a response object.  If one was passed to the exception
         it's returned directly.
 
-        :param environ: the optional environ for the request.  This
+        Args:
+            environ: the optional environ for the request.  This
                         can be used to modify the response depending
                         on how the request looked like.
-        :return: a :class:`Response` object or a subclass thereof.
+        Returns:
+            a `Response` object or a subclass thereof.
         """
         if self.response is not None:
             return self.response
@@ -84,8 +86,9 @@ class HTTPException(Exception):
     def __call__(self, environ, start_response):
         """Call the exception as WSGI application.
 
-        :param environ: the WSGI environment.
-        :param start_response: the response callable provided by the WSGI
+        Args:
+            environ: the WSGI environment.
+            start_response: the response callable provided by the WSGI
                                server.
         """
         response = self.get_response(environ)
@@ -125,19 +128,6 @@ class BadRequest(HTTPException):
         'not understand.'
     )
 
-
-class ClientDisconnected(BadRequest):
-    """Internal exception that is raised if Werkzeug detects a disconnected
-    client.  Since the client is already gone at that point attempting to
-    send the error message to the client might not work and might ultimately
-    result in another exception in the server.  Mainly this is here so that
-    it is silenced by default as far as Werkzeug is concerned.
-
-    Since disconnections cannot be reliably detected and are unspecified
-    by WSGI to a large extent this might or might not be raised if a client
-    is gone.
-
-    """
 
 
 class SecurityError(BadRequest):

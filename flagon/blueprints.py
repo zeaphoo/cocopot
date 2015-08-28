@@ -39,7 +39,7 @@ class Blueprint(object):
         """Called by `Flagon.register_blueprint` to register a blueprint
         on the application.  This can be overridden to customize the register
         behavior.  Keyword arguments from
-        :func:`~flagon.Flagon.register_blueprint` are directly forwarded to this
+        `~flagon.Flagon.register_blueprint` are directly forwarded to this
         method in the `options` dictionary.
         """
         self.app = app
@@ -48,7 +48,7 @@ class Blueprint(object):
 
     def route(self, rule, **options):
         """Like `Flagon.route` but for a blueprint.  The endpoint for the
-        :func:`url_for` function is prefixed with the name of the blueprint.
+        `url_for` function is prefixed with the name of the blueprint.
         """
         def decorator(f):
             endpoint = options.pop("endpoint", f.__name__)
@@ -58,7 +58,7 @@ class Blueprint(object):
 
     def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
         """Like `Flagon.add_url_rule` but for a blueprint.  The endpoint for
-        the :func:`url_for` function is prefixed with the name of the blueprint.
+        the `url_for` function is prefixed with the name of the blueprint.
         """
         if endpoint:
             assert '.' not in endpoint, "Blueprint endpoint's should not contain dot's"

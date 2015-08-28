@@ -124,9 +124,10 @@ def append_slash_redirect(environ, code=301):
     """Redirects to the same URL but with a slash appended.  The behavior
     of this function is undefined if the path ends with a slash already.
 
-    :param environ: the WSGI environment for the request that triggers
+    Args:
+        environ: the WSGI environment for the request that triggers
                     the redirect.
-    :param code: the status code for the redirect.
+        code: the status code for the redirect.
     """
     new_path = environ['PATH_INFO'].strip('/') + '/'
     query_string = environ.get('QUERY_STRING')
@@ -143,10 +144,12 @@ def import_string(import_name, silent=False):
 
     If `silent` is True the return value will be `None` if the import fails.
 
-    :param import_name: the dotted name for the object to import.
-    :param silent: if set to `True` import errors are ignored and
+    Args:
+        import_name: the dotted name for the object to import.
+        silent: if set to `True` import errors are ignored and
                    `None` is returned instead.
-    :return: imported object
+    Returns:
+        imported object
     """
     # force the import name to automatically convert to strings
     # __import__ is not able to handle unicode strings in the fromlist
@@ -180,35 +183,3 @@ def import_string(import_name, silent=False):
                 ImportStringError,
                 ImportStringError(import_name, e),
                 sys.exc_info()[2])
-
-
-def find_modules(import_path, include_packages=False, recursive=False):
-    """Finds all the modules below a package.  This can be useful to
-    automatically import all views / controllers so that their metaclasses /
-    function decorators have a chance to register themselves on the
-    application.
-
-    Packages are not returned unless `include_packages` is `True`.  This can
-    also recursively list modules but in that case it will import all the
-    packages to get the correct load path of that module.
-
-    :param import_name: the dotted name for the package to find child modules.
-    :param include_packages: set to `True` if packages should be returned, too.
-    :param recursive: set to `True` if recursion should happen.
-    :return: generator
-    """
-    module = import_string(import_path)
-    path = getattr(module, '__path__', None)
-    if path is None:
-        raise ValueError('%r is not a package' % import_path)
-    basename = module.__name__ + '.'
-    for importer, modname, ispkg in pkgutil.iter_modules(path):
-        modname = basename + modname
-        if ispkg:
-            if include_packages:
-                yield modname
-            if recursive:
-                for item in find_modules(modname, include_packages, True):
-                    yield item
-        else:
-            yield modname

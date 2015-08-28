@@ -15,10 +15,12 @@ class Response(object):
         This class does support dict-like case-insensitive item-access to
         headers, but is NOT a dict. Most notably, iterating over a response
         yields parts of the body and not the headers.
-        :param body: The response body as one of the supported types.
-        :param status: Either an HTTP status code (e.g. 200) or a status line
+
+        Args:
+            body: The response body as one of the supported types.
+            status: Either an HTTP status code (e.g. 200) or a status line
                        including the reason phrase (e.g. '200 OK').
-        :param headers: A dictionary or a list of name-value pairs.
+            headers: A dictionary or a list of name-value pairs.
         Additional keyword arguments are added to the list of headers.
         Underscores in the header name are replaced with dashes.
     """
@@ -105,14 +107,14 @@ class Response(object):
         _get_status, _set_status, None,
         ''' A writeable property to change the HTTP response status. It accepts
             either a numeric code (100-999) or a string with a custom reason
-            phrase (e.g. "404 Brain not found"). Both :data:`status_line` and
-            :data:`status_code` are updated accordingly. The return value is
+            phrase (e.g. "404 Brain not found"). Both `status_line` and
+            `status_code` are updated accordingly. The return value is
             always a status string. ''')
     del _get_status, _set_status
 
     @property
     def headers(self):
-        """ An instance of :class:`HeaderDict`, a case-insensitive dict-like
+        """ An instance of `HeaderDict`, a case-insensitive dict-like
             view on the response headers. """
         hdict = HeaderDict()
         hdict.dict = self._headers
@@ -189,19 +191,21 @@ class Response(object):
     def set_cookie(self, name, value, secret=None, **options):
         """ Create a new cookie or replace an old one. If the `secret` parameter is
             set, create a `Signed Cookie` (described below).
-            :param name: the name of the cookie.
-            :param value: the value of the cookie.
-            :param secret: a signature key required for signed cookies.
+
+            Args:
+                name: the name of the cookie.
+                value: the value of the cookie.
+                secret: a signature key required for signed cookies.
+
             Additionally, this method accepts all RFC 2109 attributes that are
-            supported by :class:`cookie.Morsel`, including:
-            :param max_age: maximum age in seconds. (default: None)
-            :param expires: a datetime object or UNIX timestamp. (default: None)
-            :param domain: the domain that is allowed to read the cookie.
-              (default: current domain)
-            :param path: limits the cookie to a given path (default: current path)
-            :param secure: limit the cookie to HTTPS connections (default: off).
-            :param httponly: prevents client-side javascript to read this cookie
-              (default: off, requires Python 2.6 or newer).
+            supported by `cookie.Morsel`, including:
+                max_age: maximum age in seconds. (default: None)
+                expires: a datetime object or UNIX timestamp. (default: None)
+                domain: the domain that is allowed to read the cookie. (default: current domain)
+                path: limits the cookie to a given path (default: current path)
+                secure: limit the cookie to HTTPS connections (default: off).
+                httponly: prevents client-side javascript to read this cookie (default: off).
+        
             If neither `expires` nor `max_age` is set (default), the cookie will
             expire at the end of the browser session (as soon as the browser
             window is closed).

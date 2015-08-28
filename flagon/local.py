@@ -28,8 +28,8 @@ def release_local(local):
         >>> hasattr(loc, 'foo')
         False
 
-    With this function one can release :class:`Local` objects as well
-    as :class:`LocalStack` objects.  However it is not possible to
+    With this function one can release `Local` objects as well
+    as `LocalStack` objects.  However it is not possible to
     release data held by proxies that way, one always has to retain
     a reference to the underlying local object in order to be able
     to release it.
@@ -77,7 +77,7 @@ class Local(object):
 
 
 class LocalStack(object):
-    """This class works similar to a :class:`Local` but keeps a stack
+    """This class works similar to a `Local` but keeps a stack
     of objects instead.  This is best explained with an example::
 
         >>> ls = LocalStack()
@@ -92,8 +92,8 @@ class LocalStack(object):
         >>> ls.top
         42
 
-    They can be force released by using a :class:`LocalManager` or with
-    the :func:`release_local` function but the correct way is to pop the
+    They can be force released by using a `LocalManager` or with
+    the `release_local` function but the correct way is to pop the
     item from the stack after using.  When the stack is empty it will
     no longer be bound to the current context (and as such released).
 
@@ -175,18 +175,16 @@ class LocalProxy(object):
         response = _response_local()
 
     Whenever something is bound to l.user / l.request the proxy objects
-    will forward all operations.  If no object is bound a :exc:`RuntimeError`
+    will forward all operations.  If no object is bound a `RuntimeError`
     will be raised.
 
-    To create proxies to :class:`Local` or :class:`LocalStack` objects,
+    To create proxies to `Local` or `LocalStack` objects,
     call the object as shown above.  If you want to have a proxy to an
-    object looked up by a function, you can (as of Werkzeug 0.6.1) pass
-    a function to the :class:`LocalProxy` constructor::
+    object looked up by a function, you can  pass a function to
+    the `LocalProxy` constructor::
 
         session = LocalProxy(lambda: get_current_request().session)
 
-    .. versionchanged:: 0.6.1
-       The class can be instanciated with a callable as well now.
     """
     __slots__ = ('__local', '__dict__', '__name__')
 

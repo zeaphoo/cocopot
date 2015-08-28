@@ -2,7 +2,6 @@
 """
     Defines all the global objects that are proxies to the current
     active context.
-
 """
 
 from functools import partial

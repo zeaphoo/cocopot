@@ -114,10 +114,11 @@ class MultiDict(DictMixin):
 
     def get(self, key, default=None, index=0, type=None):
         """ Return the most recent value for a key.
-            :param default: The default value to be returned if the key is not
+            Args:
+                default: The default value to be returned if the key is not
                    present or the type conversion fails.
-            :param index: An index for the list of available values.
-            :param type: If defined, this callable is used to cast the value
+                index: An index for the list of available values.
+                type: If defined, this callable is used to cast the value
                     into a specific type. Exception are suppressed and result in
                     the default value to be returned.
         """
@@ -147,17 +148,17 @@ class MultiDict(DictMixin):
 
 
 class FormsDict(MultiDict):
-    """ This :class:`MultiDict` subclass is used to store request form data.
+    """ This `MultiDict` subclass is used to store request form data.
         Additionally to the normal dict-like item access methods (which return
         unmodified data as native strings), this container also supports
         attribute-like access to its values. Attributes are automatically de-
-        or recoded to match :attr:`input_encoding` (default: 'utf8'). Missing
+        or recoded to match `input_encoding` (default: 'utf8'). Missing
         attributes default to an empty string. """
 
     #: Encoding used for attribute values.
     input_encoding = 'utf8'
     #: If true (default), unicode strings are first encoded with `latin1`
-    #: and then decoded to match :attr:`input_encoding`.
+    #: and then decoded to match `input_encoding`.
     recode_unicode = True
 
     def _fix(self, s, encoding=None):
@@ -170,7 +171,7 @@ class FormsDict(MultiDict):
 
     def decode(self, encoding=None):
         """ Returns a copy with all keys and values de- or recoded to match
-            :attr:`input_encoding`. Some libraries (e.g. WTForms) want a
+            `input_encoding`. Some libraries (e.g. WTForms) want a
             unicode dictionary. """
         copy = FormsDict()
         enc = copy.input_encoding = encoding or self.input_encoding
@@ -194,7 +195,7 @@ class FormsDict(MultiDict):
 
 
 class HeaderDict(MultiDict):
-    """ A case-insensitive version of :class:`MultiDict` that defaults to
+    """ A case-insensitive version of `MultiDict` that defaults to
         replace the old value instead of appending it. """
 
     def __init__(self, *a, **ka):
@@ -319,7 +320,7 @@ class FileUpload(object):
         self.name = name
         #: Raw filename as sent by the client (may contain unsafe characters)
         self.raw_filename = filename
-        #: A :class:`HeaderDict` with additional headers (e.g. content-type)
+        #: A `HeaderDict` with additional headers (e.g. content-type)
         self.headers = HeaderDict(headers) if headers else HeaderDict()
 
     content_type = HeaderProperty('Content-Type')
@@ -354,11 +355,12 @@ class FileUpload(object):
 
     def save(self, destination, overwrite=False, chunk_size=2 ** 16):
         """ Save file to disk or copy its content to an open file(-like) object.
-            If *destination* is a directory, :attr:`filename` is added to the
+            If *destination* is a directory, `filename` is added to the
             path. Existing files are not overwritten by default (IOError).
-            :param destination: File path, directory or file(-like) object.
-            :param overwrite: If True, replace existing files. (default: False)
-            :param chunk_size: Bytes to read at a time. (default: 64kb)
+            Args:
+                destination: File path, directory or file(-like) object.
+                overwrite: If True, replace existing files. (default: False)
+                chunk_size: Bytes to read at a time. (default: 64kb)
         """
         if isinstance(destination, basestring):  # Except file-likes here
             if os.path.isdir(destination):
