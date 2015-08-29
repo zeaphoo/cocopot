@@ -2,7 +2,7 @@
 Flagon
 -------
 
-Flagon is a microframework for Python based on Flask. Foucus on mobile service, no default template system.
+Flagon is a microframework for Python. Foucus on mobile service and cloud service, no default template system.
 
 Flagon is Fun
 ````````````
@@ -45,9 +45,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms='any',
-    install_requires=[
-        'itsdangerous>=0.21'
-    ],
+    install_requires=[],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',

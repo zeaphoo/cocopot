@@ -397,18 +397,6 @@ class Flagon(object):
         are executed when the request context is popped, even if not an
         actual request was performed.
 
-        Example:
-
-            ctx = app.test_request_context()
-            ctx.push()
-            ...
-            ctx.pop()
-
-        When ``ctx.pop()`` is executed in the above example, the teardown
-        functions are called just before the request context moves from the
-        stack of active contexts.  This becomes relevant if you are using
-        such constructs in tests.
-
         Generally teardown functions must take every necessary step to avoid
         that they will fail.  If they do execute code that might fail they
         will have to surround the execution of these code by try/except
@@ -541,9 +529,6 @@ class Flagon(object):
         If any of these function returns a value it's handled as
         if it was the return value from the view and further
         request handling is stopped.
-
-        This also triggers the `url_value_processor` functions before
-        the actual `before_request` functions are called.
         """
         bp = _request_ctx_stack.top.request.blueprint
         funcs = self.before_request_funcs.get(None, ())
