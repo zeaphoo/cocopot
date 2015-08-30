@@ -167,8 +167,8 @@ class Blueprint(object):
         special case is the 500 internal server error which is always looked
         up from the application.
 
-        Otherwise works as the `~flagon.Flagon.errorhandler` decorator
-        of the `~flagon.Flagon` object.
+        Otherwise works as the `Flagon.errorhandler` decorator
+        of the `Flagon` object.
         """
         def decorator(f):
             self.record(lambda s: s.app._register_error_handler(

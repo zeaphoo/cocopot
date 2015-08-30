@@ -70,6 +70,9 @@ class RequestContext(object):
     def __exit__(self, exc_type, exc_value, tb):
         self.pop(exc_value)
 
+def url_for(endpoint, **values):
+    pass
+
 class Flagon(object):
     """The flagon object implements a WSGI application and acts as the central
     object.  Once it is created it will act as a central registry for

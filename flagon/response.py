@@ -10,6 +10,9 @@ from .datastructures import HeaderProperty
 from .exceptions import HTTPException
 
 
+def make_response(*args):
+    pass
+
 class Response(object):
     """ Storage class for a response body as well as headers and cookies.
         This class does support dict-like case-insensitive item-access to
@@ -205,7 +208,7 @@ class Response(object):
                 path: limits the cookie to a given path (default: current path)
                 secure: limit the cookie to HTTPS connections (default: off).
                 httponly: prevents client-side javascript to read this cookie (default: off).
-        
+
             If neither `expires` nor `max_age` is set (default), the cookie will
             expire at the end of the browser session (as soon as the browser
             window is closed).
