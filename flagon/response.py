@@ -11,7 +11,31 @@ from .exceptions import HTTPException
 
 
 def make_response(*args):
-    pass
+    rv, status_or_headers, headers = args + (None,) * (3 - len(args))
+
+    if rv is None:
+        raise ValueError('View function did not return a response')
+
+    if isinstance(status_or_headers, (dict, list)):
+        headers, status_or_headers = status_or_headers, None
+
+    if isinstance(rv, (text_type, bytes, bytearray)):
+        rv = Response(rv, headers=headers,
+                                 status=status_or_headers)
+    else:
+        if not isinstance(rv, Response):
+            raise ValueError('View function returns must be Response or text, not %s'%(rv))
+
+        if status_or_headers is not None:
+            if isinstance(status_or_headers, string_types):
+                rv.status = status_or_headers
+            else:
+                rv.status_code = status_or_headers
+
+        if headers:
+            rv.headers.extend(headers)
+
+    return rv
 
 class Response(object):
     """ Storage class for a response body as well as headers and cookies.
