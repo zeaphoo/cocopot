@@ -2,8 +2,8 @@
 from functools import update_wrapper
 from datetime import datetime, timedelta
 
-from .http import HTTP_STATUS_CODES, http_date
-from .utils import cached_property
+from .http import HTTP_STATUS_CODES, http_date, html_escape
+from .utils import cached_property, json
 from ._compat import PY2, to_bytes, string_types, text_type, \
      integer_types, to_unicode, to_native, BytesIO
 from .datastructures import HeaderProperty
@@ -35,6 +35,51 @@ def make_response(*args):
         if headers:
             rv.headers.extend(headers)
 
+    return rv
+
+def redirect(location, code=302):
+    """Returns a response object (a WSGI application) that, if called,
+    redirects the client to the target location.  Supported codes are 301,
+    302, 303, 305, and 307.
+    Args:
+        location: the location the response should redirect to.
+        code: the redirect status code. defaults to 302.
+    """
+    display_location = html_escape(location)
+    response = Response(
+        '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n'
+        '<title>Redirecting...</title>\n'
+        '<h1>Redirecting...</h1>\n'
+        '<p>You should be redirected automatically to target URL: '
+        '<a href="%s">%s</a>.  If not click the link.' %
+        (html_escape(location), display_location), code, mimetype='text/html')
+    response.headers['Location'] = location
+    return response
+
+def jsonify(*args, **kwargs):
+    """Creates a `Response` with the JSON representation of
+    the given arguments with an`application/json` mimetype.  The
+    arguments to this function are the same as to the `dict`
+    constructor.
+    Example usage::
+        from flask import jsonify
+        @app.route('/_get_current_user')
+        def get_current_user():
+            return jsonify(username=g.user.username,
+                           email=g.user.email,
+                           id=g.user.id)
+    This will send a JSON response like this to the browser::
+        {
+            "username": "admin",
+            "email": "admin@localhost",
+            "id": 42
+        }
+    """
+
+    indent = None
+    separators = (',', ':')
+    rv = Response(json.dumps(dict(*args, **kwargs), indent=indent, separators=separators),
+        mimetype='application/json')
     return rv
 
 class Response(object):

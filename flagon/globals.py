@@ -17,5 +17,6 @@ def _lookup_req_object(name):
 # context locals
 _request_ctx_stack = LocalStack()
 request = LocalProxy(partial(_lookup_req_object, 'request'))
+current_app = LocalProxy(partial(_lookup_req_object, 'app'))
 g = LocalProxy(partial(_lookup_req_object, 'g'))
 config = ConfigDict()
