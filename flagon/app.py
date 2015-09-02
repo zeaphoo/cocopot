@@ -70,27 +70,6 @@ class RequestContext(object):
     def __exit__(self, exc_type, exc_value, tb):
         self.pop(exc_value)
 
-def url_for(endpoint, **values):
-    reqctx = _request_ctx_stack.top
-    # If request specific information is available we have some extra
-    # features that support "relative" URLs.
-    if reqctx is not None:
-        blueprint_name = reqctx.request.blueprint
-        if endpoint[:1] == '.':
-            if blueprint_name is not None:
-                endpoint = blueprint_name + endpoint
-            else:
-                endpoint = endpoint[1:]
-    else:
-        raise RuntimeError('url_for can only be used in request context.')
-
-    for k in ['_anchor', '_method', '_scheme', '_external']:
-        values.pop(k, None)
-
-    app = reqctx.app
-    #TODO: add url rule lookup function
-    return rv
-
 class Flagon(object):
     """The flagon object implements a WSGI application and acts as the central
     object.  Once it is created it will act as a central registry for
