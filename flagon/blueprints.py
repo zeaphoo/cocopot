@@ -17,9 +17,7 @@ class Blueprint(object):
         self.url_prefix = url_prefix
         self.deferred_functions = []
         self.view_functions = {}
-        if url_defaults is None:
-            url_defaults = {}
-        self.url_values_defaults = url_defaults
+        self.url_defaults = url_defaults or {}
 
     def record(self, func):
         """Registers a function that is called when the blueprint is

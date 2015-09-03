@@ -388,7 +388,7 @@ class Flagon(object):
         a new response object.
 
         """
-        self.after_request_funcs.setdefault(None, []).append(f)
+        self.after_request_funcs.setdefault(None, []).insert(0, f)
         return f
 
     def teardown_request(self, f):
@@ -405,7 +405,7 @@ class Flagon(object):
         When a teardown function was called because of a exception it will
         be passed an error object.
         """
-        self.teardown_request_funcs.setdefault(None, []).append(f)
+        self.teardown_request_funcs.setdefault(None, []).insert(0, f)
         return f
 
 
@@ -555,9 +555,9 @@ class Flagon(object):
         bp = ctx.request.blueprint
         funcs = []
         if bp is not None and bp in self.after_request_funcs:
-            funcs = chain(funcs, reversed(self.after_request_funcs[bp]))
+            funcs = chain(funcs, self.after_request_funcs[bp])
         if None in self.after_request_funcs:
-            funcs = chain(funcs, reversed(self.after_request_funcs[None]))
+            funcs = chain(funcs, self.after_request_funcs[None])
         for handler in funcs:
             response = handler(response)
         return response
@@ -571,10 +571,10 @@ class Flagon(object):
         """
         if exc is None:
             exc = sys.exc_info()[1]
-        funcs = reversed(self.teardown_request_funcs.get(None, ()))
+        funcs = self.teardown_request_funcs.get(None, ())
         bp = _request_ctx_stack.top.request.blueprint
         if bp is not None and bp in self.teardown_request_funcs:
-            funcs = chain(funcs, reversed(self.teardown_request_funcs[bp]))
+            funcs = chain(funcs, self.teardown_request_funcs[bp])
         for func in funcs:
             rv = func(exc)
 
