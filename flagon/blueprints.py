@@ -10,8 +10,7 @@ class Blueprint(object):
     """Represents a blueprint.
     """
 
-    def __init__(self, name, import_name,
-                 url_prefix=None, url_defaults=None):
+    def __init__(self, name, url_prefix=None, url_defaults=None):
         self.app = None
         self.name = name
         self.url_prefix = url_prefix
