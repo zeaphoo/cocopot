@@ -10,7 +10,7 @@ Flagon is Fun
 .. code:: python
 
     from flagon import Flagon
-    app = Flagon(__name__)
+    app = Flagon()
 
     @app.route("/")
     def hello():
