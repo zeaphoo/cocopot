@@ -281,7 +281,6 @@ class Flagon(object):
                 raise AssertionError('View function mapping is overwriting an '
                                      'existing endpoint function: %s' % endpoint)
             self.view_functions[endpoint] = view_func
-        print self.view_functions
 
     def route(self, rule, **options):
         """A decorator that is used to register a view function for a
@@ -503,7 +502,6 @@ class Flagon(object):
         if req.routing_exception is not None:
             self.raise_routing_exception(req)
         # otherwise dispatch to the handler for that endpoint
-        print 'dispatch', self.view_functions[req.endpoint]
         return self.view_functions[req.endpoint](**req.view_args)
 
     def full_dispatch_request(self):
@@ -545,11 +543,11 @@ class Flagon(object):
         call all the `after_request` decorated functions.
 
         Args:
-            response: a `response_class` object.
+            response: a `Response` object.
 
         Returns:
             a new response object or the same, has to be an
-                 instance of `response_class`.
+                 instance of `Response`.
         """
         ctx = _request_ctx_stack.top
         bp = ctx.request.blueprint

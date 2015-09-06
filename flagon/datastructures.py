@@ -50,7 +50,6 @@ class MultiDict(DictMixin):
             l = self.dict.setdefault(k, [])
             l.append(v)
         #self.dict = dict((k, [v]) for (k, v) in dict(*a, **k).items())
-        print 'init', self.dict
 
     def __len__(self):
         return len(self.dict)
@@ -65,7 +64,6 @@ class MultiDict(DictMixin):
         del self.dict[key]
 
     def __getitem__(self, key):
-        print self.dict[key]
         return self.dict[key][0]
 
     def __setitem__(self, key, value):
@@ -123,7 +121,6 @@ class MultiDict(DictMixin):
                     the default value to be returned.
         """
         try:
-            print self.dict[key]
             val = self.dict[key][index]
             return type(val) if type else val
         except Exception:
