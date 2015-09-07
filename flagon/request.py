@@ -98,7 +98,11 @@ class Request(object):
 
     @cached_property
     def args(self):
-        return MultiDict(urldecode(self.environ.get('QUERY_STRING', '')))
+        query_string = self.environ.get('QUERY_STRING', '')
+        if query_string:
+            return MultiDict(urldecode(query_string))
+        else:
+            return MultiDict()
 
     @property
     def data(self):
@@ -333,7 +337,7 @@ class Request(object):
         """
         return '/' + self.environ.get('PATH_INFO', '').lstrip('/')
 
-    @cached_property
+    @property
     def script_name(self):
         """ The initial portion of the URL's `path` that was removed by a higher
             level (server or routing middleware) before the application was
@@ -342,7 +346,7 @@ class Request(object):
         script_name = self.environ.get('SCRIPT_NAME', '').strip('/')
         return '/' + script_name + '/' if script_name else '/'
 
-    @cached_property
+    @property
     def full_path(self):
         """Requested path as unicode, including the query string."""
         return urljoin(self.script_name, self.path.lstrip('/'))

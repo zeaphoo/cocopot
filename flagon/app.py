@@ -15,7 +15,7 @@ from .routing import Router
 from .exceptions import HTTPException, InternalServerError, MethodNotAllowed, BadRequest, RequestRedirect
 
 from .request import Request
-from .response import Response
+from .response import Response, make_response
 from .globals import _request_ctx_stack, request, g
 from ._compat import reraise, string_types, text_type, integer_types
 
@@ -517,7 +517,7 @@ class Flagon(object):
             import traceback
             print(traceback.format_exc())
             rv = self.handle_user_exception(e)
-        response = Response(rv)
+        response = make_response(rv)
         response = self.process_response(response)
         return response
 
@@ -600,7 +600,7 @@ class Flagon(object):
         req = Request(environ)
         ctx = RequestContext(self, environ, req)
         try:
-            endpoint, view_args = self.router.match(req.full_path)
+            endpoint, view_args = self.router.match(environ['PATH_INFO'])
             req.endpoint, req.view_args = endpoint, view_args
         except HTTPException as e:
             req.routing_exception = e
@@ -614,7 +614,7 @@ class Flagon(object):
                 import traceback
                 print(traceback.format_exc())
                 error = e
-                response = Response(self.handle_exception(e))
+                response = make_response(self.handle_exception(e))
             return response(environ, start_response)
         finally:
             ctx.pop(error)

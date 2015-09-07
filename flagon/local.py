@@ -3,7 +3,6 @@
     This module implements context-local objects.
 """
 from ._compat import PY2
-
 # since each thread has its own greenlet we can just use those as identifiers
 # for the context.  If greenlets are not available we fall back to the
 # current thread ident depending on where it is.
@@ -14,66 +13,6 @@ except ImportError:
         from thread import get_ident
     except ImportError:
         from _thread import get_ident
-
-
-def release_local(local):
-    """Releases the contents of the local for the current context.
-    This makes it possible to use locals without a manager.
-
-    Example::
-
-        >>> loc = Local()
-        >>> loc.foo = 42
-        >>> release_local(loc)
-        >>> hasattr(loc, 'foo')
-        False
-
-    With this function one can release `Local` objects as well
-    as `LocalStack` objects.  However it is not possible to
-    release data held by proxies that way, one always has to retain
-    a reference to the underlying local object in order to be able
-    to release it.
-
-    """
-    local.__release_local__()
-
-
-class Local(object):
-    __slots__ = ('__storage__', '__ident_func__')
-
-    def __init__(self):
-        object.__setattr__(self, '__storage__', {})
-        object.__setattr__(self, '__ident_func__', get_ident)
-
-    def __iter__(self):
-        return iter(self.__storage__.items())
-
-    def __call__(self, proxy):
-        """Create a proxy for a name."""
-        return LocalProxy(self, proxy)
-
-    def __release_local__(self):
-        self.__storage__.pop(self.__ident_func__(), None)
-
-    def __getattr__(self, name):
-        try:
-            return self.__storage__[self.__ident_func__()][name]
-        except KeyError:
-            raise AttributeError(name)
-
-    def __setattr__(self, name, value):
-        ident = self.__ident_func__()
-        storage = self.__storage__
-        try:
-            storage[ident][name] = value
-        except KeyError:
-            storage[ident] = {name: value}
-
-    def __delattr__(self, name):
-        try:
-            del self.__storage__[self.__ident_func__()][name]
-        except KeyError:
-            raise AttributeError(name)
 
 
 class LocalStack(object):
@@ -91,42 +30,17 @@ class LocalStack(object):
         23
         >>> ls.top
         42
-
-    They can be force released by using a `LocalManager` or with
-    the `release_local` function but the correct way is to pop the
-    item from the stack after using.  When the stack is empty it will
-    no longer be bound to the current context (and as such released).
-
-    By calling the stack without arguments it returns a proxy that resolves to
-    the topmost item on the stack.
     """
 
     def __init__(self):
-        self._local = Local()
+        self._stack = {}
 
     def __release_local__(self):
-        self._local.__release_local__()
-
-    def _get__ident_func__(self):
-        return self._local.__ident_func__
-    def _set__ident_func__(self, value):
-        object.__setattr__(self._local, '__ident_func__', value)
-    __ident_func__ = property(_get__ident_func__, _set__ident_func__)
-    del _get__ident_func__, _set__ident_func__
-
-    def __call__(self):
-        def _lookup():
-            rv = self.top
-            if rv is None:
-                raise RuntimeError('object unbound')
-            return rv
-        return LocalProxy(_lookup)
+        self._stack.pop(get_ident(), None)
 
     def push(self, obj):
         """Pushes a new item to the stack"""
-        rv = getattr(self._local, 'stack', None)
-        if rv is None:
-            self._local.stack = rv = []
+        rv = self._stack.setdefault(get_ident(), [])
         rv.append(obj)
         return rv
 
@@ -134,11 +48,12 @@ class LocalStack(object):
         """Removes the topmost item from the stack, will return the
         old value or `None` if the stack was already empty.
         """
-        stack = getattr(self._local, 'stack', None)
+        ident = get_ident()
+        stack = self._stack.get(ident, None)
         if stack is None:
             return None
         elif len(stack) == 1:
-            release_local(self._local)
+            self._stack.pop(ident, None)
             return stack[-1]
         else:
             return stack.pop()
@@ -149,47 +64,23 @@ class LocalStack(object):
         `None` is returned.
         """
         try:
-            return self._local.stack[-1]
+            return self._stack.get(get_ident(), [])[-1]
         except (AttributeError, IndexError):
             return None
 
 class LocalProxy(object):
-    """Acts as a proxy for a flagon. local.  Forwards all operations to
-    a proxied object.  The only operations not supported for forwarding
-    are right handed operands and any kind of assignment.
-
-    Example usage::
-
-        from flagon.local import Local
-        l = Local()
-
-        # these are proxies
-        request = l('request')
-        user = l('user')
-
-
-        from flagon.local import LocalStack
-        _response_local = LocalStack()
-
-        # this is a proxy
-        response = _response_local()
-
-    Whenever something is bound to l.user / l.request the proxy objects
-    will forward all operations.  If no object is bound a `RuntimeError`
-    will be raised.
-
-    To create proxies to `Local` or `LocalStack` objects,
-    call the object as shown above.  If you want to have a proxy to an
-    object looked up by a function, you can  pass a function to
-    the `LocalProxy` constructor::
+    """Acts as a proxy for a object.  Forwards all operations to
+    a proxied object.
+    If you want to have a proxy to an object looked up by a function,
+    you can  pass a function to the `LocalProxy` constructor::
 
         session = LocalProxy(lambda: get_current_request().session)
 
     """
-    __slots__ = ('__local', '__dict__', '__name__')
+    __slots__ = ('__target', '__dict__', '__name__')
 
-    def __init__(self, local, name=None):
-        object.__setattr__(self, '_LocalProxy__local', local)
+    def __init__(self, target, name=None):
+        object.__setattr__(self, '_LocalProxy__target', target)
         object.__setattr__(self, '__name__', name)
 
     def _get_current_object(self):
@@ -197,10 +88,10 @@ class LocalProxy(object):
         object behind the proxy at a time for performance reasons or because
         you want to pass the object into a different context.
         """
-        if not hasattr(self.__local, '__release_local__'):
-            return self.__local()
+        if callable(self.__target):
+            return self.__target()
         try:
-            return getattr(self.__local, self.__name__)
+            return getattr(self.__target, self.__name__)
         except AttributeError:
             raise RuntimeError('no object bound to %s' % self.__name__)
 
