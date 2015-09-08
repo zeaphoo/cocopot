@@ -35,9 +35,6 @@ class LocalStack(object):
     def __init__(self):
         self._stack = {}
 
-    def __release_local__(self):
-        self._stack.pop(get_ident(), None)
-
     def push(self, obj):
         """Pushes a new item to the stack"""
         rv = self._stack.setdefault(get_ident(), [])
