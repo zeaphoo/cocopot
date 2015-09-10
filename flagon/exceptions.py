@@ -20,11 +20,10 @@ class HTTPException(Exception):
     code = None
     description = None
 
-    def __init__(self, description=None, response=None):
+    def __init__(self, description=None):
         Exception.__init__(self)
         if description is not None:
             self.description = description
-        self.response = response
 
     @classmethod
     def wrap(cls, exception, name=None):
@@ -44,11 +43,11 @@ class HTTPException(Exception):
         """The status name."""
         return HTTP_STATUS_CODES.get(self.code, 'Unknown Error')
 
-    def get_description(self, environ=None):
+    def get_description(self):
         """Get the description."""
         return u'%s' % self.description
 
-    def get_body(self, environ=None):
+    def get_body(self):
         """Get the HTML body."""
         return text_type((
             u'%(code)s %(name)s\n'
@@ -57,42 +56,13 @@ class HTTPException(Exception):
         ) % {
             'code':         self.code,
             'name':         self.name,
-            'description':  self.get_description(environ)
+            'description':  self.get_description()
         })
 
-    def get_headers(self, environ=None):
+    def get_headers(self):
         """Get a list of headers."""
-        return [('Content-Type', 'text/html')]
+        return [('Content-Type', 'text/plain')]
 
-    def get_response(self, environ=None):
-        """Get a response object.  If one was passed to the exception
-        it's returned directly.
-
-        Args:
-            environ: the optional environ for the request.  This
-                        can be used to modify the response depending
-                        on how the request looked like.
-        Returns:
-            a `Response` object or a subclass thereof.
-        """
-        if self.response is not None:
-            return self.response
-        if environ is not None:
-            environ = _get_environ(environ)
-        headers = self.get_headers(environ)
-        from .wrappers import Response
-        return Response(self.get_body(environ), self.code, headers)
-
-    def __call__(self, environ, start_response):
-        """Call the exception as WSGI application.
-
-        Args:
-            environ: the WSGI environment.
-            start_response: the response callable provided by the WSGI
-                               server.
-        """
-        response = self.get_response(environ)
-        return response(environ, start_response)
 
     def __str__(self):
         return '%d: %s' % (self.code, self.name)
@@ -112,8 +82,8 @@ class RequestRedirect(HTTPException):
     def __init__(self, new_url):
         self.new_url = new_url
 
-    def get_response(self, environ):
-        return redirect(self.new_url, self.code)
+    def get_headers(self):
+        return [('Location', self.new_url)]
 
 
 class BadRequest(HTTPException):
@@ -197,8 +167,8 @@ class MethodNotAllowed(HTTPException):
         HTTPException.__init__(self, description)
         self.valid_methods = valid_methods
 
-    def get_headers(self, environ):
-        headers = HTTPException.get_headers(self, environ)
+    def get_headers(self):
+        headers = HTTPException.get_headers(self)
         if self.valid_methods:
             headers.append(('Allow', ', '.join(self.valid_methods)))
         return headers

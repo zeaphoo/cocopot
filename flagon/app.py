@@ -500,7 +500,7 @@ class Flagon(object):
         """
         req = _request_ctx_stack.top.request
         if req.routing_exception is not None:
-            self.raise_routing_exception(req)
+            raise req.routing_exception
         # otherwise dispatch to the handler for that endpoint
         return self.view_functions[req.endpoint](**req.view_args)
 
@@ -597,6 +597,7 @@ class Flagon(object):
                                a list of headers and an optional
                                exception context to start the response
         """
+        print 'PATH_INFO', repr(environ['PATH_INFO'])
         req = Request(environ)
         ctx = RequestContext(self, environ, req)
         try:

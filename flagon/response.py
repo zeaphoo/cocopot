@@ -22,6 +22,9 @@ def make_response(*args):
     if isinstance(rv, (text_type, bytes, bytearray)):
         rv = Response(rv, headers=headers,
                                  status=status_or_headers)
+    elif isinstance(rv, HTTPException):
+        rv = Response(rv.get_body().encode('utf-8'), headers=rv.get_headers(),
+                                 status=rv.code)
     else:
         if not isinstance(rv, Response):
             raise ValueError('View function returns must be Response or text, not %s'%(rv))
@@ -98,7 +101,7 @@ class Response(object):
     """
 
     default_status = 200
-    default_content_type = 'application/json; charset=UTF-8'
+    default_content_type = 'text/plain; charset=UTF-8'
 
     # Header blacklist for specific response codes
     # (rfc2616 section 10.2.3 and 10.3.5)
