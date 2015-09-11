@@ -5,9 +5,9 @@ from datetime import datetime, timedelta
 from .http import HTTP_STATUS_CODES, http_date, html_escape
 from .utils import cached_property, json
 from ._compat import PY2, to_bytes, string_types, text_type, \
-     integer_types, to_unicode, to_native, BytesIO
+     integer_types, to_unicode, to_native, BytesIO, to_bytes
 from .datastructures import HeaderProperty, _hkey, HeaderDict
-from .exceptions import HTTPException
+from .exceptions import HTTPException, RequestRedirect
 
 
 def make_response(*args):
@@ -23,7 +23,7 @@ def make_response(*args):
         rv = Response(rv, headers=headers,
                                  status=status_or_headers)
     elif isinstance(rv, HTTPException):
-        rv = Response(rv.get_body().encode('utf-8'), headers=rv.get_headers(),
+        rv = Response(to_bytes(rv.get_body()), headers=rv.get_headers(),
                                  status=rv.code)
     else:
         if not isinstance(rv, Response):
@@ -48,16 +48,9 @@ def redirect(location, code=302):
         location: the location the response should redirect to.
         code: the redirect status code. defaults to 302.
     """
-    display_location = html_escape(location)
-    response = Response(
-        '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n'
-        '<title>Redirecting...</title>\n'
-        '<h1>Redirecting...</h1>\n'
-        '<p>You should be redirected automatically to target URL: '
-        '<a href="%s">%s</a>.  If not click the link.' %
-        (html_escape(location), display_location), code, mimetype='text/html')
-    response.headers['Location'] = location
-    return response
+    rv = RequestRedirect(location)
+    rv.code = code
+    return make_response(rv)
 
 def jsonify(*args, **kwargs):
     """Creates a `Response` with the JSON representation of

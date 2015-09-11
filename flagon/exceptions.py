@@ -7,7 +7,7 @@
 import sys
 
 from ._compat import integer_types, text_type
-from .http import HTTP_STATUS_CODES
+from .http import HTTP_STATUS_CODES, html_escape
 
 
 class HTTPException(Exception):
@@ -49,13 +49,7 @@ class HTTPException(Exception):
 
     def get_body(self):
         """Get the HTML body."""
-        return text_type((
-            u'%(code)s %(name)s\n'
-            u'%(name)s\n'
-            u'%(description)s\n'
-        ) % {
-            'code':         self.code,
-            'name':         self.name,
+        return text_type((u'%(description)s') % {
             'description':  self.get_description()
         })
 
@@ -83,8 +77,17 @@ class RequestRedirect(HTTPException):
         self.new_url = new_url
 
     def get_headers(self):
-        return [('Location', self.new_url)]
+        return [('Location', self.new_url), ('Content-Type', 'text/html')]
 
+    def get_body(self):
+        display_location = html_escape(self.new_url)
+        body = text_type((
+            '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">\n'
+            '<title>Redirecting...</title>\n'
+            '<h1>Redirecting...</h1>\n'
+            '<p>You should be redirected automatically to target URL: '
+            '<a href="%s">%s</a>.  If not click the link.') % (html_escape(self.new_url), display_location))
+        return body
 
 class BadRequest(HTTPException):
     """*400* `Bad Request`

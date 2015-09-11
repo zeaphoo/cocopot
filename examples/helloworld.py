@@ -1,5 +1,5 @@
 from flagon import Flagon
-app = Flagon()
+app = Flagon('hello')
 
 @app.route('/')
 def hello_world():

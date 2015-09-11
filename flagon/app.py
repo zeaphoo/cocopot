@@ -5,8 +5,8 @@
 
 import os
 import sys
-from threading import Lock
 from datetime import timedelta
+import traceback
 from itertools import chain
 from functools import update_wrapper
 from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
@@ -144,14 +144,6 @@ class Flagon(object):
         function also removes all attached handlers in case there was a
         logger with the log name before.
         """
-        Logger = getLoggerClass()
-
-        class DebugLogger(Logger):
-            def getEffectiveLevel(x):
-                if x.level == 0 and self.debug:
-                    return DEBUG
-                return Logger.getEffectiveLevel(x)
-
         class DebugHandler(StreamHandler):
             def emit(x, record):
                 StreamHandler.emit(x, record) if self.debug else None
@@ -163,8 +155,8 @@ class Flagon(object):
         # just in case that was not a new logger, get rid of all the handlers
         # already attached to it.
         del logger.handlers[:]
-        logger.__class__ = DebugLogger
         logger.addHandler(handler)
+        logger.setLevel(DEBUG)
         return logger
 
     @property
@@ -183,7 +175,7 @@ class Flagon(object):
         return self.import_name
 
 
-    def run(self, host=None, port=None, debug=None, **options):
+    def run(self, host=None, port=None, debug=True, **options):
         """Runs the application on a local development server.
         Args:
             host: the hostname to listen on. Set this to '0.0.0.0'` to
@@ -197,11 +189,9 @@ class Flagon(object):
         if host is None:
             host = '127.0.0.1'
         if port is None:
-            port = 5000
+            port = 3000
         if debug is not None:
             self.debug = bool(debug)
-        options.setdefault('use_reloader', self.debug)
-        options.setdefault('use_debugger', self.debug)
         run_simple(host, port, self, **options)
 
     def register_blueprint(self, blueprint, **options):
@@ -482,28 +472,6 @@ class Flagon(object):
             request.method
         ), exc_info=exc_info)
 
-    def raise_routing_exception(self, request):
-        """Exceptions that are recording during routing are reraised with
-        this method.  During debug we are not reraising redirect requests
-        for non ``GET``, ``HEAD``, or ``OPTIONS`` requests and we're raising
-        a different error instead to help debug situations.
-        """
-        if not isinstance(request.routing_exception, RequestRedirect) \
-           or request.method in ('GET', 'HEAD', 'OPTIONS'):
-            raise request.routing_exception
-
-    def dispatch_request(self):
-        """Does the request dispatching.  Matches the URL and returns the
-        return value of the view or error handler.  This does not have to
-        be a response object.  In order to convert the return value to a
-        proper response object, call `make_response`.
-        """
-        req = _request_ctx_stack.top.request
-        if req.routing_exception is not None:
-            raise req.routing_exception
-        # otherwise dispatch to the handler for that endpoint
-        return self.view_functions[req.endpoint](**req.view_args)
-
     def full_dispatch_request(self):
         """Dispatches the request and on top of that performs request
         pre and postprocessing as well as HTTP exception catching and
@@ -512,10 +480,10 @@ class Flagon(object):
         try:
             rv = self.preprocess_request()
             if rv is None:
-                rv = self.dispatch_request()
+                req = _request_ctx_stack.top.request
+                rv = self.view_functions[req.endpoint](**req.view_args)
         except Exception as e:
-            import traceback
-            print(traceback.format_exc())
+            self.logger.info('Traceback:\n%s'%(traceback.format_exc()))
             rv = self.handle_user_exception(e)
         response = make_response(rv)
         response = self.process_response(response)
@@ -597,23 +565,23 @@ class Flagon(object):
                                a list of headers and an optional
                                exception context to start the response
         """
-        print 'PATH_INFO', repr(environ['PATH_INFO'])
         req = Request(environ)
-        ctx = RequestContext(self, environ, req)
         try:
             endpoint, view_args = self.router.match(environ['PATH_INFO'])
             req.endpoint, req.view_args = endpoint, view_args
         except HTTPException as e:
             req.routing_exception = e
+            response = make_response(req.routing_exception)
+            return response(environ, start_response)
 
+        ctx = RequestContext(self, environ, req)
         ctx.push()
         error = None
         try:
             try:
                 response = self.full_dispatch_request()
             except Exception as e:
-                import traceback
-                print(traceback.format_exc())
+                self.logger.info('Traceback:\n%s'%(traceback.format_exc()))
                 error = e
                 response = make_response(self.handle_exception(e))
             return response(environ, start_response)
