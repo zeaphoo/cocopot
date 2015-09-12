@@ -85,19 +85,13 @@ class Flagon(object):
 
     debug = False
 
-    log_format = (
-        '-' * 80 + '\n' +
-        '%(levelname)s in %(module)s [%(pathname)s:%(lineno)d]:\n' +
-        '%(message)s\n' +
-        '-' * 80
-    )
+    log_format = '%(message)s'
 
 
     def __init__(self, import_name=''):
         self.config = {}
 
         self.import_name = import_name
-        self.logger_name = self.import_name
 
         #: A dictionary of all view functions registered.  The keys will
         #: be function names which are also used to generate URLs and
@@ -151,7 +145,7 @@ class Flagon(object):
         handler = DebugHandler()
         handler.setLevel(DEBUG)
         handler.setFormatter(Formatter(self.log_format))
-        logger = getLogger(self.logger_name)
+        logger = getLogger(self.name or 'flagon')
         # just in case that was not a new logger, get rid of all the handlers
         # already attached to it.
         del logger.handlers[:]
@@ -478,12 +472,14 @@ class Flagon(object):
         error handling.
         """
         try:
+            req = _request_ctx_stack.top.request
+            endpoint, view_args = self.router.match(req.environ['PATH_INFO'])
+            req.endpoint, req.view_args = endpoint, view_args
             rv = self.preprocess_request()
             if rv is None:
-                req = _request_ctx_stack.top.request
                 rv = self.view_functions[req.endpoint](**req.view_args)
         except Exception as e:
-            self.logger.info('Traceback:\n%s'%(traceback.format_exc()))
+            self.logger.info('%s'%(traceback.format_exc()))
             rv = self.handle_user_exception(e)
         response = make_response(rv)
         response = self.process_response(response)
@@ -566,14 +562,6 @@ class Flagon(object):
                                exception context to start the response
         """
         req = Request(environ)
-        try:
-            endpoint, view_args = self.router.match(environ['PATH_INFO'])
-            req.endpoint, req.view_args = endpoint, view_args
-        except HTTPException as e:
-            req.routing_exception = e
-            response = make_response(req.routing_exception)
-            return response(environ, start_response)
-
         ctx = RequestContext(self, environ, req)
         ctx.push()
         error = None
@@ -581,7 +569,7 @@ class Flagon(object):
             try:
                 response = self.full_dispatch_request()
             except Exception as e:
-                self.logger.info('Traceback:\n%s'%(traceback.format_exc()))
+                self.logger.info('%s'%(traceback.format_exc()))
                 error = e
                 response = make_response(self.handle_exception(e))
             return response(environ, start_response)

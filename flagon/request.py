@@ -35,12 +35,6 @@ class Request(object):
     #: happened when matching, this will be `None`.
     view_args = None
 
-    #: if matching the URL failed, this is the exception that will be
-    #: raised / was raised as part of the request handling.  This is
-    #: usually a `~flagon.exceptions.NotFound` exception or
-    #: something similar.
-    routing_exception = None
-
     def __init__(self, environ, populate_request=True):
         self.environ = environ
         if populate_request:
