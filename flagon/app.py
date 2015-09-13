@@ -9,7 +9,7 @@ from datetime import timedelta
 import traceback
 from itertools import chain
 from functools import update_wrapper
-from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG
+from logging import getLogger, StreamHandler, Formatter, getLoggerClass, DEBUG, INFO, NOTSET
 
 from .routing import Router
 from .exceptions import HTTPException, InternalServerError, MethodNotAllowed, BadRequest, RequestRedirect
@@ -146,11 +146,9 @@ class Flagon(object):
         handler.setLevel(DEBUG)
         handler.setFormatter(Formatter(self.log_format))
         logger = getLogger(self.name or 'flagon')
-        # just in case that was not a new logger, get rid of all the handlers
-        # already attached to it.
-        del logger.handlers[:]
         logger.addHandler(handler)
-        logger.setLevel(DEBUG)
+        if logger.level == NOTSET or logger.level > INFO:
+            logger.setLevel(INFO)
         return logger
 
     @property
