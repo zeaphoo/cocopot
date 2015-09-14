@@ -572,6 +572,7 @@ class Flagon(object):
                 response = make_response(self.handle_exception(e))
             return response(environ, start_response)
         finally:
+            self.do_teardown_request(error)
             ctx.pop(error)
 
     def __call__(self, environ, start_response):
