@@ -121,6 +121,7 @@ class Flagon(object):
         #: example be used to open database connections or getting hold of the
         #: currently logged in user.
         self.after_request_funcs = {}
+        self.teardown_request_funcs = {}
 
         #: all the attached blueprints in a dictionary by name.  Blueprints
         #: can be attached multiple times so this dictionary does not tell
