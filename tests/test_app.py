@@ -1,6 +1,6 @@
 import pytest
 
-from flagon import Flagon, Blueprint, request, g
+from flagon import Flagon, Blueprint, request, g, abort
 import copy
 import traceback
 
@@ -89,3 +89,36 @@ def test_basic_app():
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo2'
     assert app(env, start_response)  == '404'
+
+def test_blueprint_errorhandler():
+    app = Flagon()
+
+    bp = Blueprint('foo', url_prefix='/foo')
+
+    @bp.route('/bar')
+    def bar():
+        abort(400)
+        return 'bar'
+
+    @bp.route('/bar2')
+    def bar2():
+        i = 1/0
+        return 'bar'
+
+    @bp.errorhandler(400)
+    def bp_errorhandler400(exception):
+        return 'bar'
+
+    @bp.errorhandler(Exception)
+    def bp_errorhandler(exception):
+        return 'bar2'
+
+    app.register_blueprint(bp)
+
+    env = copy.deepcopy(env1)
+    env['PATH_INFO'] = '/foo/bar'
+    assert app(env, start_response)  == 'bar'
+
+    env = copy.deepcopy(env1)
+    env['PATH_INFO'] = '/foo/bar2'
+    assert app(env, start_response)  == 'bar2'
