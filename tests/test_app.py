@@ -122,3 +122,37 @@ def test_blueprint_errorhandler():
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo/bar2'
     assert app(env, start_response)  == 'bar2'
+
+
+def test_blueprint():
+    app = Flagon()
+
+    bp = Blueprint('foo', url_prefix='/foo')
+
+    @bp.route('/bar')
+    def bar():
+        return 'bar'
+
+    @bp.route('/bar2')
+    def bar2():
+        return 'bar2'
+
+    app.register_blueprint(bp)
+    bp.url_prefix = '/foo2'
+    app.register_blueprint(bp)
+
+    env = copy.deepcopy(env1)
+    env['PATH_INFO'] = '/foo/bar'
+    assert app(env, start_response)  == 'bar'
+
+    env = copy.deepcopy(env1)
+    env['PATH_INFO'] = '/foo/bar2'
+    assert app(env, start_response)  == 'bar2'
+
+    env = copy.deepcopy(env1)
+    env['PATH_INFO'] = '/foo2/bar'
+    assert app(env, start_response)  == 'bar'
+
+    env = copy.deepcopy(env1)
+    env['PATH_INFO'] = '/foo2/bar2'
+    assert app(env, start_response)  == 'bar2'
