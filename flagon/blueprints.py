@@ -17,6 +17,7 @@ class Blueprint(object):
         self.deferred_functions = []
         self.view_functions = {}
         self.url_defaults = url_defaults or {}
+        self.register_options = {}
 
     def record(self, func):
         """Registers a function that is called when the blueprint is
@@ -32,7 +33,7 @@ class Blueprint(object):
         self.deferred_functions.append(func)
 
 
-    def register(self, app, options, first_registration=False):
+    def register(self, app, options):
         """Called by `Flagon.register_blueprint` to register a blueprint
         on the application.  This can be overridden to customize the register
         behavior.  Keyword arguments from
@@ -40,6 +41,7 @@ class Blueprint(object):
         method in the `options` dictionary.
         """
         self.app = app
+        self.register_options = options or {}
         for deferred in self.deferred_functions:
             deferred(self)
 
@@ -67,8 +69,9 @@ class Blueprint(object):
         to the application.  The endpoint is automatically prefixed with the
         blueprint's name.
         """
-        if self.url_prefix:
-            rule = self.url_prefix + rule
+        url_prefix = self.register_options.get('url_prefix') or self.url_prefix
+        if url_prefix:
+            rule = url_prefix + rule
         if endpoint is None:
             endpoint = view_func.__name__
         defaults = self.url_defaults

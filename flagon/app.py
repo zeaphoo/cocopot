@@ -190,7 +190,6 @@ class Flagon(object):
     def register_blueprint(self, blueprint, **options):
         """Registers a blueprint on the application.
         """
-        first_registration = False
         if blueprint.name in self.blueprints:
             assert self.blueprints[blueprint.name] is blueprint, \
                 'A blueprint\'s name collision occurred between %r and ' \
@@ -199,8 +198,7 @@ class Flagon(object):
                 (blueprint, self.blueprints[blueprint.name], blueprint.name)
         else:
             self.blueprints[blueprint.name] = blueprint
-            first_registration = True
-        blueprint.register(self, options, first_registration)
+        blueprint.register(self, options)
 
     def add_url_rule(self, rule, endpoint=None, view_func=None, methods=None, **options):
         """Connects a URL rule.  Works exactly like the `route`

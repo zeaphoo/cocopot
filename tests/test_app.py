@@ -138,8 +138,7 @@ def test_blueprint():
         return 'bar2'
 
     app.register_blueprint(bp)
-    bp.url_prefix = '/foo2'
-    app.register_blueprint(bp)
+    app.register_blueprint(bp, url_prefix='/foo2')
 
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo/bar'
