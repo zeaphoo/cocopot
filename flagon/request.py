@@ -506,6 +506,7 @@ class Request(object):
             cache: if set to `True` the parsed JSON data is remembered
                       on the request.
         """
+        _missing = object()
         rv = getattr(self, '_cached_json', _missing)
         if rv is not _missing:
             return rv

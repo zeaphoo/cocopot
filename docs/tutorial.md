@@ -1,6 +1,6 @@
 
 
-= write your first flagon app
+# write your first flagon app
 
 ```python
 from flagon import Flagon

@@ -26,7 +26,7 @@ And Easy to Setup
 
     $ pip install Flagon
     $ python hello.py
-     * Running on http://localhost:5000/
+     * Running on http://localhost:3000/
 
 """
 from __future__ import print_function
