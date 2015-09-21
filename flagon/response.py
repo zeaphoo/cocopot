@@ -6,7 +6,7 @@ from .http import HTTP_STATUS_CODES, http_date, html_escape
 from .utils import cached_property, json
 from ._compat import PY2, to_bytes, string_types, text_type, \
      integer_types, to_unicode, to_native, BytesIO, to_bytes
-from .datastructures import HeaderProperty, _hkey, HeaderDict
+from .datastructures import HeaderProperty, HeaderDict
 from .exceptions import HTTPException, RequestRedirect
 
 
@@ -107,7 +107,7 @@ class Response(object):
 
     def __init__(self, body='', status=None, headers=None, **more_headers):
         self._cookies = None
-        self._headers = {}
+        self._headers = HeaderDict()
         self.body = self.init_with(body, status or self.default_status)
         if headers:
             if isinstance(headers, dict):
@@ -132,7 +132,7 @@ class Response(object):
         assert issubclass(cls,Response)
         copy = cls()
         copy.status = self.status
-        copy._headers = dict((k, v[:]) for (k, v) in self._headers.items())
+        copy._headers = HeaderDict(self._headers.allitems())
         if self._cookies:
             copy._cookies = SimpleCookie()
             copy._cookies.load(self._cookies.output(header=''))
@@ -184,38 +184,33 @@ class Response(object):
     def headers(self):
         """ An instance of `HeaderDict`, a case-insensitive dict-like
             view on the response headers. """
-        hdict = HeaderDict()
-        hdict.dict = self._headers
-        return hdict
+        return self._headers
 
     def __contains__(self, name):
-        return _hkey(name) in self._headers
+        return name in self._headers
 
     def __delitem__(self, name):
-        del self._headers[_hkey(name)]
+        del self._headers[name]
 
     def __getitem__(self, name):
-        return self._headers[_hkey(name)][-1]
+        return self._headers[name]
 
     def __setitem__(self, name, value):
-        self._headers[_hkey(name)] = [value if isinstance(value, unicode) else
-                                      str(value)]
+        self._headers[name] = value
 
     def get_header(self, name, default=None):
         """ Return the value of a previously defined header. If there is no
             header with that name, return a default value. """
-        return self._headers.get(_hkey(name), [default])[-1]
+        return self._headers.get(name, [default])
 
     def set_header(self, name, value):
         """ Create a new response header, replacing any previously defined
             headers with the same name. """
-        self._headers[_hkey(name)] = [value if isinstance(value, unicode)
-                                            else str(value)]
+        self._headers.replace(name, value)
 
     def add_header(self, name, value):
         """ Add an additional response header, not removing duplicates. """
-        self._headers.setdefault(_hkey(name), []).append(
-            value if isinstance(value, unicode) else str(value))
+        self._headers.append(name, value)
 
     def iter_headers(self):
         """ Yield (header, value) tuples, skipping headers that are not
