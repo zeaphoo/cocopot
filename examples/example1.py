@@ -3,9 +3,11 @@ app = Flagon('example1')
 
 @app.before_request
 def before_request():
-    request.view_args.update(foo='123')
+    if 'foo' not in request.view_args:
+        request.view_args.update(foo='123')
 
 @app.route('/')
+@app.route('/<foo>/bar')
 def hello_world(foo):
     print 'hello', foo
     return 'Hello World!'

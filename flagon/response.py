@@ -36,7 +36,8 @@ def make_response(*args):
                 rv.status_code = status_or_headers
 
         if headers:
-            rv.headers.extend(headers)
+            for name, value in headers:
+                rv.add_header(name, value)
 
     return rv
 
@@ -220,14 +221,16 @@ class Response(object):
     @property
     def headerlist(self):
         """ WSGI conform list of (header, value) tuples. """
+        import flagon
         out = []
-        headers = list(self._headers.items())
+        headers = self._headers.allitems()
         if 'Content-Type' not in self._headers:
-            headers.append(('Content-Type', [self.default_content_type]))
+            headers.append(('Content-Type', self.default_content_type))
+        headers.append(('Server', 'Flagon %s'%(flagon.__version__)))
         if self._status_code in self.bad_headers:
             bad_headers = self.bad_headers[self._status_code]
             headers = [h for h in headers if h[0] not in bad_headers]
-        out += [(name, val) for (name, vals) in headers for val in vals]
+        out.extend(headers)
         if self._cookies:
             for c in self._cookies.values():
                 out.append(('Set-Cookie', c.OutputString()))
