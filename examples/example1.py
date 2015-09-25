@@ -16,10 +16,14 @@ def hello_world(foo):
     print 'hello', foo
     return 'Hello World!'
 
-@app.route('/')
 @app.route('/<foo2>/noarg')
 def hello_world2():
     return 'Hello World!'
+
+@app.route('/<int:number>/num')
+def hello_world3(number):
+    return 'Hello World! %s'%(number)
+
 
 if __name__ == '__main__':
     app.run()
