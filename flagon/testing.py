@@ -10,7 +10,22 @@ class EnvironBuilder(object):
                  method='GET', input_stream=None, content_type=None,
                  content_length=None, errors_stream=None,headers=None, data=None,
                  environ_base=None, environ_overrides=None, charset='utf-8'):
-        pass
+        self.closed = False
+        self.files = []
+
+    def close(self):
+        """Closes all files.  If you put real :class:`file` objects into the
+        :attr:`files` dict you can call this method to automatically close
+        them all in one go.
+        """
+        if self.closed:
+            return
+        for f in files:
+            try:
+                f.close()
+            except Exception:
+                pass
+        self.closed = True
 
     def get_environ(self):
         """Return the built environ."""
@@ -56,12 +71,9 @@ class EnvironBuilder(object):
             'wsgi.version':         self.wsgi_version,
             'wsgi.url_scheme':      self.url_scheme,
             'wsgi.input':           input_stream,
-            'wsgi.errors':          self.errors_stream,
-            'wsgi.multithread':     self.multithread,
-            'wsgi.multiprocess':    self.multiprocess,
-            'wsgi.run_once':        self.run_once
+            'wsgi.errors':          self.errors_stream
         })
-        for key, value in self.headers.to_wsgi_list():
+        for key, value in self.headers.items():
             result['HTTP_%s' % key.upper().replace('-', '_')] = value
         if self.environ_overrides:
             result.update(self.environ_overrides)
@@ -70,11 +82,32 @@ class EnvironBuilder(object):
 class FlagonClinet(object):
     """
     """
-
-    preserve_context = False
+    def __init__(self, application, use_cookies=True):
+        self.application = application
 
     def open(self, *args, **kwargs):
         as_tuple = kwargs.pop('as_tuple', False)
         buffered = kwargs.pop('buffered', False)
         follow_redirects = kwargs.pop('follow_redirects', False)
-        builder = make_test_environ_builder(self.application, *args, **kwargs)
+        builder = EnvironBuilder(*args, **kwargs)
+        try:
+            environ = builder.get_environ()
+        finally:
+            builder.close()
+        response = self.run_wsgi_app(self.application, environ)
+
+        if as_tuple:
+            return environ, response
+        return response
+
+    def run_wsgi_app(self, app, environ):
+        response = []
+        resp_buffer = []
+        def start_response(status, headers, exc_info=None):
+            if exc_info is not None:
+                reraise(*exc_info)
+            response[:] = [status, headers]
+            return resp_buffer.append
+
+        app_rv = app(environ, start_response)
+        return app_rv
