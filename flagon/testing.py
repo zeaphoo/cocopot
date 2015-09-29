@@ -1,4 +1,8 @@
 
+import sys
+from  datastructures import MultiDict
+
+_empty_stream = object()
 
 class EnvironBuilder(object):
     server_protocol = 'HTTP/1.1'
@@ -10,8 +14,40 @@ class EnvironBuilder(object):
                  method='GET', input_stream=None, content_type=None,
                  content_length=None, errors_stream=None,headers=None, data=None,
                  environ_base=None, environ_overrides=None, charset='utf-8'):
+        self.path = path
+        self.base_url = base_url
+        self.host = 'localhost'
+        self.script_root = ''
+        self.url_scheme = 'http'
+        self.query_string = query_string
+        self.method = method
+        self.headers = headers or MultiDict()
+        self.content_type = content_type or 'text/plain'
+        if errors_stream is None:
+            errors_stream = sys.stderr
+        self.errors_stream = errors_stream
+        self.environ_base = environ_base
+        self.environ_overrides = environ_overrides
+        self.input_stream = input_stream
+        self.content_length = content_length
+        self.closed = False
         self.closed = False
         self.files = []
+
+    @property
+    def server_name(self):
+        """The server name (read-only, use :attr:`host` to set)"""
+        return self.host.split(':', 1)[0]
+
+    @property
+    def server_port(self):
+        """The server port as integer (read-only, use :attr:`host` to set)"""
+        pieces = self.host.split(':', 1)
+        if len(pieces) == 2 and pieces[1].isdigit():
+            return int(pieces[1])
+        elif self.url_scheme == 'https':
+            return 443
+        return 80
 
     def close(self):
         """Closes all files.  If you put real :class:`file` objects into the
@@ -20,7 +56,7 @@ class EnvironBuilder(object):
         """
         if self.closed:
             return
-        for f in files:
+        for f in self.files:
             try:
                 f.close()
             except Exception:
@@ -61,7 +97,7 @@ class EnvironBuilder(object):
             'REQUEST_METHOD':       self.method,
             'SCRIPT_NAME':          self.script_root,
             'PATH_INFO':            self.path,
-            'QUERY_STRING':         qs,
+            'QUERY_STRING':         self.query_string,
             'SERVER_NAME':          self.server_name,
             'SERVER_PORT':          str(self.server_port),
             'HTTP_HOST':            self.host,
@@ -79,7 +115,7 @@ class EnvironBuilder(object):
             result.update(self.environ_overrides)
         return result
 
-class FlagonClinet(object):
+class FlagonClient(object):
     """
     """
     def __init__(self, application, use_cookies=True):
