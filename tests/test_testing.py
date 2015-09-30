@@ -20,4 +20,6 @@ def test_client():
         return 'ok'
 
     c = FlagonClient(app)
-    assert c.open('/hello') == 'ok'
+    r = c.open('/hello')
+    assert r[0] == 'ok'
+    assert r[1] == '200 OK'

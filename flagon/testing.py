@@ -146,4 +146,4 @@ class FlagonClient(object):
             return resp_buffer.append
 
         app_rv = app(environ, start_response)
-        return app_rv
+        return app_rv, response[0], response[1]
