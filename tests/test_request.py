@@ -33,3 +33,4 @@ def test_basic_request():
     assert req.root_url == 'http://test.flagon.org/foo/'
     assert req.host_url == 'http://test.flagon.org/'
     assert req.host == 'test.flagon.org'
+    assert req.get_data() == ''
