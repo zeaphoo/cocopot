@@ -17,7 +17,7 @@ from .exceptions import HTTPException, InternalServerError, MethodNotAllowed, Ba
 from .request import Request
 from .response import Response, make_response
 from .globals import _request_ctx_stack, request, g
-from ._compat import reraise, string_types, text_type, integer_types
+from ._compat import reraise, string_types, text_type, integer_types, to_bytes
 
 
 class RequestContextGlobals(object):
@@ -255,7 +255,7 @@ class Flagon(object):
 
         defaults = options.get('defaults') or {}
 
-        self.router.add(rule, endpoint, methods=methods, defaults=defaults)
+        self.router.add(to_bytes(rule), endpoint, methods=methods, defaults=defaults)
         if view_func is not None:
             old_func = self.view_functions.get(endpoint)
             if old_func is not None and old_func != view_func:

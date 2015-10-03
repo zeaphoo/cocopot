@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import pytest
 
 from flagon import Flagon, Blueprint, request, g, abort
+from flagon.testing import FlagonClient
 import copy
 import traceback
 
@@ -155,3 +157,15 @@ def test_blueprint():
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo2/bar2'
     assert app(env, start_response)  == 'bar2'
+
+def test_unicode_route():
+    app = Flagon()
+
+    @app.route(u'/地球')
+    def hello():
+        return u'你好地球'
+
+    c = FlagonClient(app)
+    r = c.open(u'/地球')
+    assert r[0] == u'你好地球'
+    assert r[1] == '200 OK'

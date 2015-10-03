@@ -1,6 +1,7 @@
 
 import sys
 from  datastructures import MultiDict
+from  _compat import to_bytes
 
 _empty_stream = object()
 
@@ -14,7 +15,7 @@ class EnvironBuilder(object):
                  method='GET', input_stream=None, content_type=None,
                  content_length=None, errors_stream=None,headers=None, data=None,
                  environ_base=None, environ_overrides=None, charset='utf-8'):
-        self.path = path
+        self.path = to_bytes(path)
         self.base_url = base_url
         self.host = 'localhost'
         self.script_root = ''
