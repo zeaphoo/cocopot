@@ -271,7 +271,7 @@ class Request(object):
         return rv
 
 
-    def get_content_length(environ):
+    def get_content_length(self):
         """Returns the content length from the WSGI environment as
         integer.  If it's not available `None` is returned.
         """
@@ -440,6 +440,7 @@ class Request(object):
     @cached_property
     def authorization(self):
         header = self.environ.get('HTTP_AUTHORIZATION')
+        if not header: return None
         return parse_auth(header)
 
     @property

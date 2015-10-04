@@ -14,7 +14,7 @@ env1 = {
     'SERVER_PORT':          80,
     'HTTP_HOST':            'test.flagon.org',
     'SERVER_PROTOCOL':      'http',
-    'CONTENT_TYPE':         '',
+    'CONTENT_TYPE':         'text/plain; charset=utf-8',
     'CONTENT_LENGTH':       '0',
     'wsgi.url_scheme':      'http'
 }
@@ -34,3 +34,9 @@ def test_basic_request():
     assert req.host_url == 'http://test.flagon.org/'
     assert req.host == 'test.flagon.org'
     assert req.get_data() == ''
+    assert req.blueprint == None
+    assert req.mimetype == 'text/plain'
+    assert req.mimetype_params == {'charset': 'utf-8'}
+    assert req.get_json() == None
+    assert req.content_length == 0
+    assert req.authorization == None
