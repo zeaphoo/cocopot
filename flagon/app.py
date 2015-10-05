@@ -57,11 +57,13 @@ class RequestContext(object):
         if hasattr(sys, 'exc_clear'):
             sys.exc_clear()
         _request_ctx_stack.push(self)
+        self.request.__enter__()
 
     def pop(self, exc=None):
         rv = _request_ctx_stack.pop()
         assert rv is self, 'Popped wrong request context.  (%r instead of %r)' \
             % (rv, self)
+        rv.request.__exit__(None, None, None)
 
     def __enter__(self):
         self.push()

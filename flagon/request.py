@@ -71,7 +71,8 @@ class Request(object):
 
         """
         files = self.__dict__.get('files')
-        for key, value in iter_multi_items(files or ()):
+        if not files: return
+        for key, value in iter_multi_items(files):
             value.close()
 
     def __enter__(self):
