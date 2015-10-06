@@ -2,7 +2,8 @@ import pytest
 
 from flagon.request import Request
 from flagon.exceptions import BadRequest, NotFound, MethodNotAllowed
-from flagon.datastructures import MultiDict
+from flagon.datastructures import MultiDict, FormsDict
+from flagon._compat import BytesIO
 import copy
 
 env1 = {
@@ -40,3 +41,14 @@ def test_basic_request():
     assert req.get_json() == None
     assert req.content_length == 0
     assert req.authorization == None
+
+def test_form_data():
+    env = dict(copy.deepcopy(env1))
+    form_data = 'c=1&d=woo'
+    env['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+    env['wsgi.input'] = BytesIO(form_data)
+    env['CONTENT_LENGTH'] = len(form_data)
+    req = Request(env)
+    assert req.args == MultiDict({'a':'1', 'b':'2'}.items())
+    assert req.form == FormsDict({'c':'1', 'd':'woo'}.items())
+    assert req.values == MultiDict({'a':'1', 'b':'2', 'c':'1', 'd':'woo'}.items())

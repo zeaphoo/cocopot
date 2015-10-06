@@ -188,7 +188,7 @@ class Request(object):
                 body = BytesIO()
                 for part in self.iter_body(read_func, MEMFILE_MAX):
                     body.write(part)
-        environ['wsgi.input'] = body
+        self.environ['wsgi.input'] = body
         body.seek(0)
         return body
 
@@ -241,9 +241,8 @@ class Request(object):
                 for k, v in d.items():
                     args.append((k, v))
             else:
-                for k, v in d.items():
-                    for lv in v:
-                        args.append((k, lv))
+                for k, v in d.iterallitems():
+                    args.append((k, v))
         return MultiDict(args)
 
     @cached_property
