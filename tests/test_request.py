@@ -7,7 +7,7 @@ from flagon._compat import BytesIO
 import copy
 
 env1 = {
-    'REQUEST_METHOD':       'GET',
+    'REQUEST_METHOD':       'POST',
     'SCRIPT_NAME':          '/foo',
     'PATH_INFO':            '/bar',
     'QUERY_STRING':         'a=1&b=2',
@@ -52,3 +52,32 @@ def test_form_data():
     assert req.args == MultiDict({'a':'1', 'b':'2'}.items())
     assert req.form == FormsDict({'c':'1', 'd':'woo'}.items())
     assert req.values == MultiDict({'a':'1', 'b':'2', 'c':'1', 'd':'woo'}.items())
+
+def test_multipart():
+    env = dict(copy.deepcopy(env1))
+    form_data = '''-----------------------------9051914041544843365972754266
+Content-Disposition: form-data; name="text"
+
+text default
+-----------------------------9051914041544843365972754266
+Content-Disposition: form-data; name="file1"; filename="a.txt"
+Content-Type: text/plain
+
+Content of a.txt.
+
+-----------------------------9051914041544843365972754266
+Content-Disposition: form-data; name="file2"; filename="a.html"
+Content-Type: text/html
+
+<!DOCTYPE html><title>Content of a.html.</title>
+
+-----------------------------9051914041544843365972754266--
+'''
+    env['CONTENT_TYPE'] = 'multipart/form-data; boundary=---------------------------9051914041544843365972754266'
+    env['wsgi.input'] = BytesIO(form_data)
+    env['CONTENT_LENGTH'] = len(form_data)
+    env['QUERY_STRING'] = ''
+    req = Request(env)
+    assert req.args == MultiDict()
+    assert req.form == FormsDict({'text':'text default'}.items())
+    assert req.values == MultiDict({'text':'text default'}.items())

@@ -210,7 +210,7 @@ class Request(object):
         if not PY2:
             args['encoding'] = 'utf8'
         data = cgi.FieldStorage(**args)
-        environ['_cgi.FieldStorage'] = data  #http://bugs.python.org/issue18394
+        self.environ['_cgi.FieldStorage'] = data  #http://bugs.python.org/issue18394
         data = data.list or []
         for item in data:
             if item.filename:
