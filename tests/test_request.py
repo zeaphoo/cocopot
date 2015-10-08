@@ -81,3 +81,9 @@ Content-Type: text/html
     assert req.args == MultiDict()
     assert req.form == FormsDict({'text':'text default'}.items())
     assert req.values == MultiDict({'text':'text default'}.items())
+    a_txt = req.files['file1']
+    a_html = req.files['file2']
+    assert a_txt.filename == 'a.txt'
+    assert a_txt.headers['Content-Type'] == 'text/plain'
+    assert a_html.filename == 'a.html'
+    assert a_html.headers['Content-Type'] == 'text/html'

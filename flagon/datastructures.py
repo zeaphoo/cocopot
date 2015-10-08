@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import re
+import os
 import sys
 import codecs
 import mimetypes
 from copy import deepcopy
 from itertools import repeat
 from collections import MutableMapping as DictMixin
+from unicodedata import normalize
 from ._compat import PY2, to_unicode
 from .utils import cached_property
 

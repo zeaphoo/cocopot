@@ -45,7 +45,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     platforms='any',
-    install_requires=[],
+    install_requires=['unicodedata'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
