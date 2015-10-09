@@ -41,6 +41,16 @@ def test_basic_request():
     assert req.get_json() == None
     assert req.content_length == 0
     assert req.authorization == None
+    assert req.cookies == FormsDict()
+    assert list(req.range) == []
+    assert req.access_route == []
+    assert req.is_xhr == False
+    assert req.is_secure == False
+    assert req.if_modified_since == None
+    assert req.if_unmodified_since == None
+    assert req.access_route == []
+    assert req.remote_addr == None
+    assert req.chunked == False
 
 def test_form_data():
     env = dict(copy.deepcopy(env1))

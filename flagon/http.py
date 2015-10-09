@@ -1,6 +1,7 @@
 
 import time
 import email
+import email.utils
 import base64
 from ._compat import to_unicode
 
