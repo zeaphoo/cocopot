@@ -3,7 +3,7 @@ from functools import update_wrapper
 from datetime import datetime, timedelta
 import cgi
 from tempfile import TemporaryFile
-from .exceptions import HTTPException
+from .exceptions import HTTPException, BadRequest
 from .utils import cached_property
 from .datastructures import MultiDict, iter_multi_items, FileUpload, FormsDict, WSGIHeaders
 from ._compat import (PY2, to_bytes, string_types, text_type,
@@ -139,8 +139,8 @@ class Request(object):
             maxread -= len(part)
 
     def iter_chunked(self, read, bufsize):
-        err = HTTPException(400, 'Error while parsing chunked transfer body.')
-        rn, sem, bs = to_byte('\r\n'), to_byte(';'), to_byte('')
+        err = BadRequest('Error while parsing chunked transfer body.')
+        rn, sem, bs = to_bytes('\r\n'), to_bytes(';'), to_bytes('')
         while True:
             header = read(1)
             while header[-2:] != rn:

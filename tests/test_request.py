@@ -5,6 +5,7 @@ from flagon.exceptions import BadRequest, NotFound, MethodNotAllowed
 from flagon.datastructures import MultiDict, FormsDict
 from flagon._compat import BytesIO
 import copy
+import inspect
 
 env1 = {
     'REQUEST_METHOD':       'POST',
@@ -97,3 +98,30 @@ Content-Type: text/html
     assert a_txt.headers['Content-Type'] == 'text/plain'
     assert a_html.filename == 'a.html'
     assert a_html.headers['Content-Type'] == 'text/html'
+
+
+def _test_chunked(body, expect):
+    env = dict(copy.deepcopy(env1))
+    env['wsgi.input'] = BytesIO(body)
+    env['HTTP_TRANSFER_ENCODING'] = 'chunked'
+    env['QUERY_STRING'] = ''
+    req = Request(env)
+    assert req.chunked == True
+    if inspect.isclass(expect) and issubclass(expect, Exception):
+        with pytest.raises(BadRequest):
+            req.get_data()
+    else:
+        assert req.data == expect
+
+def test_chunked():
+    _test_chunked('1\r\nx\r\nff\r\n' + 'y'*255 + '\r\n0\r\n',
+                           'x' + 'y'*255)
+    _test_chunked('8\r\nxxxxxxxx\r\n0\r\n','xxxxxxxx')
+    _test_chunked('0\r\n', '')
+    _test_chunked('8 ; foo\r\nxxxxxxxx\r\n0\r\n','xxxxxxxx')
+    _test_chunked('8;foo\r\nxxxxxxxx\r\n0\r\n','xxxxxxxx')
+    _test_chunked('8;foo=bar\r\nxxxxxxxx\r\n0\r\n','xxxxxxxx')
+    _test_chunked('1\r\nx\r\n', BadRequest)
+    _test_chunked('2\r\nx\r\n', BadRequest)
+    _test_chunked('x\r\nx\r\n', BadRequest)
+    _test_chunked('abcdefg', BadRequest)
