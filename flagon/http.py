@@ -3,7 +3,7 @@ import time
 import email
 import email.utils
 import base64
-from ._compat import to_unicode
+from ._compat import to_unicode, to_bytes
 
 HTTP_STATUS_CODES = {
     100:    'Continue',
@@ -85,7 +85,7 @@ def parse_auth(header):
     try:
         method, data = header.split(None, 1)
         if method.lower() == 'basic':
-            user, pwd = to_unicode(base64.b64decode(tob(data))).split(':', 1)
+            user, pwd = to_unicode(base64.b64decode(to_bytes(data))).split(':', 1)
             return user, pwd
     except (KeyError, ValueError):
         return None

@@ -3,7 +3,8 @@ import pytest
 from flagon.request import Request
 from flagon.exceptions import BadRequest, NotFound, MethodNotAllowed
 from flagon.datastructures import MultiDict, FormsDict
-from flagon._compat import BytesIO
+from flagon._compat import BytesIO, to_native, to_bytes, to_unicode
+import base64
 import copy
 import inspect
 
@@ -125,3 +126,13 @@ def test_chunked():
     _test_chunked('2\r\nx\r\n', BadRequest)
     _test_chunked('x\r\nx\r\n', BadRequest)
     _test_chunked('abcdefg', BadRequest)
+
+def test_auth():
+    user, pwd = 'marc', 'secret'
+    basic = to_unicode(base64.b64encode(to_bytes('%s:%s' % (user, pwd))))
+    env = dict(copy.deepcopy(env1))
+    r = Request(env)
+    assert r.authorization == None
+    env['HTTP_AUTHORIZATION'] = 'basic %s' % basic
+    r = Request(env)
+    assert r.authorization == (user, pwd)
