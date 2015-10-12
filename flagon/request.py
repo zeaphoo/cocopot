@@ -403,10 +403,13 @@ class Request(object):
             return list([self.environ['REMOTE_ADDR']])
         return list()
 
+    remote_route = access_route
+
     @property
     def remote_addr(self):
         """The remote address of the client."""
-        return self.environ.get('REMOTE_ADDR')
+        route = self.access_route
+        return route[0] if route else None
 
 
     is_xhr = property(lambda x: x.environ.get('HTTP_X_REQUESTED_WITH', '')

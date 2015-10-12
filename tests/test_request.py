@@ -136,3 +136,39 @@ def test_auth():
     env['HTTP_AUTHORIZATION'] = 'basic %s' % basic
     r = Request(env)
     assert r.authorization == (user, pwd)
+
+def test_remote_addr():
+    ips = ['1.2.3.4', '2.3.4.5', '3.4.5.6']
+    env = dict(copy.deepcopy(env1))
+    env['HTTP_X_FORWARDED_FOR'] = ', '.join(ips)
+    r = Request(env)
+    assert r.remote_addr == ips[0]
+
+    env = dict(copy.deepcopy(env1))
+    env['HTTP_X_FORWARDED_FOR'] = ', '.join(ips)
+    env['REMOTE_ADDR'] = ips[1]
+    r = Request(env)
+    assert r.remote_addr == ips[0]
+
+    env = dict(copy.deepcopy(env1))
+    env['REMOTE_ADDR'] = ips[1]
+    r = Request(env)
+    assert r.remote_addr == ips[1]
+
+def test_remote_route():
+    ips = ['1.2.3.4', '2.3.4.5', '3.4.5.6']
+    env = dict(copy.deepcopy(env1))
+    env['HTTP_X_FORWARDED_FOR'] = ', '.join(ips)
+    r = Request(env)
+    assert r.remote_route == ips
+
+    env = dict(copy.deepcopy(env1))
+    env['HTTP_X_FORWARDED_FOR'] = ', '.join(ips)
+    env['REMOTE_ADDR'] = ips[1]
+    r = Request(env)
+    assert r.remote_route == ips
+
+    env = dict(copy.deepcopy(env1))
+    env['REMOTE_ADDR'] = ips[1]
+    r = Request(env)
+    assert r.remote_route == [ips[1],]
