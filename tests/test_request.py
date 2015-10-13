@@ -7,6 +7,7 @@ from flagon._compat import BytesIO, to_native, to_bytes, to_unicode
 import base64
 import copy
 import inspect
+import json
 
 env1 = {
     'REQUEST_METHOD':       'POST',
@@ -172,3 +173,32 @@ def test_remote_route():
     env['REMOTE_ADDR'] = ips[1]
     r = Request(env)
     assert r.remote_route == [ips[1],]
+
+
+def test_json_header_empty_body():
+    """Request Content-Type is application/json but body is empty"""
+    env = dict(copy.deepcopy(env1))
+    env['CONTENT_TYPE'] = 'application/json; charset=UTF-8'
+    env['CONTENT_LENGTH'] = 0
+    r = Request(env)
+    assert r.json == None
+
+def test_json_valid():
+    """ Environ: Request.json property. """
+    test = dict(a=5, b='test', c=[1,2,3])
+    env = dict(copy.deepcopy(env1))
+    env['CONTENT_TYPE'] = 'application/json; charset=UTF-8'
+    env['wsgi.input'] = BytesIO(to_bytes(json.dumps(test)))
+    env['CONTENT_LENGTH'] = str(len(json.dumps(test)))
+    r = Request(env)
+    assert r.json == test
+
+
+def test_json_forged_header_issue616():
+    test = dict(a=5, b='test', c=[1,2,3])
+    env = dict(copy.deepcopy(env1))
+    env['CONTENT_TYPE'] = 'text/plain;application/json'
+    env['wsgi.input'] = BytesIO(to_bytes(json.dumps(test)))
+    env['CONTENT_LENGTH'] = str(len(json.dumps(test)))
+    r = Request(env)
+    assert r.json == None

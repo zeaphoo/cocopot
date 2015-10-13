@@ -113,7 +113,9 @@ def parse_content_type(content_type):
     parts = content_type.split(';')
     params = {}
     for part in parts[1:]:
-        k, v = part.strip().split('=')
+        if '=' not in part:
+            break
+        k, v = part.strip().split('=', 1)
         params[k] = v
     return (parts[0], params)
 

@@ -12,7 +12,7 @@ if PY2:
     from Cookie import SimpleCookie
 else:
     from http.cookies import SimpleCookie
-from .utils import (urlencode, urldecode, urlquote, urlunquote, urljoin)
+from .utils import (urlencode, urldecode, urlquote, urlunquote, urljoin, json)
 from .http import (parse_content_type, parse_date, parse_auth, parse_content_type, parse_range_header)
 
 from .exceptions import BadRequest
@@ -494,7 +494,7 @@ class Request(object):
 
         The `get_json` method should be used instead.
         """
-        return self.get_json()
+        return self.get_json(silent=True)
 
     def get_json(self, force=False, silent=False, cache=True):
         """Parses the incoming JSON request data and returns it.  If
@@ -524,7 +524,7 @@ class Request(object):
         # and strict in what we send out.
         request_charset = self.mimetype_params.get('charset', 'utf-8')
         try:
-            data = self.get_data(self, cache=False)
+            data = self.get_data(cache=False)
             if request_charset is not None:
                 rv = json.loads(data, encoding=request_charset)
             else:
