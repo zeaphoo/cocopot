@@ -55,6 +55,20 @@ def test_basic_request():
     assert req.remote_addr == None
     assert req.chunked == False
 
+def test_cookie_dict():
+    """ Environ: Cookie dict """
+    t = dict()
+    t['a=a']      = {'a': 'a'}
+    t['a=a; b=b'] = {'a': 'a', 'b':'b'}
+    t['a=a; a=b'] = {'a': 'b'}
+    for k, v in t.items():
+        env = dict(copy.deepcopy(env1))
+        env.update({'HTTP_COOKIE': k})
+        req = Request(env)
+        for n in v:
+            assert v[n] == req.cookies[n]
+            assert v[n] == req.get_cookie(n)
+
 def test_form_data():
     env = dict(copy.deepcopy(env1))
     form_data = 'c=1&d=woo'

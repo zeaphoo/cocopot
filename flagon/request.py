@@ -316,6 +316,11 @@ class Request(object):
         cookies = SimpleCookie(self.environ.get('HTTP_COOKIE', '')).values()
         return FormsDict((c.key, c.value) for c in cookies)
 
+    def get_cookie(self, key):
+        """ Return the content of a cookie. """
+        value = self.cookies.get(key)
+        return value
+
     @cached_property
     def headers(self):
         """The headers from the WSGI environ as immutable
