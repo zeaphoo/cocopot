@@ -14,6 +14,24 @@ def test_basic_response():
     assert r.status_line == '302 Found'
     assert r.status_code == 302
 
+    r = make_response('', 999)
+    assert r.status_line == '999 Unknown'
+    assert r.status_code == 999
+
+    with pytest.raises(ValueError):
+        r = make_response('', 1099)
+        r = make_response('', 99)
+
+    r = make_response('', '999 Who knows?') # Illegal, but acceptable three digit code
+    assert r.status_line == '999 Who knows?'
+    assert r.status_code == 999
+
+    with pytest.raises(ValueError):
+        r = make_response('', '555')
+    assert r.status_line == '999 Who knows?'
+    assert r.status_code == 999
+
+
 def test_redirect():
     r = redirect('http://example.com/foo/new', 302)
     assert r.status_line == '302 Found'

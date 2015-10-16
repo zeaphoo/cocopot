@@ -158,7 +158,7 @@ class Response(object):
 
     def _set_status(self, status):
         if isinstance(status, int):
-            code, status = status, '%s %s'%(status, HTTP_STATUS_CODES.get(status))
+            code, status = status, '%s %s'%(status, HTTP_STATUS_CODES.get(status, 'Unknown'))
         elif ' ' in status:
             status = status.strip()
             code = int(status.split()[0])
@@ -167,7 +167,7 @@ class Response(object):
         if not 100 <= code <= 999:
             raise ValueError('Status code out of range.')
         self._status_code = code
-        self._status_line = str(status or ('%d Unknown' % code))
+        self._status_line = str(status)
 
     def _get_status(self):
         return self._status_line
