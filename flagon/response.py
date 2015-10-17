@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from functools import update_wrapper
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+import time
 
 from .http import HTTP_STATUS_CODES, http_date, html_escape
 from .utils import cached_property, json
@@ -8,6 +9,10 @@ from ._compat import PY2, to_bytes, string_types, text_type, \
      integer_types, to_unicode, to_native, BytesIO, to_bytes
 from .datastructures import HeaderProperty, HeaderDict
 from .exceptions import HTTPException, RequestRedirect
+if PY2:
+    from Cookie import SimpleCookie
+else:
+    from http.cookies import SimpleCookie
 
 
 def make_response(*args):
@@ -299,7 +304,7 @@ class Response(object):
                 if isinstance(value, timedelta):
                     value = value.seconds + value.days * 24 * 3600
             if key == 'expires':
-                if isinstance(value, (datedate, datetime)):
+                if isinstance(value, (date, datetime)):
                     value = value.timetuple()
                 elif isinstance(value, (int, float)):
                     value = time.gmtime(value)
