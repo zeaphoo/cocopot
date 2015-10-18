@@ -94,3 +94,39 @@ def test_redirect():
     r = redirect('http://example.com/foo/new2', 301)
     assert r.status_line == '301 Moved Permanently'
     assert r.headers['location'] == 'http://example.com/foo/new2'
+
+def test_set_header():
+    response = Response()
+    response['x-test'] = 'foo'
+    headers = [value for name, value in response.headerlist
+               if name.title() == 'X-Test']
+    assert ['foo'] == headers
+    assert 'foo' == response['x-test']
+
+    response['X-Test'] = 'bar'
+    headers = [value for name, value in response.headerlist
+               if name.title() == 'X-Test']
+    assert ['bar'] == headers
+    assert 'bar' == response['x-test']
+
+def test_append_header():
+    response = Response()
+    response.set_header('x-test', 'foo')
+    headers = [value for name, value in response.headerlist
+               if name.title() == 'X-Test']
+    assert ['foo'] == headers
+    assert 'foo' == response['x-test']
+
+    response.add_header('X-Test', 'bar')
+    headers = [value for name, value in response.headerlist
+               if name.title() == 'X-Test']
+    assert ['foo', 'bar'] == headers
+    assert 'foo' == response['x-test']
+
+def test_delete_header():
+    response = Response()
+    response['x-test'] = 'foo'
+    assert 'foo', response['x-test']
+    del response['X-tESt']
+    with pytest.raises(KeyError):
+        response['x-test']

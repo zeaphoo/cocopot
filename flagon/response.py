@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 import time
 
 from .http import HTTP_STATUS_CODES, http_date, html_escape
-from .utils import cached_property, json
+from .utils import json
 from ._compat import PY2, to_bytes, string_types, text_type, \
      integer_types, to_unicode, to_native, BytesIO, to_bytes
 from .datastructures import HeaderProperty, HeaderDict
