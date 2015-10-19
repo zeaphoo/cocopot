@@ -2,6 +2,7 @@ import pytest
 
 from flagon.response import Response, make_response, redirect
 from flagon.datastructures import MultiDict
+from flagon.http import parse_date
 import copy
 
 
@@ -130,3 +131,25 @@ def test_delete_header():
     del response['X-tESt']
     with pytest.raises(KeyError):
         response['x-test']
+
+def test_non_string_header():
+    response = Response()
+    response['x-test'] = 5
+    assert '5' == response['x-test']
+    response['x-test'] = None
+    assert 'None' == response['x-test']
+
+def test_expires_header():
+    import datetime
+    response = Response()
+    now = datetime.datetime.now()
+    response.expires = now
+
+    def seconds(a, b):
+        td = max(a,b) - min(a,b)
+        return td.days*360*24 + td.seconds
+
+    assert 0 == seconds(response.expires, now)
+    now2 = datetime.datetime.utcfromtimestamp(
+        parse_date(response.headers['Expires']))
+    assert 0 == seconds(now, now2)

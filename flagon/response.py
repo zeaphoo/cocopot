@@ -3,7 +3,7 @@ from functools import update_wrapper
 from datetime import datetime, timedelta, date
 import time
 
-from .http import HTTP_STATUS_CODES, http_date, html_escape
+from .http import HTTP_STATUS_CODES, http_date, html_escape, parse_date
 from .utils import json
 from ._compat import PY2, to_bytes, string_types, text_type, \
      integer_types, to_unicode, to_native, BytesIO, to_bytes

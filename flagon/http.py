@@ -3,6 +3,7 @@ import time
 import email
 import email.utils
 import base64
+from datetime import date, datetime
 from ._compat import to_unicode, to_bytes
 
 HTTP_STATUS_CODES = {
@@ -63,7 +64,7 @@ HTTP_STATUS_CODES = {
 }
 
 def http_date(value):
-    if isinstance(value, (datedate, datetime)):
+    if isinstance(value, (date, datetime)):
         value = value.utctimetuple()
     elif isinstance(value, (int, float)):
         value = time.gmtime(value)
