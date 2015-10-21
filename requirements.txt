@@ -1,0 +1,2 @@
+unicodedata
+simplejson

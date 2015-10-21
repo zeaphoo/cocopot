@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/zeaphoo/flagon.svg)](https://travis-ci.org/zeaphoo/flagon)
 
 # What is Flagon?
 
