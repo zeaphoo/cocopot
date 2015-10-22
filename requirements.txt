@@ -1,2 +1,1 @@
-unicodedata
 simplejson
