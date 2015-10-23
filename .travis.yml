@@ -3,7 +3,11 @@ python:
   - "2.6"
   - "2.7"
 # command to install dependencies
-install: "pip install -r requirements.txt"
+install:
+  - pip install -r requirements.txt
+  - pip install coveralls
 # command to run tests
-script: py.test
-repo_token: Nil7HGFTtF2R7QAQFaUEjf09snoTofKRX
+script:
+  - coverage run --source=flagon setup.py test
+after_success:
+  - coveralls

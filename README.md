@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/zeaphoo/flagon.svg)](https://travis-ci.org/zeaphoo/flagon)
+[![Coverage Status](https://coveralls.io/repos/zeaphoo/flagon/badge.svg?branch=master&service=github)](https://coveralls.io/github/zeaphoo/flagon?branch=master)
 
 # What is Flagon?
 
