@@ -56,7 +56,7 @@ else:
 def to_bytes(s, enc='utf8'):
     if s is None:
         return None
-    return s.encode(enc) if isinstance(s, unicode) else bytes(s)
+    return s.encode(enc) if isinstance(s, text_type) else bytes(s)
 
 
 def to_unicode(s, enc='utf8', err='strict'):
@@ -65,6 +65,6 @@ def to_unicode(s, enc='utf8', err='strict'):
     if isinstance(s, bytes):
         return s.decode(enc, err)
     else:
-        return unicode(s)
+        return text_type(s)
 
 to_native = to_bytes if PY2 else to_unicode

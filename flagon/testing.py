@@ -1,7 +1,7 @@
 
 import sys
-from  datastructures import MultiDict
-from  _compat import to_bytes
+from  .datastructures import MultiDict
+from  ._compat import to_bytes
 
 _empty_stream = object()
 

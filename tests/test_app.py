@@ -21,18 +21,18 @@ env1 = {
 }
 
 def start_response(x, y):
-    print x, y
+    print((x, y))
 
 def test_basic_app():
     app = Flagon()
     @app.before_request
     def before_request1():
-        print 'before_request'
+        print('before_request')
         g.a = 1
 
     @app.before_request
     def before_request2():
-        print 'before_request2'
+        print('before_request2')
         g.b = 2
 
     @app.route('/hello')
@@ -53,7 +53,7 @@ def test_basic_app():
 
     @app.errorhandler(500)
     def error_handler500(exception):
-        print traceback.format_exc()
+        print(traceback.format_exc())
         return '500'
 
     assert app.before_request_funcs[None][0] == before_request1

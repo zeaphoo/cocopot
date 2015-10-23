@@ -37,7 +37,7 @@ def test_basic_request():
     assert req.root_url == 'http://test.flagon.org/foo/'
     assert req.host_url == 'http://test.flagon.org/'
     assert req.host == 'test.flagon.org'
-    assert req.get_data() == ''
+    assert req.get_data() == b''
     assert req.blueprint == None
     assert req.mimetype == 'text/plain'
     assert req.mimetype_params == {'charset': 'utf-8'}
@@ -73,7 +73,7 @@ def test_form_data():
     env = dict(copy.deepcopy(env1))
     form_data = 'c=1&d=woo'
     env['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
-    env['wsgi.input'] = BytesIO(form_data)
+    env['wsgi.input'] = BytesIO(to_bytes(form_data))
     env['CONTENT_LENGTH'] = len(form_data)
     req = Request(env)
     assert req.args == MultiDict({'a':'1', 'b':'2'}.items())
@@ -101,7 +101,7 @@ Content-Type: text/html
 -----------------------------9051914041544843365972754266--
 '''
     env['CONTENT_TYPE'] = 'multipart/form-data; boundary=---------------------------9051914041544843365972754266'
-    env['wsgi.input'] = BytesIO(form_data)
+    env['wsgi.input'] = BytesIO(to_bytes(form_data))
     env['CONTENT_LENGTH'] = len(form_data)
     env['QUERY_STRING'] = ''
     req = Request(env)
@@ -118,7 +118,7 @@ Content-Type: text/html
 
 def _test_chunked(body, expect):
     env = dict(copy.deepcopy(env1))
-    env['wsgi.input'] = BytesIO(body)
+    env['wsgi.input'] = BytesIO(to_bytes(body))
     env['HTTP_TRANSFER_ENCODING'] = 'chunked'
     env['QUERY_STRING'] = ''
     req = Request(env)
@@ -127,7 +127,7 @@ def _test_chunked(body, expect):
         with pytest.raises(BadRequest):
             req.get_data()
     else:
-        assert req.data == expect
+        assert req.data == to_bytes(expect)
 
 def test_chunked():
     _test_chunked('1\r\nx\r\nff\r\n' + 'y'*255 + '\r\n0\r\n',

@@ -228,7 +228,7 @@ class Response(object):
         """ WSGI conform list of (header, value) tuples. """
         import flagon
         out = []
-        headers = self._headers.allitems()
+        headers = list(self._headers.allitems())
         if 'Content-Type' not in self._headers:
             headers.append(('Content-Type', self.default_content_type))
         headers.append(('Server', 'Flagon %s'%(flagon.__version__)))
@@ -240,7 +240,7 @@ class Response(object):
             for c in self._cookies.values():
                 out.append(('Set-Cookie', c.OutputString()))
         if PY2:
-            return [(k, v.encode('utf8') if isinstance(v, unicode) else v)
+            return [(k, v.encode('utf8') if isinstance(v, text_type) else v)
                     for (k, v) in out]
         else:
             return [(k, v.encode('utf8').decode('latin1')) for (k, v) in out]
@@ -293,7 +293,7 @@ class Response(object):
 
         if secret:
             value = to_unicode(cookie_encode((name, value), secret))
-        elif not isinstance(value, basestring):
+        elif not isinstance(value, string_types):
             raise TypeError('Secret key missing for non-string Cookie.')
 
         if len(value) > 4096: raise ValueError('Cookie value to long.')

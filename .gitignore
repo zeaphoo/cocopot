@@ -10,3 +10,4 @@ _mailinglist
 .tox
 .cache
 .coverage
+.python-version

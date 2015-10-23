@@ -4,7 +4,7 @@ import email
 import email.utils
 import base64
 from datetime import date, datetime
-from ._compat import to_unicode, to_bytes
+from ._compat import to_unicode, to_bytes, string_types
 
 HTTP_STATUS_CODES = {
     100:    'Continue',
@@ -68,7 +68,7 @@ def http_date(value):
         value = value.utctimetuple()
     elif isinstance(value, (int, float)):
         value = time.gmtime(value)
-    if not isinstance(value, basestring):
+    if not isinstance(value, string_types):
         value = time.strftime("%a, %d %b %Y %H:%M:%S GMT", value)
     return value
 

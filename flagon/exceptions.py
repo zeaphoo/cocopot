@@ -474,7 +474,7 @@ default_exceptions = {}
 __all__ = ['HTTPException']
 
 def _find_exceptions():
-    for name, obj in globals().iteritems():
+    for name, obj in globals().items():
         try:
             is_http_exception = issubclass(obj, HTTPException)
         except TypeError:

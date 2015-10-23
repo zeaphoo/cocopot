@@ -197,7 +197,7 @@ class Request(object):
         # We default to application/x-www-form-urlencoded for everything that
         # is not multipart and take the fast path (also: 3.1 workaround)
         if not self.content_type.startswith('multipart/'):
-            pairs = urldecode(self.get_data())
+            pairs = urldecode(to_unicode(self.get_data()))
             for key, value in pairs:
                 post[key] = value
             return post
@@ -303,7 +303,8 @@ class Request(object):
         cat(urlquote(environ.get('SCRIPT_NAME', '')).rstrip('/'))
         cat('/')
         if not root_only:
-            cat(urlquote(environ.get('PATH_INFO', '').lstrip(b'/')))
+            print(type(environ.get('PATH_INFO')))
+            cat(urlquote(environ.get('PATH_INFO', '').lstrip('/')))
             if not strip_querystring:
                 qs = self.query_string
                 if qs:
@@ -529,7 +530,7 @@ class Request(object):
         # and strict in what we send out.
         request_charset = self.mimetype_params.get('charset', 'utf-8')
         try:
-            data = self.get_data(cache=False)
+            data = to_unicode(self.get_data(cache=False))
             if request_charset is not None:
                 rv = json.loads(data, encoding=request_charset)
             else:

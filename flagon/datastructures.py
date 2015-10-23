@@ -8,7 +8,7 @@ from copy import deepcopy
 from itertools import repeat
 from collections import MutableMapping as DictMixin
 from unicodedata import normalize
-from ._compat import PY2, to_unicode
+from ._compat import PY2, to_unicode, text_type
 from .utils import cached_property
 
 
@@ -161,7 +161,7 @@ class FormsDict(MultiDict):
     recode_unicode = True
 
     def _fix(self, s, encoding=None):
-        if isinstance(s, unicode) and self.recode_unicode:  # Python 3 WSGI
+        if isinstance(s, text_type) and self.recode_unicode:  # Python 3 WSGI
             return s.encode('latin1').decode(encoding or self.input_encoding)
         elif isinstance(s, bytes):  # Python 2 WSGI
             return s.decode(encoding or self.input_encoding)
@@ -186,7 +186,7 @@ class FormsDict(MultiDict):
         except (UnicodeError, KeyError):
             return default
 
-    def __getattr__(self, name, default=unicode()):
+    def __getattr__(self, name, default=text_type()):
         # Without this guard, pickle generates a cryptic TypeError:
         if name.startswith('__') and name.endswith('__'):
             return super(FormsDict, self).__getattr__(name)
@@ -211,15 +211,15 @@ class HeaderDict(MultiDict):
         return self.dict[_hkey(key)][0]
 
     def __setitem__(self, key, value):
-        self.dict[_hkey(key)] = [value if isinstance(value, unicode) else
+        self.dict[_hkey(key)] = [value if isinstance(value, text_type) else
                                  str(value)]
 
     def append(self, key, value):
         self.dict.setdefault(_hkey(key), []).append(
-            value if isinstance(value, unicode) else str(value))
+            value if isinstance(value, text_type) else str(value))
 
     def replace(self, key, value):
-        self.dict[_hkey(key)] = [value if isinstance(value, unicode) else
+        self.dict[_hkey(key)] = [value if isinstance(value, text_type) else
                                  str(value)]
 
     def getall(self, key):
@@ -264,7 +264,7 @@ class WSGIHeaders(DictMixin):
     def __getitem__(self, key):
         val = self.environ[self._ekey(key)]
         if not PY2:
-            if isinstance(val, unicode):
+            if isinstance(val, text_type):
                 val = val.encode('latin1').decode('utf8')
             else:
                 val = val.decode('utf8')
@@ -335,7 +335,7 @@ class FileUpload(object):
             or dashes are removed. The filename is limited to 255 characters.
         """
         fname = self.raw_filename
-        if not isinstance(fname, unicode):
+        if not isinstance(fname, text_type):
             fname = fname.decode('utf8', 'ignore')
         fname = normalize('NFKD', fname)
         fname = fname.encode('ASCII', 'ignore').decode('ASCII')
@@ -361,7 +361,7 @@ class FileUpload(object):
                 overwrite: If True, replace existing files. (default: False)
                 chunk_size: Bytes to read at a time. (default: 64kb)
         """
-        if isinstance(destination, basestring):  # Except file-likes here
+        if isinstance(destination, string_types):  # Except file-likes here
             if os.path.isdir(destination):
                 destination = os.path.join(destination, self.filename)
             if not overwrite and os.path.exists(destination):
