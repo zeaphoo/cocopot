@@ -6,3 +6,4 @@ python:
 install: "pip install -r requirements.txt"
 # command to run tests
 script: py.test
+repo_token: Nil7HGFTtF2R7QAQFaUEjf09snoTofKRX
