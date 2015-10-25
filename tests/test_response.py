@@ -68,7 +68,7 @@ def test_set_cookie_secure():
     r.set_cookie('name2', 'value', secure=False)
     cookies = sorted([value for name, value in r.headerlist
                if name.title() == 'Set-Cookie'])
-    assert cookies[0] == 'name1=value; secure'
+    assert cookies[0].lower() == 'name1=value; secure'
     assert cookies[1] == 'name2=value'
 
 def test_set_cookie_httponly():
@@ -77,7 +77,7 @@ def test_set_cookie_httponly():
     r.set_cookie('name2', 'value', httponly=False)
     cookies = sorted([value for name, value in r.headerlist
                if name.title() == 'Set-Cookie'])
-    assert cookies[0] == 'name1=value; httponly'
+    assert cookies[0].lower() == 'name1=value; httponly'
     assert cookies[1] == 'name2=value'
 
 def test_delete_cookie():
@@ -86,7 +86,7 @@ def test_delete_cookie():
     response.delete_cookie('name')
     cookies = [value for name, value in response.headerlist
                if name.title() == 'Set-Cookie']
-    assert 'name=;' in cookies[0]
+    assert 'name=;' in cookies[0] or 'name="";' in cookies[0]
 
 def test_redirect():
     r = redirect('http://example.com/foo/new', 302)
