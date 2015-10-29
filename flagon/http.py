@@ -88,14 +88,14 @@ def parse_auth(header):
         if method.lower() == 'basic':
             user, pwd = to_unicode(base64.b64decode(to_bytes(data))).split(':', 1)
             return user, pwd
-    except (KeyError, ValueError):
+    except (KeyError, ValueError, Exception):
         return None
 
 
 def parse_range_header(header, maxlen=0):
     """ Yield (start, end) ranges parsed from a HTTP Range header. Skip
         unsatisfiable ranges. The end index is non-inclusive."""
-    if not header or header[:6] != 'bytes=': return []
+    if not header or header[:6] != 'bytes=': return
     ranges = [r.split('-', 1) for r in header[6:].split(',') if '-' in r]
     for start, end in ranges:
         try:
