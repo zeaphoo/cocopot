@@ -1,6 +1,7 @@
 import pytest
 
 from flagon.http import parse_content_type, parse_auth, parse_date, http_date, html_quote, parse_range_header
+from flagon.exceptions import abort, HTTPException, MethodNotAllowed
 import copy
 import time
 from datetime import datetime
@@ -26,6 +27,9 @@ def test_range_header():
     rv = list(parse_range_header('bytes=52-', 1000))
     assert rv == [(52, 1000)]
 
+    rv = list(parse_range_header('bytes=52a-', 1000))
+    assert rv == []
+
     rv = list(parse_range_header('bytes=52-99', 1000))
     assert rv == [(52, 100)]
 
@@ -40,3 +44,10 @@ def test_range_header():
 
 def test_html():
     assert '"&lt;&#039;&#13;&#10;&#9;&quot;\\&gt;"' == html_quote('<\'\r\n\t"\\>')
+
+def test_exception():
+    exc = HTTPException()
+    assert exc.get_description() == 'Unknown http exception'
+    assert exc.name == 'Unknown Error'
+    assert exc.get_body() == 'Unknown http exception'
+    s = repr(exc)
