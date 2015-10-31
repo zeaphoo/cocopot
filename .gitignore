@@ -11,3 +11,4 @@ _mailinglist
 .cache
 .coverage
 .python-version
+htmlcov

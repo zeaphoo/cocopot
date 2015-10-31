@@ -2,6 +2,7 @@
 import pytest
 
 from flagon import Flagon, Blueprint, request, g, abort
+from flagon.app import RequestContextGlobals
 from flagon.testing import FlagonClient
 import copy
 import traceback
@@ -19,6 +20,16 @@ env1 = {
     'CONTENT_LENGTH':       '0',
     'wsgi.url_scheme':      'http'
 }
+
+def test_context_globals():
+    contextg = RequestContextGlobals()
+    contextg.foo = 'foo'
+    assert contextg.get('foo') == 'foo'
+    assert 'foo' in contextg
+    attrs = [key for key in contextg]
+    assert attrs == ['foo']
+    s = repr(contextg)
+
 
 def start_response(x, y):
     print((x, y))
