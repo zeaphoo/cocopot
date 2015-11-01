@@ -89,7 +89,6 @@ class cached_property(object):
     def __get__(self, obj, cls=None):
         if obj is None: return self
         if self.func.__name__ not in obj.__dict__:
-            value = obj.__dict__[self.func.__name__] = self.func(obj)
-        else:
-            value = obj.__dict__[self.func.__name__]
+            obj.__dict__[self.func.__name__] = self.func(obj)
+        value = obj.__dict__[self.func.__name__]
         return value
