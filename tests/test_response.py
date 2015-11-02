@@ -1,8 +1,9 @@
 import pytest
 
-from flagon.response import Response, make_response, redirect
+from flagon.response import Response, make_response, redirect, jsonify
 from flagon.datastructures import MultiDict
 from flagon.http import parse_date
+from flagon.utils import json
 import copy
 
 
@@ -28,9 +29,43 @@ def test_basic_response():
     assert r.status_code == 999
 
     with pytest.raises(ValueError):
+        r = make_response(None)
         r = make_response('', '555')
     assert r.status_line == '999 Who knows?'
     assert r.status_code == 999
+
+    r = make_response('', [('Custom-Header', 'custom-value')])
+    assert r.status_code == 200
+    assert 'Custom-Header' in r
+
+    with pytest.raises(ValueError):
+        r = make_response(object())
+
+    r0 = make_response('text')
+    r = make_response(r0, 200, [('Custom-Header', 'custom-value')])
+    assert r.status_code == 200
+    assert 'Custom-Header' in r
+
+    r0 = make_response('text')
+    r = make_response(r0, '200 OK', [('Custom-Header', 'custom-value')])
+    assert r.status_code == 200
+    assert 'Custom-Header' in r
+    assert r.status_line == '200 OK'
+
+    r1 = r.copy()
+    assert r1.status_line == r.status_line
+    assert r1.headers == r.headers
+    assert r1.body == r.body
+    assert repr(r1) == repr(r)
+
+
+def test_jsonify():
+    r = jsonify(username='admin',
+                   email='admin@localhost',
+                   id=42)
+    assert r.status_code == 200
+    assert r.headers['Content-Type'] == 'application/json'
+    assert json.loads(r.body)['username'] == 'admin'
 
 def test_set_cookie():
     r = Response()

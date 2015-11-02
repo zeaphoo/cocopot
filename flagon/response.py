@@ -38,7 +38,7 @@ def make_response(*args):
             if isinstance(status_or_headers, string_types):
                 rv.status = status_or_headers
             else:
-                rv.status_code = status_or_headers
+                rv._status_code = status_or_headers
 
         if headers:
             for name, value in headers:
@@ -81,7 +81,7 @@ def jsonify(*args, **kwargs):
     indent = None
     separators = (',', ':')
     rv = Response(json.dumps(dict(*args, **kwargs), indent=indent, separators=separators),
-        mimetype='application/json')
+        content_type='application/json')
     return rv
 
 class Response(object):
@@ -142,6 +142,7 @@ class Response(object):
         if self._cookies:
             copy._cookies = SimpleCookie()
             copy._cookies.load(self._cookies.output(header=''))
+        copy.body = self.body
         return copy
 
     def __iter__(self):
