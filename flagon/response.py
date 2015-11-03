@@ -41,6 +41,7 @@ def make_response(*args):
                 rv._status_code = status_or_headers
 
         if headers:
+            headers = headers.items() if isinstance(headers, dict) else headers
             for name, value in headers:
                 rv.add_header(name, value)
 
@@ -293,7 +294,8 @@ class Response(object):
             self._cookies = SimpleCookie()
 
         if secret:
-            value = to_unicode(cookie_encode((name, value), secret))
+            pass
+            #value = to_unicode(cookie_encode((name, value), secret))
         elif not isinstance(value, string_types):
             raise TypeError('Secret key missing for non-string Cookie.')
 

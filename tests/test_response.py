@@ -3,8 +3,10 @@ import pytest
 from flagon.response import Response, make_response, redirect, jsonify
 from flagon.datastructures import MultiDict
 from flagon.http import parse_date
+from flagon.exceptions import BadRequest
 from flagon.utils import json
 import copy
+import datetime
 
 
 def test_basic_response():
@@ -12,6 +14,8 @@ def test_basic_response():
     assert r.body == 'text'
     assert r.status_line == '200 OK'
     assert r.status_code == 200
+    assert r.charset.lower() == 'utf-8'
+
     r = make_response('redirect', 302)
     assert r.status_line == '302 Found'
     assert r.status_code == 302
@@ -22,6 +26,8 @@ def test_basic_response():
 
     with pytest.raises(ValueError):
         r = make_response('', 1099)
+
+    with pytest.raises(ValueError):
         r = make_response('', 99)
 
     r = make_response('', '999 Who knows?') # Illegal, but acceptable three digit code
@@ -30,7 +36,10 @@ def test_basic_response():
 
     with pytest.raises(ValueError):
         r = make_response(None)
+
+    with pytest.raises(ValueError):
         r = make_response('', '555')
+
     assert r.status_line == '999 Who knows?'
     assert r.status_code == 999
 
@@ -47,16 +56,26 @@ def test_basic_response():
     assert 'Custom-Header' in r
 
     r0 = make_response('text')
-    r = make_response(r0, '200 OK', [('Custom-Header', 'custom-value')])
+    r = make_response(r0, '200 OK', {'Custom-Header':'custom-value'})
     assert r.status_code == 200
     assert 'Custom-Header' in r
+    assert r.get_header('Custom-Header') == 'custom-value'
+    assert 'Custom-Header' in dict(r.iter_headers())
     assert r.status_line == '200 OK'
 
+    r.set_cookie('name1', 'value')
     r1 = r.copy()
     assert r1.status_line == r.status_line
     assert r1.headers == r.headers
     assert r1.body == r.body
     assert repr(r1) == repr(r)
+
+    r = make_response('', 304)
+    assert r.status_code == 304
+    assert 'Content-Type' not in dict(r.iter_headers())
+
+    r = make_response(BadRequest(''))
+    assert r.status_code == 400
 
 
 def test_jsonify():
@@ -71,6 +90,9 @@ def test_set_cookie():
     r = Response()
     r.set_cookie('name1', 'value', max_age=5)
     r.set_cookie('name2', 'value 2', path='/foo')
+    with pytest.raises(TypeError):
+        r.set_cookie('name3', 3)
+
     cookies = [value for name, value in r.headerlist
                if name.title() == 'Set-Cookie']
     cookies.sort()
@@ -88,7 +110,6 @@ def test_set_cookie_maxage():
     assert cookies[1] == 'name2=value; Max-Age=86400'
 
 def test_set_cookie_expires():
-    import datetime
     r = Response()
     r.set_cookie('name1', 'value', expires=42)
     r.set_cookie('name2', 'value', expires=datetime.datetime(1970,1,1,0,0,43))
