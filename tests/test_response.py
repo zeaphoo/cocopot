@@ -90,6 +90,7 @@ def test_set_cookie():
     r = Response()
     r.set_cookie('name1', 'value', max_age=5)
     r.set_cookie('name2', 'value 2', path='/foo')
+    r.set_cookie('name4', 'value4', secret=True)
     with pytest.raises(TypeError):
         r.set_cookie('name3', 3)
 

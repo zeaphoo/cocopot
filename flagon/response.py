@@ -127,9 +127,6 @@ class Response(object):
 
     def init_with(self, rv, status):
         ret = rv
-        if isinstance(rv, HTTPException):
-            status = rv.code
-            ret = ''
         self.status = status
         return ret
 

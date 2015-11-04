@@ -70,10 +70,8 @@ class Request(object):
         object in a with statement with will automatically close it.
 
         """
-        files = self.__dict__.get('files')
-        if not files: return
-        for key, value in iter_multi_items(files):
-            value.close()
+        if hasattr(self.stream, 'close'):
+            self.stream.close()
 
     def __enter__(self):
         return self
@@ -267,7 +265,7 @@ class Request(object):
             rv = environ['SERVER_NAME']
             if (environ['wsgi.url_scheme'], environ['SERVER_PORT']) not \
                in (('https', '443'), ('http', '80')):
-                rv += ':' + environ['SERVER_PORT']
+                rv += ':%s'%(environ['SERVER_PORT'])
         return rv
 
 

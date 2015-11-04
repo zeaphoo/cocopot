@@ -27,9 +27,9 @@ class Blueprint(object):
         """
         if self.app:
             from warnings import warn
-            warn(Warning('The blueprint was already registered once '
+            warn('The blueprint was already registered once '
                          'but is getting modified now.  These changes '
-                         'will not show up.'))
+                         'will not show up.')
         self.deferred_functions.append(func)
 
 

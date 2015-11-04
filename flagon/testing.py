@@ -1,9 +1,9 @@
 
 import sys
 from  .datastructures import MultiDict
-from  ._compat import to_bytes
+from  ._compat import to_bytes, BytesIO
 
-_empty_stream = object()
+_empty_stream = BytesIO(to_bytes(''))
 
 class EnvironBuilder(object):
     server_protocol = 'HTTP/1.1'

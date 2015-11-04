@@ -15,7 +15,7 @@ env1 = {
     'PATH_INFO':            '/bar',
     'QUERY_STRING':         'a=1&b=2',
     'SERVER_NAME':          'test.flagon.org',
-    'SERVER_PORT':          80,
+    'SERVER_PORT':          '80',
     'HTTP_HOST':            'test.flagon.org',
     'SERVER_PROTOCOL':      'http',
     'CONTENT_TYPE':         'text/plain; charset=utf-8',
@@ -38,9 +38,11 @@ def test_basic_request():
     assert req.host_url == 'http://test.flagon.org/'
     assert req.host == 'test.flagon.org'
     assert req.get_data() == b''
+    assert req.get_data(as_text=True) == ''
     assert req.blueprint == None
     assert req.mimetype == 'text/plain'
     assert req.mimetype_params == {'charset': 'utf-8'}
+    assert req.get_json() == None
     assert req.get_json() == None
     assert req.content_length == 0
     assert req.authorization == None
@@ -54,6 +56,32 @@ def test_basic_request():
     assert req.access_route == []
     assert req.remote_addr == None
     assert req.chunked == False
+    assert req.method == "POST"
+    assert req.url_charset == 'utf-8'
+    assert "Content-Length" in req.headers
+    assert "Request" in repr(req)
+
+def test_basic_request2():
+    env = dict(copy.deepcopy(env1))
+    env['HTTP_X_FORWARDED_HOST'] = 'test.flagon.org'
+    req = Request(env)
+    assert req.host == 'test.flagon.org'
+    env['HTTP_X_FORWARDED_HOST'] = 'test.flagon.org, a.proxy.org'
+    req = Request(env)
+    assert req.host == 'test.flagon.org'
+    env = dict(copy.deepcopy(env1))
+    env.pop('HTTP_HOST')
+    env['SERVER_PORT'] = '8080'
+    req = Request(env)
+    assert req.host == 'test.flagon.org:8080'
+
+def test_basic_error():
+    env = dict(copy.deepcopy(env1))
+    env['wsgi.input'] = BytesIO(to_bytes('a'*20))
+    env['CONTENT_LENGTH'] = '20a'
+    req = Request(env)
+    assert req.content_length == None
+
 
 def test_cookie_dict():
     """ Environ: Cookie dict """
@@ -76,6 +104,7 @@ def test_form_data():
     env['wsgi.input'] = BytesIO(to_bytes(form_data))
     env['CONTENT_LENGTH'] = len(form_data)
     req = Request(env)
+    assert req.input_stream == env['wsgi.input']
     assert req.args == MultiDict({'a':'1', 'b':'2'}.items())
     assert req.form == FormsDict({'c':'1', 'd':'woo'}.items())
     assert req.values == MultiDict({'a':'1', 'b':'2', 'c':'1', 'd':'woo'}.items())
@@ -114,6 +143,7 @@ Content-Type: text/html
     assert a_txt.headers['Content-Type'] == 'text/plain'
     assert a_html.filename == 'a.html'
     assert a_html.headers['Content-Type'] == 'text/html'
+    assert req.close() == None
 
 
 def _test_chunked(body, expect):
