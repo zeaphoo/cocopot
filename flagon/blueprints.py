@@ -88,8 +88,8 @@ class Blueprint(object):
         it's an application independent endpoint.
         """
         def decorator(f):
-            def register_endpoint(state):
-                state.app.view_functions[endpoint] = f
+            def register_endpoint(self):
+                self.app.view_functions['%s.%s' % (self.name, endpoint)] = f
             self.record(register_endpoint)
             return f
         return decorator
