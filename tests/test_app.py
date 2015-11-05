@@ -138,7 +138,7 @@ def test_more_app():
     env['PATH_INFO'] = '/foo2'
     assert app(env, start_response)  == '404'
 
-def test_blueprint():
+def test_basic_blueprint():
     app = Flagon()
     bp = Blueprint('foo', url_prefix='/foo')
 
