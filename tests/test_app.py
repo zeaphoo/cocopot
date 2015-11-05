@@ -2,7 +2,8 @@
 import pytest
 
 from flagon import Flagon, Blueprint, request, g, abort
-from flagon.app import RequestContextGlobals
+from flagon.request import Request
+from flagon.app import RequestContextGlobals, RequestContext
 from flagon.testing import FlagonClient
 import copy
 import traceback
@@ -30,12 +31,42 @@ def test_context_globals():
     assert attrs == ['foo']
     s = repr(contextg)
 
+def test_request_context():
+    env = copy.deepcopy(env1)
+    r = Request(env)
+    context = RequestContext(Flagon(), env, r, foo='foo', bar=123)
+    with context:
+        assert g.foo == 'foo'
+        assert g.bar == 123
+
 
 def start_response(x, y):
     print((x, y))
 
 def test_basic_app():
+    app = Flagon(__name__)
+    assert app.name == 'tests.test_app'
+
+    app.add_url_rule('/hello', 'hello', lambda x: 'ok')
+
+    with pytest.raises(AssertionError):
+        app.add_url_rule('/hello', 'hello', lambda x: 'ok')
+
+    @app.endpoint('foo')
+    def foo():
+        return 'foo'
+    app.add_url_rule('/foo', 'foo')
+
+    def error_handler(exception):
+        return '500'
+
+    app.register_error_handler(Exception, error_handler)
+
+
+def test_more_app():
     app = Flagon()
+    assert 'Flagon' in repr(app)
+
     @app.before_request
     def before_request1():
         print('before_request')
@@ -66,6 +97,10 @@ def test_basic_app():
     def error_handler500(exception):
         print(traceback.format_exc())
         return '500'
+
+    @app.teardown_request
+    def teardown_request(exc=None):
+        pass
 
     assert app.before_request_funcs[None][0] == before_request1
     assert app.before_request_funcs[None][1] == before_request2
@@ -102,6 +137,58 @@ def test_basic_app():
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo2'
     assert app(env, start_response)  == '404'
+
+def test_blueprint():
+    app = Flagon()
+    bp = Blueprint('foo', url_prefix='/foo')
+
+    @bp.before_request
+    def bp_before_request():
+        pass
+
+    @bp.route('/bar')
+    def bar():
+        return 'bar'
+
+    @bp.before_app_request
+    def bp_app_before_request():
+        pass
+
+    @bp.after_request
+    def bp_after_request(resp):
+        pass
+
+    @bp.after_app_request
+    def bp_after_app_request(resp):
+        pass
+
+    @bp.teardown_request
+    def bp_teardown_request(exc):
+        pass
+
+    @bp.teardown_app_request
+    def bp_teardown_app_request(exc):
+        pass
+
+    @bp.errorhandler(Exception)
+    def bp_errorhandler(exception):
+        pass
+
+    @bp.app_errorhandler(Exception)
+    def bp_app_errorhandler(exception):
+        pass
+
+    @bp.endpoint('bbb')
+    def bbb():
+        return 'ok'
+
+    app.register_blueprint(bp)
+
+    assert app.view_functions['foo.bbb'] == bbb
+
+    @bp.route('/bar2')
+    def bar2():
+        return 'bar2'
 
 def test_blueprint_errorhandler():
     app = Flagon()

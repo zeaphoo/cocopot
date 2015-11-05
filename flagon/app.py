@@ -164,9 +164,7 @@ class Flagon(object):
         """
         if self.import_name == '__main__':
             fn = getattr(sys.modules['__main__'], '__file__', None)
-            if fn is None:
-                return '__main__'
-            return os.path.splitext(os.path.basename(fn))[0]
+            return os.path.splitext(os.path.basename(fn))[0] if fn else '__main__'
         return self.import_name
 
 
