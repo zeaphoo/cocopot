@@ -172,7 +172,7 @@ class Response(object):
         if not 100 <= code <= 999:
             raise ValueError('Status code out of range.')
         self._status_code = code
-        self._status_line = text_type(status)
+        self._status_line = str(status)
 
     def _get_status(self):
         return self._status_line
