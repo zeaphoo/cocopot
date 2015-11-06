@@ -279,6 +279,7 @@ class Request(object):
                 return max(0, int(content_length))
             except (ValueError, TypeError):
                 pass
+        return 0
 
     def get_current_url(self, root_only=False, strip_querystring=False, host_only=False):
         """A handy helper function that recreates the full URL as IRI for the
@@ -333,7 +334,7 @@ class Request(object):
         info in the WSGI environment but will always include a leading slash,
         even if the URL root is accessed.
         """
-        return '/' + self.environ.get('PATH_INFO', '').lstrip('/')
+        return '/' + to_unicode(self.environ.get('PATH_INFO', '')).lstrip('/')
 
     @property
     def script_name(self):

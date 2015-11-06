@@ -115,7 +115,8 @@ class Response(object):
     def __init__(self, body='', status=None, headers=None, **more_headers):
         self._cookies = None
         self._headers = HeaderDict()
-        self.body = self.init_with(body, status or self.default_status)
+        self.status = status or self.default_status
+        self.body = body
         if headers:
             if isinstance(headers, dict):
                 headers = headers.items()
@@ -171,7 +172,7 @@ class Response(object):
         if not 100 <= code <= 999:
             raise ValueError('Status code out of range.')
         self._status_code = code
-        self._status_line = str(status)
+        self._status_line = text_type(status)
 
     def _get_status(self):
         return self._status_line
@@ -330,4 +331,6 @@ class Response(object):
         """Process this response as WSGI application.
         """
         start_response(self._status_line, self.headerlist)
-        return self.body
+        body = self.body if isinstance(self.body, list) else [self.body]
+        body = list(map(lambda x: to_bytes(x), body))
+        return body

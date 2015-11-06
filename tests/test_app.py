@@ -2,6 +2,7 @@
 import pytest
 
 from flagon import Flagon, Blueprint, request, g, abort
+from flagon._compat import to_bytes
 from flagon.request import Request
 from flagon.app import RequestContextGlobals, RequestContext
 from flagon.testing import FlagonClient
@@ -112,6 +113,14 @@ def test_more_app():
     def bp_before_request():
         pass
 
+    @bp.after_request
+    def bp_after_request(resp):
+        return resp
+
+    @bp.teardown_request
+    def bp_teardown_request(exc):
+        pass
+
     @bp.route('/bar')
     def bar():
         return 'bar'
@@ -130,13 +139,13 @@ def test_more_app():
 
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/hello'
-    assert app(env, start_response)  == 'ok'
+    assert app(env, start_response)[0]  == b'ok'
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo/bar'
-    assert app(env, start_response)  == 'bar'
+    assert app(env, start_response)[0]  == b'bar'
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo2'
-    assert app(env, start_response)  == '404'
+    assert app(env, start_response)[0]  == b'404'
 
 def test_basic_blueprint():
     app = Flagon()
@@ -217,11 +226,11 @@ def test_blueprint_errorhandler():
 
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo/bar'
-    assert app(env, start_response)  == 'bar'
+    assert app(env, start_response)[0]  == b'bar'
 
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo/bar2'
-    assert app(env, start_response)  == 'bar2'
+    assert app(env, start_response)[0]  == b'bar2'
 
 
 def test_blueprint():
@@ -242,19 +251,19 @@ def test_blueprint():
 
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo/bar'
-    assert app(env, start_response)  == 'bar'
+    assert app(env, start_response)[0]  == b'bar'
 
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo/bar2'
-    assert app(env, start_response)  == 'bar2'
+    assert app(env, start_response)[0]  == b'bar2'
 
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo2/bar'
-    assert app(env, start_response)  == 'bar'
+    assert app(env, start_response)[0]  == b'bar'
 
     env = copy.deepcopy(env1)
     env['PATH_INFO'] = '/foo2/bar2'
-    assert app(env, start_response)  == 'bar2'
+    assert app(env, start_response)[0]  == b'bar2'
 
 def test_unicode_route():
     app = Flagon()
@@ -265,5 +274,5 @@ def test_unicode_route():
 
     c = FlagonClient(app)
     r = c.open(u'/地球')
-    assert r[0] == u'你好地球'
+    assert r[0] == to_bytes(u'你好地球')
     assert r[1] == '200 OK'

@@ -80,7 +80,7 @@ def test_basic_error():
     env['wsgi.input'] = BytesIO(to_bytes('a'*20))
     env['CONTENT_LENGTH'] = '20a'
     req = Request(env)
-    assert req.content_length == None
+    assert req.content_length == 0
 
 
 def test_cookie_dict():
