@@ -52,13 +52,15 @@ def start_server(port):
     if rv is None:
         raise AssertionError("Server took too long to start up.")
     if rv is 3: # Port in use
-        raise AssertionError("Port in use"%(port))
+        return ('port in use', None)
     raise AssertionError("Server exited with error code %d" % rv)
 
 def test_run():
     p = None
-    port = 18800
-    r, p = start_server(port)
+    for port in range(18800, 18900):
+        r, p = start_server(port)
+        if r == 'ok' and p:
+            break
     assert to_bytes('ok') == fetch(port, 'test')
     os.kill(p.pid, signal.SIGTERM)
     while p.poll() == None:
