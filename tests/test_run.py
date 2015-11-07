@@ -41,7 +41,7 @@ def start_server(port):
     cmd += sys.argv[1:] # pass cmdline arguments to subprocesses
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     # Wait for the socket to accept connections
-    for i in range(10):
+    for i in range(30):
         time.sleep(0.1)
         # Accepts connections?
         if ping('127.0.0.1', port): return ('ok', p)
