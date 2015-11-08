@@ -12,14 +12,6 @@ from ._compat import PY2, to_unicode, text_type
 from .utils import cached_property
 
 
-def iter_multi_items(mapping):
-    for key, value in mapping.iteritems():
-        if isinstance(value, (tuple, list)):
-            for value in value:
-                yield key, value
-        else:
-            yield key, value
-
 def _hkey(s):
     return s.title().replace('_', '-')
 
@@ -227,11 +219,6 @@ class HeaderDict(MultiDict):
 
     def get(self, key, default=None, index=0):
         return MultiDict.get(self, _hkey(key), default, index)
-
-    def filter(self, names):
-        for name in [_hkey(n) for n in names]:
-            if name in self.dict:
-                del self.dict[name]
 
 
 class WSGIHeaders(DictMixin):

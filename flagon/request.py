@@ -5,7 +5,7 @@ import cgi
 from tempfile import TemporaryFile
 from .exceptions import HTTPException, BadRequest
 from .utils import cached_property
-from .datastructures import MultiDict, iter_multi_items, FileUpload, FormsDict, WSGIHeaders
+from .datastructures import MultiDict, FileUpload, FormsDict, WSGIHeaders
 from ._compat import (PY2, to_bytes, string_types, text_type,
      integer_types, to_unicode, to_native, BytesIO)
 if PY2:
