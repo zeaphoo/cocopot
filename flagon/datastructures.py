@@ -8,7 +8,7 @@ from copy import deepcopy
 from itertools import repeat
 from collections import MutableMapping as DictMixin
 from unicodedata import normalize
-from ._compat import PY2, to_unicode, text_type
+from ._compat import PY2, to_unicode, text_type, string_types
 from .utils import cached_property
 
 
