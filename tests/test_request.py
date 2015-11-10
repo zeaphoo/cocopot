@@ -107,6 +107,8 @@ def test_form_data():
     assert req.input_stream == env['wsgi.input']
     assert req.args == MultiDict({'a':'1', 'b':'2'}.items())
     assert req.form == FormsDict({'c':'1', 'd':'woo'}.items())
+    assert req.form.c == '1'
+    assert req.form.d == 'woo'
     assert req.values == MultiDict({'a':'1', 'b':'2', 'c':'1', 'd':'woo'}.items())
 
 def test_multipart():

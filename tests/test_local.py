@@ -2,6 +2,7 @@ import pytest
 
 from flagon.http import parse_content_type, parse_auth, parse_date, http_date, html_quote, parse_range_header
 from flagon.local import LocalStack, LocalProxy
+from flagon._compat import PY2
 import copy
 import time
 from datetime import datetime
@@ -32,5 +33,18 @@ def test_localproxy():
     assert dir(p) == dir(d.foo)
     d.foo = [1, 23, 34]
     assert p[1] == 23
+    assert p[0:2] == [1, 23]
     del p[1]
     assert p[1] == 34
+    del p[:]
+
+    p = LocalProxy(object(), 'notexist')
+    with pytest.raises(RuntimeError):
+        p.notexist
+
+    assert 'unbound>' in repr(p)
+    assert bool(p) == False
+    assert dir(p) == []
+
+    if PY2:
+        assert unicode(p) == repr(p)
