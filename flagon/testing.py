@@ -1,6 +1,6 @@
 
 import sys
-from  .datastructures import MultiDict
+from  .datastructures import MultiDict, FileUpload
 from  .utils import urlencode
 from  ._compat import to_bytes, BytesIO, string_types
 from random import random
@@ -25,7 +25,7 @@ def encode_multipart(values, threshold=1024 * 500,
     for key, value in values.iterallitems():
         write('--%s\r\nContent-Disposition: form-data; name="%s"' %
               (boundary, key))
-        reader = getattr(value, 'read', None)
+        reader = value.file.read if isinstance(value, FileUpload) else None
         if reader is not None:
             filename = getattr(value, 'filename',
                                getattr(value, 'name', None))
