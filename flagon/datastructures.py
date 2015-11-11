@@ -43,7 +43,6 @@ class MultiDict(DictMixin):
         for k, v in kwargs.items():
             l = self.dict.setdefault(k, [])
             l.append(v)
-        #self.dict = dict((k, [v]) for (k, v) in dict(*a, **k).items())
 
     def __len__(self):
         return len(self.dict)

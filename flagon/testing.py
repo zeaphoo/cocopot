@@ -1,9 +1,58 @@
 
 import sys
 from  .datastructures import MultiDict
-from  ._compat import to_bytes, BytesIO
+from  .utils import urlencode
+from  ._compat import to_bytes, BytesIO, string_types
+from random import random
+import time
 
 _empty_stream = BytesIO(to_bytes(''))
+
+def encode_multipart(values, threshold=1024 * 500,
+                            boundary=None, charset='utf-8'):
+    if boundary is None:
+        boundary = '---------------part_%s%s' % (time.time(), random())
+    _closure = [BytesIO(), 0, False]
+
+    write_binary = _closure[0].write
+
+    def write(string):
+        write_binary(string.encode(charset))
+
+    if not isinstance(values, MultiDict):
+        values = MultiDict(values)
+
+    for key, value in values.iterallitems():
+        write('--%s\r\nContent-Disposition: form-data; name="%s"' %
+              (boundary, key))
+        reader = getattr(value, 'read', None)
+        if reader is not None:
+            filename = getattr(value, 'filename',
+                               getattr(value, 'name', None))
+            content_type = getattr(value, 'content_type', 'application/octet-stream')
+            if filename is not None:
+                write('; filename="%s"\r\n' % filename)
+            else:
+                write('\r\n')
+            write('Content-Type: %s\r\n\r\n' % content_type)
+            while 1:
+                chunk = reader(16384)
+                if not chunk:
+                    break
+                write_binary(chunk)
+        else:
+            if not isinstance(value, string_types):
+                value = str(value)
+            else:
+                value = to_bytes(value, charset)
+            write('\r\n\r\n')
+            write_binary(to_bytes(value))
+        write('\r\n')
+    write('--%s--\r\n' % boundary)
+
+    length = int(_closure[0].tell())
+    _closure[0].seek(0)
+    return _closure[0], length, boundary
 
 class EnvironBuilder(object):
     server_protocol = 'HTTP/1.1'
@@ -14,7 +63,9 @@ class EnvironBuilder(object):
     def __init__(self, path='/', base_url=None, query_string=None,
                  method='GET', input_stream=None, content_type=None,
                  content_length=None, errors_stream=None,headers=None, data=None,
-                 environ_base=None, environ_overrides=None, charset='utf-8'):
+                 environ_base=None, environ_overrides=None, form={}, files={},
+                 charset='utf-8'):
+        self.charset = charset
         self.path = to_bytes(path)
         self.base_url = base_url
         self.host = 'localhost'
@@ -31,9 +82,9 @@ class EnvironBuilder(object):
         self.environ_overrides = environ_overrides
         self.input_stream = input_stream
         self.content_length = content_length
+        self.form = form
+        self.files = files
         self.closed = False
-        self.closed = False
-        self.files = []
 
     @property
     def server_name(self):
@@ -77,13 +128,14 @@ class EnvironBuilder(object):
             input_stream.seek(start_pos)
             content_length = end_pos - start_pos
         elif content_type == 'multipart/form-data':
-            values = CombinedMultiDict([self.form, self.files])
-            input_stream, content_length, boundary = \
-                stream_encode_multipart(values, charset=self.charset)
+            l1 = self.form.allitems() if isinstance(self.form, MultiDict) else self.form.items()
+            l2 = self.files.allitems() if isinstance(self.files, MultiDict) else self.files.items()
+            values = MultiDict(l1, l2)
+            input_stream, content_length, boundary = encode_multipart(values, charset=self.charset)
             content_type += '; boundary="%s"' % boundary
         elif content_type == 'application/x-www-form-urlencoded':
             # XXX: py2v3 review
-            values = url_encode(self.form, charset=self.charset)
+            values = urlencode(self.form)
             values = values.encode('ascii')
             content_length = len(values)
             input_stream = BytesIO(values)
