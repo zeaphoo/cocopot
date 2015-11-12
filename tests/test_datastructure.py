@@ -1,6 +1,6 @@
 import pytest
 
-from flagon.datastructures import MultiDict, WSGIHeaders, FileUpload
+from flagon.datastructures import MultiDict, WSGIHeaders, FileUpload, FormsDict
 import base64
 from flagon._compat import PY2, to_unicode, to_bytes, BytesIO
 import tempfile
@@ -68,6 +68,13 @@ def test_wsgiheaders():
 
     assert len(w) == len(w.keys())
     assert len(w) == 6
+
+def test_formsdict():
+    form = FormsDict({'a': '111', 'b':123, 'c':b'xxx'}.items())
+    assert form.a == '111'
+    assert form.b == 123
+    assert form.c == 'xxx'
+    assert form.d == ''
 
 
 def test_fileupload():
