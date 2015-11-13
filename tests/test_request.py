@@ -23,6 +23,7 @@ env1 = {
     'wsgi.url_scheme':      'http'
 }
 
+
 def test_basic_request():
     env = dict(copy.deepcopy(env1))
     req = Request(env)
@@ -165,6 +166,7 @@ def test_chunked():
     _test_chunked('1\r\nx\r\nff\r\n' + 'y'*255 + '\r\n0\r\n',
                            'x' + 'y'*255)
     _test_chunked('8\r\nxxxxxxxx\r\n0\r\n','xxxxxxxx')
+    _test_chunked('8\r\nxxxxxxxx\r\n'*1024*1024 + '0\r\n','xxxxxxxx'*1024*1024)
     _test_chunked('0\r\n', '')
     _test_chunked('8 ; foo\r\nxxxxxxxx\r\n0\r\n','xxxxxxxx')
     _test_chunked('8;foo\r\nxxxxxxxx\r\n0\r\n','xxxxxxxx')
