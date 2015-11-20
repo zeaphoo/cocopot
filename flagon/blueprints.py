@@ -46,8 +46,7 @@ class Blueprint(object):
             deferred(self)
 
     def route(self, rule, **options):
-        """Like `Flagon.route` but for a blueprint.  The endpoint for the
-        `url_for` function is prefixed with the name of the blueprint.
+        """Like `Flagon.route` but for a blueprint.
         """
         def decorator(f):
             endpoint = options.pop("endpoint", f.__name__)
@@ -56,8 +55,7 @@ class Blueprint(object):
         return decorator
 
     def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
-        """Like `Flagon.add_url_rule` but for a blueprint.  The endpoint for
-        the `url_for` function is prefixed with the name of the blueprint.
+        """Like `Flagon.add_url_rule` but for a blueprint.
         """
         if endpoint:
             assert '.' not in endpoint, "Blueprint endpoint's should not contain dot's"
