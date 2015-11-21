@@ -83,6 +83,36 @@ OPTIONS
 Provides a quick way for a client to figure out which methods are supported by this URL.
 
 # Request Data
+In Flagon this information is provided by the global request object. If you have some experience with Python you might be wondering how that object can be global and how Flagon manages to still be threadsafe. The answer is request context locals.
+
+First of all you have to import it:
+
+```python
+from flagon import request
+```
+
+The current request method is available by using the method attribute. To access form data (data transmitted in a POST or PUT request) you can use the form attribute. Here is a full example of the two attributes mentioned above:
+
+```python
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if valid_login(request.form['username'],
+                       request.form['password']):
+            return log_the_user_in(request.form['username'])
+        else:
+            error = 'Invalid username/password'
+    # the code below is executed if the request method
+    # was GET or the credentials were invalid
+    return 'error' if error else 'ok'
+```
+
+To access parameters submitted in the URL (?key=value) you can use the args attribute:
+
+```python
+searchword = request.args.get('key', '')
+```
 
 # Response
 
