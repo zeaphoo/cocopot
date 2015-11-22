@@ -114,6 +114,26 @@ To access parameters submitted in the URL (?key=value) you can use the args attr
 searchword = request.args.get('key', '')
 ```
 
+# Redirects and Errors
+
+To redirect a user to another endpoint, use the redirect() function; to abort a request early with an error code, use the abort() function:
+
+from flagon import abort, redirect
+
+```python
+@app.route('/')
+def index():
+    return redirect('/login')
+
+@app.route('/login')
+def login():
+    abort(401)
+    this_is_never_executed()
+```
+
+This is a rather pointless example because a user will be redirected from the index to a page they cannot access (401 means access denied) but it shows how that works.
+
+
 # Response
 
 # Blueprints
