@@ -136,6 +136,32 @@ This is a rather pointless example because a user will be redirected from the in
 
 # Response
 
+The return value from a view function is automatically converted into a response object for you. If the return value is a string it’s converted into a response object with the string as response body, an 200 OK error code and a text/html mimetype. The logic that Flagon applies to converting return values into response objects is as follows:
+
+* If a response object of the correct type is returned it’s directly returned from the view.
+* If it’s a string, a response object is created with that data and the default parameters.
+* If a tuple is returned the items in the tuple can provide extra information. Such tuples have to be in the form (response, status, headers) where at least one item has to be in the tuple. The status value will override the status code and headers can be a list or dictionary of additional header values.
+* If none of that works, Flagon will assume the return value is a valid WSGI application and convert that into a response object.
+* If you want to get hold of the resulting response object inside the view you can use the make_response() function.
+
+Imagine you have a view like this:
+
+```python
+@app.route('/hello')
+def hello():
+    return 'ok', 200
+```
+
+You just need to wrap the return expression with make_response() and get the response object to modify it, then return it:
+
+```python
+@app.route('/hello')
+def hello():
+    resp = make_response('ok', 200)
+    resp.headers['X-Something'] = 'A value'
+    return resp
+```
+
 # Blueprints
 
 # Error Handle
