@@ -16,9 +16,9 @@ try:
         from gevent import monkey
         monkey.patch_all()
 
-    from flagon import Flagon
+    from cocopot import Cocopot
 
-    app = Flagon()
+    app = Cocopot()
     @app.route('/test')
     def test():
         return 'ok'

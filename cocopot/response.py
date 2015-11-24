@@ -226,12 +226,12 @@ class Response(object):
     @property
     def headerlist(self):
         """ WSGI conform list of (header, value) tuples. """
-        import flagon
+        import cocopot
         out = []
         headers = list(self._headers.allitems())
         if 'Content-Type' not in self._headers:
             headers.append(('Content-Type', self.default_content_type))
-        headers.append(('Server', 'Flagon %s'%(flagon.__version__)))
+        headers.append(('Server', 'Cocopot %s'%(cocopot.__version__)))
         if self._status_code in self.bad_headers:
             bad_headers = self.bad_headers[self._status_code]
             headers = [h for h in headers if h[0] not in bad_headers]

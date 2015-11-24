@@ -34,10 +34,10 @@ class Blueprint(object):
 
 
     def register(self, app, options):
-        """Called by `Flagon.register_blueprint` to register a blueprint
+        """Called by `Cocopot.register_blueprint` to register a blueprint
         on the application.  This can be overridden to customize the register
         behavior.  Keyword arguments from
-        `~flagon.Flagon.register_blueprint` are directly forwarded to this
+        `~cocopot.Cocopot.register_blueprint` are directly forwarded to this
         method in the `options` dictionary.
         """
         self.app = app
@@ -46,7 +46,7 @@ class Blueprint(object):
             deferred(self)
 
     def route(self, rule, **options):
-        """Like `Flagon.route` but for a blueprint.
+        """Like `Cocopot.route` but for a blueprint.
         """
         def decorator(f):
             endpoint = options.pop("endpoint", f.__name__)
@@ -55,7 +55,7 @@ class Blueprint(object):
         return decorator
 
     def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
-        """Like `Flagon.add_url_rule` but for a blueprint.
+        """Like `Cocopot.add_url_rule` but for a blueprint.
         """
         if endpoint:
             assert '.' not in endpoint, "Blueprint endpoint's should not contain dot's"
@@ -79,7 +79,7 @@ class Blueprint(object):
                               view_func, defaults=defaults, **options)
 
     def endpoint(self, endpoint):
-        """Like `Flagon.endpoint` but for a blueprint.  This does not
+        """Like `Cocopot.endpoint` but for a blueprint.  This does not
         prefix the endpoint with the blueprint name, this has to be done
         explicitly by the user of this method.  If the endpoint is prefixed
         with a `.` it will be registered to the current blueprint, otherwise
@@ -94,7 +94,7 @@ class Blueprint(object):
 
 
     def before_request(self, f):
-        """Like `Flagon.before_request` but for a blueprint.  This function
+        """Like `Cocopot.before_request` but for a blueprint.  This function
         is only executed before each request that is handled by a function of
         that blueprint.
         """
@@ -103,7 +103,7 @@ class Blueprint(object):
         return f
 
     def before_app_request(self, f):
-        """Like `Flagon.before_request`.  Such a function is executed
+        """Like `Cocopot.before_request`.  Such a function is executed
         before each request, even if outside of a blueprint.
         """
         self.record(lambda s: s.app.before_request_funcs
@@ -111,7 +111,7 @@ class Blueprint(object):
         return f
 
     def after_request(self, f):
-        """Like `Flagon.after_request` but for a blueprint.  This function
+        """Like `Cocopot.after_request` but for a blueprint.  This function
         is only executed after each request that is handled by a function of
         that blueprint.
         """
@@ -120,7 +120,7 @@ class Blueprint(object):
         return f
 
     def after_app_request(self, f):
-        """Like `Flagon.after_request` but for a blueprint.  Such a function
+        """Like `Cocopot.after_request` but for a blueprint.  Such a function
         is executed after each request, even if outside of the blueprint.
         """
         self.record(lambda s: s.app.after_request_funcs
@@ -128,7 +128,7 @@ class Blueprint(object):
         return f
 
     def teardown_request(self, f):
-        """Like `Flagon.teardown_request` but for a blueprint.  This
+        """Like `Cocopot.teardown_request` but for a blueprint.  This
         function is only executed when tearing down requests handled by a
         function of that blueprint.  Teardown request functions are executed
         when the request context is popped, even when no actual request was
@@ -139,7 +139,7 @@ class Blueprint(object):
         return f
 
     def teardown_app_request(self, f):
-        """Like `Flagon.teardown_request` but for a blueprint.  Such a
+        """Like `Cocopot.teardown_request` but for a blueprint.  Such a
         function is executed when tearing down each request, even if outside of
         the blueprint.
         """
@@ -148,7 +148,7 @@ class Blueprint(object):
         return f
 
     def app_errorhandler(self, code):
-        """Like `Flagon.errorhandler` but for a blueprint.  This
+        """Like `Cocopot.errorhandler` but for a blueprint.  This
         handler is used for all requests, even if outside of the blueprint.
         """
         def decorator(f):
@@ -165,8 +165,8 @@ class Blueprint(object):
         special case is the 500 internal server error which is always looked
         up from the application.
 
-        Otherwise works as the `Flagon.errorhandler` decorator
-        of the `Flagon` object.
+        Otherwise works as the `Cocopot.errorhandler` decorator
+        of the `Cocopot` object.
         """
         def decorator(f):
             self.record(lambda s: s.app._register_error_handler(

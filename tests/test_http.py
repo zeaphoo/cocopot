@@ -1,7 +1,7 @@
 import pytest
 
-from flagon.http import parse_content_type, parse_auth, parse_date, http_date, html_quote, parse_range_header
-from flagon.exceptions import abort, HTTPException, MethodNotAllowed
+from cocopot.http import parse_content_type, parse_auth, parse_date, http_date, html_quote, parse_range_header
+from cocopot.exceptions import abort, HTTPException, MethodNotAllowed
 import copy
 import time
 from datetime import datetime

@@ -33,7 +33,7 @@ class RequestContextGlobals(object):
         return iter(self.__dict__)
 
     def __repr__(self):
-        return '<flagon.g of %r>' % object.__repr__(self)
+        return '<cocopot.g of %r>' % object.__repr__(self)
 
 
 class RequestContext(object):
@@ -72,16 +72,16 @@ class RequestContext(object):
     def __exit__(self, exc_type, exc_value, tb):
         self.pop(exc_value)
 
-class Flagon(object):
-    """The flagon object implements a WSGI application and acts as the central
+class Cocopot(object):
+    """The cocopot object implements a WSGI application and acts as the central
     object.  Once it is created it will act as a central registry for
     the view functions, the URL rules,  and more.
 
-    Usually you create a `Flagon` instance in your main module or
+    Usually you create a `Cocopot` instance in your main module or
     in the `__init__.py` file of your package like this::
 
-        from flagon import Flagon
-        app = Flagon()
+        from cocopot import Cocopot
+        app = Cocopot()
 
     """
 
@@ -148,7 +148,7 @@ class Flagon(object):
         handler = DebugHandler()
         handler.setLevel(DEBUG)
         handler.setFormatter(Formatter(self.log_format))
-        logger = getLogger(self.name or 'flagon')
+        logger = getLogger(self.name or 'cocopot')
         logger.addHandler(handler)
         if logger.level == NOTSET or logger.level > INFO:
             logger.setLevel(INFO)
@@ -159,7 +159,7 @@ class Flagon(object):
         """The name of the application.  This is usually the import name
         with the difference that it's guessed from the run file if the
         import name is main.  This name is used as a display name when
-        Flagon needs the name of the application.  It can be set and overridden
+        Cocopot needs the name of the application.  It can be set and overridden
         to change the value.
         """
         if self.import_name == '__main__':
@@ -178,7 +178,7 @@ class Flagon(object):
                      port defined in the SERVER_NAME` config variable if
                      present.
         """
-        from flagon.run import run_simple
+        from cocopot.run import run_simple
         if host is None:
             host = '127.0.0.1'
         if port is None:
@@ -231,7 +231,7 @@ class Flagon(object):
         Args:
             rule : the URL rule as string
             endpoint : the endpoint for the registered URL rule.
-                    Flagon itself assumes the name of the view function as endpoint
+                    Cocopot itself assumes the name of the view function as endpoint
             view_func: the function to call when serving a request to the
                     provided endpoint
             options: methods is a list of methods this rule should be limited
@@ -276,7 +276,7 @@ class Flagon(object):
 
         Args:
             rule: the URL rule as string
-            endpoint: the endpoint for the registered URL rule.  Flagon
+            endpoint: the endpoint for the registered URL rule.  Cocopot
                          itself assumes the name of the view function as
                          endpoint
         """
@@ -409,7 +409,7 @@ class Flagon(object):
 
     def handle_user_exception(self, e):
         """This method is called whenever an exception occurs that should be
-        handled.  A special case are `~flagon.exception.HTTPException`\s which are forwarded by
+        handled.  A special case are `~cocopot.exception.HTTPException`\s which are forwarded by
         this function to the `handle_http_exception` method.  This
         function will either return a response value or reraise the
         exception with the same traceback.
@@ -524,7 +524,7 @@ class Flagon(object):
     def do_teardown_request(self, exc=None):
         """Called after the actual request dispatching and will
         call every as `teardown_request` decorated function.  This is
-        not actually called by the `Flagon` object itself but is always
+        not actually called by the `Cocopot` object itself but is always
         triggered when the request context is popped.  That way we have a
         tighter control over certain resources under testing environments.
         """

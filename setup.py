@@ -1,16 +1,16 @@
 """
-Flagon
+Cocopot
 -------
 
-Flagon is a microframework for Python. Foucus on mobile service and cloud service, no default template system.
+Cocopot is a microframework for Python. Foucus on mobile service and cloud service, no default template system.
 
-Flagon is Fun
+Cocopot is Fun
 ````````````
 
 .. code:: python
 
-    from flagon import Flagon
-    app = Flagon()
+    from cocopot import Cocopot
+    app = Cocopot()
 
     @app.route("/")
     def hello():
@@ -24,7 +24,7 @@ And Easy to Setup
 
 .. code:: bash
 
-    $ pip install Flagon
+    $ pip install Cocopot
     $ python hello.py
      * Running on http://localhost:3000/
 
@@ -46,15 +46,15 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 setup(
-    name='Flagon',
+    name='Cocopot',
     version='0.1',
-    url='http://github.com/zeaphoo/flagon/',
+    url='http://github.com/zeaphoo/cocopot/',
     license='BSD',
     author='zeaphoo',
     author_email='zeaphoo@gmail.com',
     description='A microframework based on Flask, more suitable for mobile service.',
     long_description=__doc__,
-    packages=['flagon'],
+    packages=['cocopot'],
     include_package_data=True,
     zip_safe=False,
     platforms='any',

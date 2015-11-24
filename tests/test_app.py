@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from flagon import Flagon, Blueprint, request, g, abort
-from flagon._compat import to_bytes
-from flagon.request import Request
-from flagon.app import RequestContextGlobals, RequestContext
-from flagon.testing import FlagonClient
+from cocopot import Cocopot, Blueprint, request, g, abort
+from cocopot._compat import to_bytes
+from cocopot.request import Request
+from cocopot.app import RequestContextGlobals, RequestContext
+from cocopot.testing import FlagonClient
 import copy
 import traceback
 
@@ -14,9 +14,9 @@ env1 = {
     'SCRIPT_NAME':          '',
     'PATH_INFO':            '/foo/bar',
     'QUERY_STRING':         'a=1&b=2',
-    'SERVER_NAME':          'test.flagon.org',
+    'SERVER_NAME':          'test.cocopot.org',
     'SERVER_PORT':          80,
-    'HTTP_HOST':            'test.flagon.org',
+    'HTTP_HOST':            'test.cocopot.org',
     'SERVER_PROTOCOL':      'http',
     'CONTENT_TYPE':         '',
     'CONTENT_LENGTH':       '0',
@@ -35,7 +35,7 @@ def test_context_globals():
 def test_request_context():
     env = copy.deepcopy(env1)
     r = Request(env)
-    context = RequestContext(Flagon(), env, r, foo='foo', bar=123)
+    context = RequestContext(Cocopot(), env, r, foo='foo', bar=123)
     with context:
         assert g.foo == 'foo'
         assert g.bar == 123
@@ -45,7 +45,7 @@ def start_response(x, y):
     print((x, y))
 
 def test_basic_app():
-    app = Flagon(__name__)
+    app = Cocopot(__name__)
     assert app.name == 'tests.test_app'
 
     app.add_url_rule('/hello', 'hello', lambda x: 'ok')
@@ -65,8 +65,8 @@ def test_basic_app():
 
 
 def test_more_app():
-    app = Flagon()
-    assert 'Flagon' in repr(app)
+    app = Cocopot()
+    assert 'Cocopot' in repr(app)
 
     @app.before_request
     def before_request1():
@@ -148,7 +148,7 @@ def test_more_app():
     assert app(env, start_response)[0]  == b'404'
 
 def test_basic_blueprint():
-    app = Flagon()
+    app = Cocopot()
     bp = Blueprint('foo', url_prefix='/foo')
 
     @bp.before_request
@@ -200,7 +200,7 @@ def test_basic_blueprint():
         return 'bar2'
 
 def test_blueprint_errorhandler():
-    app = Flagon()
+    app = Cocopot()
 
     bp = Blueprint('foo', url_prefix='/foo')
 
@@ -234,7 +234,7 @@ def test_blueprint_errorhandler():
 
 
 def test_blueprint():
-    app = Flagon()
+    app = Cocopot()
 
     bp = Blueprint('foo', url_prefix='/foo')
 
@@ -266,7 +266,7 @@ def test_blueprint():
     assert app(env, start_response)[0]  == b'bar2'
 
 def test_unicode_route():
-    app = Flagon()
+    app = Cocopot()
 
     @app.route(u'/地球')
     def hello():

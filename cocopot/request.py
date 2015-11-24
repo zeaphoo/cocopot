@@ -38,7 +38,7 @@ class Request(object):
     def __init__(self, environ, populate_request=True):
         self.environ = environ
         if populate_request:
-            self.environ['flagon.request'] = self
+            self.environ['cocopot.request'] = self
 
     def __repr__(self):
         # make sure the __repr__ even works if the request was created
@@ -324,7 +324,7 @@ class Request(object):
     @cached_property
     def headers(self):
         """The headers from the WSGI environ as immutable
-        `~flagon.datastructures.WSGIHeaders`.
+        `~cocopot.datastructures.WSGIHeaders`.
         """
         return WSGIHeaders(self.environ)
 

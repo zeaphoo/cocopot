@@ -121,22 +121,22 @@ def werkzeug(body, headers):
     return hello
 
 
-def flagon(body, headers):
-    import flagon
+def cocopot(body, headers):
+    import cocopot
 
     path = '/hello/<account_id>/test'
-    flagon_app = flagon.Flagon('hello')
+    cocopot_app = cocopot.Cocopot('hello')
 
-    @flagon_app.route(path)
+    @cocopot_app.route(path)
     def hello(account_id):
-        request = flagon.request
+        request = cocopot.request
         user_agent = request.headers['User-Agent']  # NOQA
         limit = request.args.get('limit', '10')  # NOQA
 
-        return flagon.Response(body, headers=headers,
+        return cocopot.Response(body, headers=headers,
                               mimetype='text/plain')
 
-    return flagon_app
+    return cocopot_app
 
 
 def bench(name, iterations, env, stat_memory):
@@ -288,7 +288,7 @@ def main():
         'falcon',
         'flask',
         'werkzeug',
-        'flagon'
+        'cocopot'
     ]
     parser = argparse.ArgumentParser(description="Falcon benchmark runner")
     parser.add_argument('-b', '--benchmark', type=str, action='append',

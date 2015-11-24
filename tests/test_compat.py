@@ -1,6 +1,6 @@
 import pytest
 
-from flagon._compat import *
+from cocopot._compat import *
 import copy
 import traceback
 import sys

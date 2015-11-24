@@ -1,8 +1,8 @@
 import pytest
 
-from flagon.http import parse_content_type, parse_auth, parse_date, http_date, html_quote, parse_range_header
-from flagon.local import LocalStack, LocalProxy
-from flagon._compat import PY2
+from cocopot.http import parse_content_type, parse_auth, parse_date, http_date, html_quote, parse_range_header
+from cocopot.local import LocalStack, LocalProxy
+from cocopot._compat import PY2
 import copy
 import time
 from datetime import datetime

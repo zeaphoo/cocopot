@@ -83,12 +83,12 @@ OPTIONS
 Provides a quick way for a client to figure out which methods are supported by this URL.
 
 # Request Data
-In Flagon this information is provided by the global request object. If you have some experience with Python you might be wondering how that object can be global and how Flagon manages to still be threadsafe. The answer is request context locals.
+In Cocopot this information is provided by the global request object. If you have some experience with Python you might be wondering how that object can be global and how Cocopot manages to still be threadsafe. The answer is request context locals.
 
 First of all you have to import it:
 
 ```python
-from flagon import request
+from cocopot import request
 ```
 
 The current request method is available by using the method attribute. To access form data (data transmitted in a POST or PUT request) you can use the form attribute. Here is a full example of the two attributes mentioned above:
@@ -118,7 +118,7 @@ searchword = request.args.get('key', '')
 
 To redirect a user to another endpoint, use the redirect() function; to abort a request early with an error code, use the abort() function:
 
-from flagon import abort, redirect
+from cocopot import abort, redirect
 
 ```python
 @app.route('/')
@@ -136,12 +136,12 @@ This is a rather pointless example because a user will be redirected from the in
 
 # Response
 
-The return value from a view function is automatically converted into a response object for you. If the return value is a string it’s converted into a response object with the string as response body, an 200 OK error code and a text/html mimetype. The logic that Flagon applies to converting return values into response objects is as follows:
+The return value from a view function is automatically converted into a response object for you. If the return value is a string it’s converted into a response object with the string as response body, an 200 OK error code and a text/html mimetype. The logic that Cocopot applies to converting return values into response objects is as follows:
 
 * If a response object of the correct type is returned it’s directly returned from the view.
 * If it’s a string, a response object is created with that data and the default parameters.
 * If a tuple is returned the items in the tuple can provide extra information. Such tuples have to be in the form (response, status, headers) where at least one item has to be in the tuple. The status value will override the status code and headers can be a list or dictionary of additional header values.
-* If none of that works, Flagon will assume the return value is a valid WSGI application and convert that into a response object.
+* If none of that works, Cocopot will assume the return value is a valid WSGI application and convert that into a response object.
 * If you want to get hold of the resulting response object inside the view you can use the make_response() function.
 
 Imagine you have a view like this:
@@ -164,7 +164,7 @@ def hello():
 
 # Blueprints
 
-A Blueprint object works similarly to a Flagon application object, but it is not actually an application. Rather it is a blueprint of how to construct or extend an application.
+A Blueprint object works similarly to a Cocopot application object, but it is not actually an application. Rather it is a blueprint of how to construct or extend an application.
 
 ## Why Blueprints?
 Blueprints are intended for these cases:
@@ -182,7 +182,7 @@ A blueprint is not a pluggable app because it is not actually an application –
 This is what a very basic blueprint looks like. In this case we want to implement a blueprint that does simple return:
 
 ```python
-from flagon import Blueprint, abort
+from cocopot import Blueprint, abort
 
 bp = Blueprint('blueprint1')
 
@@ -198,10 +198,10 @@ When you bind a function with the help of the `@bp.route` decorator the blueprin
 So how do you register that blueprint? Like this:
 
 ```python
-from flagon import Flagon
+from cocopot import Cocopot
 from yourapplication.blueprint1 import bp
 
-app = Flagon()
+app = Cocopot()
 app.register_blueprint(bp)
 ```
 

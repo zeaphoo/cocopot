@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from flagon import Flagon, Blueprint, request, g, abort
-from flagon.testing import FlagonClient
-from flagon.datastructures import FileUpload
-from flagon._compat import BytesIO, to_bytes
+from cocopot import Cocopot, Blueprint, request, g, abort
+from cocopot.testing import FlagonClient
+from cocopot.datastructures import FileUpload
+from cocopot._compat import BytesIO, to_bytes
 import copy
 import traceback
 
 def test_client():
-    app = Flagon()
+    app = Cocopot()
     @app.before_request
     def before_request1():
         g.a = 1
@@ -31,7 +31,7 @@ def test_client():
     assert r[1] == '404 Not Found'
 
 def test_client2():
-    app = Flagon()
+    app = Cocopot()
     @app.before_request
     def before_request1():
         return 'before_request_return'
@@ -46,7 +46,7 @@ def test_client2():
     assert r[1] == '200 OK'
 
 def test_client_formdata():
-    app = Flagon()
+    app = Cocopot()
     @app.route('/hello')
     def hello():
         return 'ok'
@@ -76,7 +76,7 @@ def test_client_formdata():
 
 
 def test_client_error():
-    app = Flagon()
+    app = Cocopot()
 
     @app.route('/hello')
     def hello():

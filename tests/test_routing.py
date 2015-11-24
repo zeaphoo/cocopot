@@ -1,7 +1,7 @@
 import pytest
 
-from flagon.routing import Router
-from flagon.exceptions import BadRequest, NotFound, MethodNotAllowed
+from cocopot.routing import Router
+from cocopot.exceptions import BadRequest, NotFound, MethodNotAllowed
 
 def test_basic_routing():
     r = Router()

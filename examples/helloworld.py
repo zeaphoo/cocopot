@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from flagon import Flagon
-app = Flagon('hello')
+from cocopot import Cocopot
+app = Cocopot('hello')
 
 @app.route('/')
 def hello_world():

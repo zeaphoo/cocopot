@@ -1,6 +1,6 @@
 import pytest
 
-from flagon.utils import ConfigDict, cached_property
+from cocopot.utils import ConfigDict, cached_property
 import copy
 import traceback
 

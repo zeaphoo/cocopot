@@ -1,10 +1,10 @@
 import pytest
 
-from flagon.response import Response, make_response, redirect, jsonify
-from flagon.datastructures import MultiDict
-from flagon.http import parse_date
-from flagon.exceptions import BadRequest
-from flagon.utils import json
+from cocopot.response import Response, make_response, redirect, jsonify
+from cocopot.datastructures import MultiDict
+from cocopot.http import parse_date
+from cocopot.exceptions import BadRequest
+from cocopot.utils import json
 import copy
 import datetime
 

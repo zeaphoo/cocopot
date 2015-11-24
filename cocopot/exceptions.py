@@ -153,7 +153,7 @@ class MethodNotAllowed(HTTPException):
 
     def __init__(self, valid_methods=None, description=None):
         """Takes an optional list of valid http methods
-        starting with flagon."""
+        starting with cocopot."""
         HTTPException.__init__(self, description)
         self.valid_methods = valid_methods
 

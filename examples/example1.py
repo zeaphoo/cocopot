@@ -1,5 +1,5 @@
-from flagon import Flagon, request
-app = Flagon('example1')
+from cocopot import Cocopot, request
+app = Cocopot('example1')
 
 @app.before_request
 def before_request():

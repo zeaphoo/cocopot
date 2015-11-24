@@ -1,9 +1,9 @@
 import pytest
 
-from flagon.request import Request
-from flagon.exceptions import BadRequest, NotFound, MethodNotAllowed
-from flagon.datastructures import MultiDict, FormsDict
-from flagon._compat import BytesIO, to_native, to_bytes, to_unicode
+from cocopot.request import Request
+from cocopot.exceptions import BadRequest, NotFound, MethodNotAllowed
+from cocopot.datastructures import MultiDict, FormsDict
+from cocopot._compat import BytesIO, to_native, to_bytes, to_unicode
 import base64
 import copy
 import inspect
@@ -14,9 +14,9 @@ env1 = {
     'SCRIPT_NAME':          '/foo',
     'PATH_INFO':            '/bar',
     'QUERY_STRING':         'a=1&b=2',
-    'SERVER_NAME':          'test.flagon.org',
+    'SERVER_NAME':          'test.cocopot.org',
     'SERVER_PORT':          '80',
-    'HTTP_HOST':            'test.flagon.org',
+    'HTTP_HOST':            'test.cocopot.org',
     'SERVER_PROTOCOL':      'http',
     'CONTENT_TYPE':         'text/plain; charset=utf-8',
     'CONTENT_LENGTH':       '0',
@@ -27,17 +27,17 @@ env1 = {
 def test_basic_request():
     env = dict(copy.deepcopy(env1))
     req = Request(env)
-    assert 'flagon.request' in env
+    assert 'cocopot.request' in env
     assert req.args == MultiDict({'a':'1', 'b':'2'}.items())
     assert req.values == MultiDict({'a':'1', 'b':'2'}.items())
     assert req.path == '/bar'
     assert req.full_path == '/foo/bar'
     assert req.script_root == '/foo'
-    assert req.url == 'http://test.flagon.org/foo/bar?a=1&b=2'
-    assert req.base_url == 'http://test.flagon.org/foo/bar'
-    assert req.root_url == 'http://test.flagon.org/foo/'
-    assert req.host_url == 'http://test.flagon.org/'
-    assert req.host == 'test.flagon.org'
+    assert req.url == 'http://test.cocopot.org/foo/bar?a=1&b=2'
+    assert req.base_url == 'http://test.cocopot.org/foo/bar'
+    assert req.root_url == 'http://test.cocopot.org/foo/'
+    assert req.host_url == 'http://test.cocopot.org/'
+    assert req.host == 'test.cocopot.org'
     assert req.get_data() == b''
     assert req.get_data(as_text=True) == ''
     assert req.blueprint == None
@@ -64,17 +64,17 @@ def test_basic_request():
 
 def test_basic_request2():
     env = dict(copy.deepcopy(env1))
-    env['HTTP_X_FORWARDED_HOST'] = 'test.flagon.org'
+    env['HTTP_X_FORWARDED_HOST'] = 'test.cocopot.org'
     req = Request(env)
-    assert req.host == 'test.flagon.org'
-    env['HTTP_X_FORWARDED_HOST'] = 'test.flagon.org, a.proxy.org'
+    assert req.host == 'test.cocopot.org'
+    env['HTTP_X_FORWARDED_HOST'] = 'test.cocopot.org, a.proxy.org'
     req = Request(env)
-    assert req.host == 'test.flagon.org'
+    assert req.host == 'test.cocopot.org'
     env = dict(copy.deepcopy(env1))
     env.pop('HTTP_HOST')
     env['SERVER_PORT'] = '8080'
     req = Request(env)
-    assert req.host == 'test.flagon.org:8080'
+    assert req.host == 'test.cocopot.org:8080'
 
 def test_basic_error():
     env = dict(copy.deepcopy(env1))

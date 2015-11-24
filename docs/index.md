@@ -1,12 +1,12 @@
 
 
-# write your first flagon app
+# write your first cocopot app
 
 Let's start with a very basic "Hello World" example:
 
 ```python
-from flagon import Flagon
-app = Flagon()
+from cocopot import Cocopot
+app = Cocopot()
 
 @app.route("/")
 def hello():

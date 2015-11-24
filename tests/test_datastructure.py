@@ -1,8 +1,8 @@
 import pytest
 
-from flagon.datastructures import MultiDict, WSGIHeaders, FileUpload, FormsDict
+from cocopot.datastructures import MultiDict, WSGIHeaders, FileUpload, FormsDict
 import base64
-from flagon._compat import PY2, to_unicode, to_bytes, BytesIO
+from cocopot._compat import PY2, to_unicode, to_bytes, BytesIO
 import tempfile
 import os
 
@@ -38,9 +38,9 @@ def test_wsgiheaders():
         'SCRIPT_NAME':          '/foo',
         'PATH_INFO':            '/bar',
         'QUERY_STRING':         'a=1&b=2',
-        'SERVER_NAME':          'test.flagon.org',
+        'SERVER_NAME':          'test.cocopot.org',
         'SERVER_PORT':          '80',
-        'HTTP_HOST':            'test.flagon.org',
+        'HTTP_HOST':            'test.cocopot.org',
         'SERVER_PROTOCOL':      'http',
         'CONTENT_TYPE':         'text/plain; charset=utf-8',
         'CONTENT_LENGTH':       '0',

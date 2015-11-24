@@ -1,7 +1,7 @@
 import pytest
 
-from flagon import Flagon, Blueprint, request, g, abort
-from flagon._compat import to_bytes
+from cocopot import Cocopot, Blueprint, request, g, abort
+from cocopot._compat import to_bytes
 import copy
 import traceback
 import sys
