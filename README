@@ -38,4 +38,4 @@ Install the latest stable release with ``pip install cocopot``, ``easy_install -
 
 ## License
 
-Code and documentation are available according to the MIT License (see LICENSE__).
+Code and documentation are available according to the BSD License (see LICENSE).

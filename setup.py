@@ -1,11 +1,11 @@
 """
 Cocopot
--------
+---------
 
 Cocopot is a microframework for Python. Foucus on mobile service and cloud service, no default template system.
 
 Cocopot is Fun
-````````````
+```````````````````````
 
 .. code:: python
 
@@ -20,7 +20,7 @@ Cocopot is Fun
         app.run()
 
 And Easy to Setup
-`````````````````
+```````````````````````
 
 .. code:: bash
 
@@ -49,6 +49,7 @@ setup(
     name='Cocopot',
     version='0.1',
     url='http://github.com/zeaphoo/cocopot/',
+    download_url='http://github.com/zeaphoo/cocopot/tarball/0.1',
     license='BSD',
     author='zeaphoo',
     author_email='zeaphoo@gmail.com',
