@@ -52,7 +52,7 @@ setup(
     license='BSD',
     author='zeaphoo',
     author_email='zeaphoo@gmail.com',
-    description='A microframework based on Flask, more suitable for mobile service.',
+    description='A microframework for python web development, more suitable for mobile service.',
     long_description=__doc__,
     packages=['cocopot'],
     include_package_data=True,
@@ -61,7 +61,7 @@ setup(
     install_requires=[],
     cmdclass={'test': PyTest},
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',

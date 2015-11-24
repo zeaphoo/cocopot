@@ -65,7 +65,7 @@ def jsonify(*args, **kwargs):
     arguments to this function are the same as to the `dict`
     constructor.
     Example usage::
-        from flask import jsonify
+        from cocopot import jsonify
         @app.route('/_get_current_user')
         def get_current_user():
             return jsonify(username=g.user.username,
