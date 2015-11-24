@@ -164,6 +164,53 @@ def hello():
 
 # Blueprints
 
+A Blueprint object works similarly to a Flagon application object, but it is not actually an application. Rather it is a blueprint of how to construct or extend an application.
+
+## Why Blueprints?
+Blueprints are intended for these cases:
+
+* Factor an application into a set of blueprints. This is ideal for larger applications; a project could instantiate an application object, initialize several extensions, and register a collection of blueprints.
+* Register a blueprint on an application at a URL prefix. Parameters in the URL prefix become common view arguments (with defaults) across all view functions in the blueprint.
+* Register a blueprint multiple times on an application with different URL rules.
+Provide template filters, static files, templates, and other utilities through blueprints. A blueprint does not have to implement applications or view functions.
+
+A blueprint is not a pluggable app because it is not actually an application – it’s a set of operations which can be registered on an application, even multiple times. Why not have multiple application objects? You can do that, but your applications will be managed at the WSGI layer.
+
+
+## Write Blueprint
+
+This is what a very basic blueprint looks like. In this case we want to implement a blueprint that does simple return:
+
+```python
+from flagon import Blueprint, abort
+
+bp = Blueprint('blueprint1')
+
+@bp.route('/show')
+def show():
+    return 'ok'
+```
+
+When you bind a function with the help of the `@bp.route` decorator the blueprint will record the intention of registering the function `show` on the application when it’s later registered. Additionally it will prefix the endpoint of the function with the name of the blueprint which was given to the Blueprint constructor.
+
+## Registering Blueprints
+
+So how do you register that blueprint? Like this:
+
+```python
+from flagon import Flagon
+from yourapplication.blueprint1 import bp
+
+app = Flagon()
+app.register_blueprint(bp)
+```
+
+Blueprints however can also be mounted at different locations:
+
+```python
+app.register_blueprint(bp, url_prefix='/blueprint1')
+```
+
 # Error Handle
 
 # Sessions
