@@ -114,7 +114,7 @@ To access parameters submitted in the URL (?key=value) you can use the args attr
 searchword = request.args.get('key', '')
 ```
 
-# Redirects and Errors
+# Redirects and Aborts
 
 To redirect a user to another endpoint, use the redirect() function; to abort a request early with an error code, use the abort() function:
 
@@ -211,7 +211,27 @@ Blueprints however can also be mounted at different locations:
 app.register_blueprint(bp, url_prefix='/blueprint1')
 ```
 
+# Request Hooks
+
+
+
 # Error Handle
+
+By default all the error and exception will be wrapped as a default response,  If you want to customize the error returns, you can use the errorhandler() decorator:
+
+```python
+import json
+
+@app.errorhandler(401)
+def user_not_authed(error):
+    return json.dumps({'status':'error', 'error':'login_required'}), 401
+
+@app.errorhandler(Exception)
+def server_exception(error):
+    return  'server exception, we will fix it soon.', 500
+```
+
+The errorhandler() decorator can also be used in Blueprint, the only limitation is Blueprint can't handle 500 error, since it should be handled by the Application.
 
 # Sessions
 
