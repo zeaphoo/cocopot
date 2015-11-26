@@ -4,18 +4,18 @@
 In the last chapter we built a very simple web application with only a single route. Here is the routing part of the "Hello World" example again:
 
 ```python
-    @app.route('/hello')
-    def hello():
-        return "Hello World!"
+@app.route('/hello')
+def hello():
+    return "Hello World!"
 ```
 
 The `route` decorator links an URL path to a callback function, and adds a new route to the Application `app`. An application with just one route is kind of boring, though. Let's add some more:
 
 ```python
-    @app.route('/')
-    @app.route('/hello/<name>')
-    def greet(name='Stranger'):
-        return 'Hello %s, how are you?'%(name)
+@app.route('/')
+@app.route('/hello/<name>')
+def greet(name='Stranger'):
+    return 'Hello %s, how are you?'%(name)
 ```
 
 This example demonstrates two things: You can bind more than one route to a single callback, and you can add wildcards to URLs and access them via keyword arguments.
@@ -233,8 +233,41 @@ def server_exception(error):
 
 The errorhandler() decorator can also be used in Blueprint, the only limitation is Blueprint can't handle 500 error, since it should be handled by the Application.
 
-# Sessions
+# Cookies
+
+Cocopot don't have session like other web framework, it intend to be support in extension. But cocopot support Cookies, read cookies from request:
+
+```python
+request.cookies # a FormsDict object
+request.get_cookie('session_id')
+```
+
+Set cookie in response:
+
+```python
+from cocopot import make_response
+
+resp = make_response('ok')
+resp.set_cookie('session_id', 'abcdefghijklmn')
+resp.delete_cookie('old_session_id')
+```
 
 # Testing
 
+
 # Deployment
+
+## Gunicorn
+Gunicorn ‘Green Unicorn’ is a WSGI HTTP Server for UNIX. It’s a pre-fork worker model ported from Ruby’s Unicorn project. It supports both eventlet and greenlet. Running a Cocopot application on this server is quite simple:
+
+```
+gunicorn myproject:app
+```
+
+Gunicorn provides many command-line options – see gunicorn -h. For example, to run a Cocopot application with 4 worker processes (-w 4) binding to localhost port 4000 (-b 127.0.0.1:4000):
+
+```
+gunicorn -w 4 -b 127.0.0.1:4000 myproject:app
+```
+
+## Deploying Cocopot on Heroku
