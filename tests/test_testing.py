@@ -2,7 +2,7 @@
 import pytest
 
 from cocopot import Cocopot, Blueprint, request, g, abort
-from cocopot.testing import FlagonClient
+from cocopot.testing import CocopotClient
 from cocopot.datastructures import FileUpload
 from cocopot._compat import BytesIO, to_bytes
 import copy
@@ -22,7 +22,7 @@ def test_client():
     def hello():
         return 'ok'
 
-    c = FlagonClient(app)
+    c = CocopotClient(app)
     r = c.open('/hello')
     assert r[0] == b'ok'
     assert r[1] == '200 OK'
@@ -40,7 +40,7 @@ def test_client2():
     def hello():
         return 'ok'
 
-    c = FlagonClient(app)
+    c = CocopotClient(app)
     r = c.open('/hello')
     assert r[0] == b'before_request_return'
     assert r[1] == '200 OK'
@@ -51,7 +51,7 @@ def test_client_formdata():
     def hello():
         return 'ok'
 
-    c = FlagonClient(app)
+    c = CocopotClient(app)
     r = c.open('/hello', content_type='application/x-www-form-urlencoded', form={'c':1, 'd':'woo'})
     assert r[0] == b'ok'
     assert r[1] == '200 OK'
@@ -61,14 +61,14 @@ def test_client_formdata():
         'a.html':FileUpload(BytesIO(to_bytes('<!DOCTYPE html><title>Content of a.html.</title>')), 'file2', 'a.html', headers={'Content-Type': 'text/plain'}),
         'b.txt': 'b txt content'
     }
-    c = FlagonClient(app)
+    c = CocopotClient(app)
     r = c.open('/hello', content_type='multipart/form-data',
                 form={'text':'text default'},
                 files=files)
     assert r[0] == b'ok'
     assert r[1] == '200 OK'
 
-    c = FlagonClient(app)
+    c = CocopotClient(app)
     r = c.open('/hello', content_type='text/plain',
                 input_stream = BytesIO())
     assert r[0] == b'ok'
@@ -82,6 +82,6 @@ def test_client_error():
     def hello():
         return object()
 
-    c = FlagonClient(app)
+    c = CocopotClient(app)
     r = c.open('/hello')
     assert r[1] == '500 Internal Server Error'

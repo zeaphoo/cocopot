@@ -5,7 +5,7 @@ from cocopot import Cocopot, Blueprint, request, g, abort
 from cocopot._compat import to_bytes
 from cocopot.request import Request
 from cocopot.app import RequestContextGlobals, RequestContext
-from cocopot.testing import FlagonClient
+from cocopot.testing import CocopotClient
 import copy
 import traceback
 
@@ -272,7 +272,7 @@ def test_unicode_route():
     def hello():
         return u'你好地球'
 
-    c = FlagonClient(app)
+    c = CocopotClient(app)
     r = c.open(u'/地球')
     assert r[0] == to_bytes(u'你好地球')
     assert r[1] == '200 OK'

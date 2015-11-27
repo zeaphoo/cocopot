@@ -168,7 +168,7 @@ class EnvironBuilder(object):
             result.update(self.environ_overrides)
         return result
 
-class FlagonClient(object):
+class CocopotClient(object):
     """
     """
     def __init__(self, application, use_cookies=True):

@@ -253,7 +253,19 @@ resp.delete_cookie('old_session_id')
 ```
 
 # Testing
+Cocopot provides a way to test your application by providing test client and handling the context locals for you. You can then use that with your favourite testing solution. In this documentation we will use the py.test package.
 
+```python
+from cocopot.testing import CocopotClient
+from yourproject import app
+
+def test_application():
+    c = CocopotClient(app)
+    r = c.open('/hello', content_type='application/x-www-form-urlencoded', form={'c':1, 'd':'woo'})
+    assert r[0] == 'ok'
+    assert r[1] == '200 OK'
+
+```
 
 # Deployment
 
@@ -269,5 +281,3 @@ Gunicorn provides many command-line options – see gunicorn -h. For example, to
 ```
 gunicorn -w 4 -b 127.0.0.1:4000 myproject:app
 ```
-
-## Deploying Cocopot on Heroku
