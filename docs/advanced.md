@@ -1,5 +1,25 @@
 # Request Context
 
+## Object Proxies
+
+Some of the objects like `request, g` provided by Cocopot are proxies to other objects. The reason behind this is that these proxies are shared between threads and they have to dispatch to the actual object bound to a thread behind the scenes as necessary.
+
+```python
+from cocopot import request, g
+app = Cocopot()
+
+@app.before_request
+def before_request():
+    g.foo = 'ok'
+
+@app.route('/hello')
+def hello_world():
+    return g.foo
+```
+
+## Request Hooks and Processing
+
+
 # Errors
 
 What happens if an error occurs during request processing? The behavior is quite simple:
