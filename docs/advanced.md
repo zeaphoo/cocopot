@@ -19,6 +19,17 @@ def hello_world():
 
 ## Request Hooks and Processing
 
+Cocopot application provides `before_request, after_request, teardown_request` callbacks in request processing.
+
+The before_request callbacks does not need any parameters, in this callback, request context has been created, so request and g object is available. It is often check session, create necessary db connection and etc.
+
+```Python
+@app.before_request
+def before_request():
+    g.db = DBConnection() #
+```
+
+
 
 # Errors
 
