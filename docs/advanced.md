@@ -21,7 +21,7 @@ def hello_world():
 
 Cocopot application provides `before_request, after_request, teardown_request` callbacks in request processing.
 
-The before_request callbacks does not need any parameters, in this callback, request context has been created, so request and g object is available. It is often check session, create necessary db connection and etc.
+The before_request will triggered before processing the request. The callbacks does not need accept any parameters, in this callback, request context has been created, so request and g object is available. It is often check session, create necessary db connection and etc.
 
 ```Python
 @app.before_request
@@ -29,7 +29,21 @@ def before_request():
     g.db = DBConnection() #
 ```
 
+The after_request will triggered after request been processed without exception. The callback must accept a response object as parameter and should return a response.
 
+```python
+@app.after_request
+def after_request1(resp):
+    return resp
+```
+
+The teardown_request will triggered when request context will be destroyed, so after request been processed with or without exception, the teardown_request callbacks will be called. The callback must accept a exception object as parameter, it is the exception occurred in processing the request, include before_request, after_request else it will be None.
+
+```python
+@app.teardown_request
+def teardown_request(exc):
+    pass
+```
 
 # Errors
 
