@@ -45,6 +45,10 @@ def teardown_request(exc):
     pass
 ```
 
+This `before_request, after_request, teardown_request` callback can be added multiple times. The callbacks executed as the order as added.
+
+Blueprint object also provides `before_request, after_request, teardown_request` for the blueprint object, it will only triggered when the endpoint is in this blueprint. Blueprint provides the application level callbacks for insert some action in processing, `before_app_request, after_app_request, teardown_app_request`.
+
 # Errors
 
 What happens if an error occurs during request processing? The behavior is quite simple:
