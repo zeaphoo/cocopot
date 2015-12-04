@@ -1,0 +1,8 @@
+site_name: Cocopot
+pages:
+- Home: index.md
+- Install: install.md
+- Quick Start: quickstart.md
+- Advanced: advanced.md
+- About: for_flask_user.md
+theme: readthedocs
