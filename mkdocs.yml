@@ -5,4 +5,11 @@ pages:
 - Quick Start: quickstart.md
 - Advanced: advanced.md
 - About: for_flask_user.md
+- API Documents:
+    - Application: api_app.md
+    - Blueprints: api_blueprints.md
+    - Request: api_request.md
+    - Response: api_response.md
+    - DataStructure: api_datastructures.md
+    - Routing: api_routing.md
 theme: readthedocs
