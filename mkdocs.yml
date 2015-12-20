@@ -4,7 +4,7 @@ pages:
 - Install: install.md
 - Quick Start: quickstart.md
 - Advanced: advanced.md
-- About: for_flask_user.md
+- SlackUserGuide: for_flask_user.md
 - API Documents:
     - Application: api_app.md
     - Blueprints: api_blueprints.md

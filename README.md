@@ -33,7 +33,7 @@ Run this script or paste it into a Python console, then point your browser to `<
 ## Download and Install
 
 
-Install the latest stable release with ``pip install cocopot``, ``easy_install -U cocopot``. There are no hard dependencies other than the Python standard library. Cocopot runs with **Python 2.6+ and 3.3+**. 0.1 will be released soon.
+Install the latest stable release with ``pip install cocopot``, ``easy_install -U cocopot``. There are no hard dependencies other than the Python standard library. Cocopot runs with **Python 2.6+ and 3.3+**.
 
 
 ## Documentation
