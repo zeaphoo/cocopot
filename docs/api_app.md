@@ -153,9 +153,9 @@ Returns:
 
 Runs the application on a local development server.
 Args:
-    host: the hostname to listen on. Set this to '0.0.0.0'` to
+    host: the hostname to listen on. Set this to '0.0.0.0' to
              have the server available externally as well. Defaults to
-             '127.0.0.1'`.
+             '127.0.0.1'.
     port: the port of the webserver. Defaults to 5000 or the
              port defined in the SERVER_NAME` config variable if
              present.
@@ -275,20 +275,26 @@ endpoint.
 
 Basically this example::
 
+```
     @app.route('/')
     def index():
         pass
+```
 
 Is equivalent to the following::
 
+```
     def index():
         pass
     app.add_url_rule('/', 'index', index)
+```
 
 If the view_func is not provided you will need to connect the endpoint
 to a view function like so::
 
+```
     app.view_functions['index'] = index
+```
 
 Internally `route` invokes `add_url_rule` so if you want
 to customize the behavior via subclassing you only need to change
@@ -297,11 +303,15 @@ this method.
 For more information refer to `url-route-registrations`.
 
 Args:
+
     rule : the URL rule as string
+
     endpoint : the endpoint for the registered URL rule.
             Cocopot itself assumes the name of the view function as endpoint
+
     view_func: the function to call when serving a request to the
             provided endpoint
+
     options: methods is a list of methods this rule should be limited
             to (`GET`, `POST` etc.).
 
