@@ -77,7 +77,7 @@ class Cocopot(object):
     the view functions, the URL rules,  and more.
 
     Usually you create a `Cocopot` instance in your main module or
-    in the `__init__.py` file of your package like this::
+    in the `__init__.py` file of your package like this:
 
         from cocopot import Cocopot
         app = Cocopot()
@@ -170,10 +170,11 @@ class Cocopot(object):
     def run(self, host=None, port=None, debug=True, **options):
         """Runs the application on a local development server.
         Args:
-            host: the hostname to listen on. Set this to '0.0.0.0' to
+
+          * host: the hostname to listen on. Set this to '0.0.0.0' to
                      have the server available externally as well. Defaults to
                      '127.0.0.1'.
-            port: the port of the webserver. Defaults to 5000 or the
+          * port: the port of the webserver. Defaults to 5000 or the
                      port defined in the SERVER_NAME` config variable if
                      present.
         """
@@ -204,28 +205,22 @@ class Cocopot(object):
         decorator.  If a view_func is provided it will be registered with the
         endpoint.
 
-        Basically this example::
+        Basically this example:
 
-        ```
             @app.route('/')
             def index():
                 pass
-        ```
 
-        Is equivalent to the following::
+        Is equivalent to the following:
 
-        ```
             def index():
                 pass
             app.add_url_rule('/', 'index', index)
-        ```
 
         If the view_func is not provided you will need to connect the endpoint
-        to a view function like so::
+        to a view function like so:
 
-        ```
             app.view_functions['index'] = index
-        ```
 
         Internally `route` invokes `add_url_rule` so if you want
         to customize the behavior via subclassing you only need to change
@@ -235,15 +230,12 @@ class Cocopot(object):
 
         Args:
 
-            rule : the URL rule as string
-
-            endpoint : the endpoint for the registered URL rule.
+          * rule : the URL rule as string
+          * endpoint : the endpoint for the registered URL rule.
                     Cocopot itself assumes the name of the view function as endpoint
-
-            view_func: the function to call when serving a request to the
+          * view_func: the function to call when serving a request to the
                     provided endpoint
-
-            options: methods is a list of methods this rule should be limited
+          * options: methods is a list of methods this rule should be limited
                     to (`GET`, `POST` etc.).
         """
         if endpoint is None:
@@ -275,7 +267,7 @@ class Cocopot(object):
     def route(self, rule, **options):
         """A decorator that is used to register a view function for a
         given URL rule.  This does the same thing as `add_url_rule`
-        but is intended for decorator usage::
+        but is intended for decorator usage:
 
             @app.route('/')
             def index():
@@ -284,8 +276,9 @@ class Cocopot(object):
         For more information refer to `url-route-registrations`.
 
         Args:
-            rule: the URL rule as string
-            endpoint: the endpoint for the registered URL rule.  Cocopot
+
+          * rule: the URL rule as string
+          * endpoint: the endpoint for the registered URL rule.  Cocopot
                          itself assumes the name of the view function as
                          endpoint
         """
@@ -313,13 +306,13 @@ class Cocopot(object):
 
     def errorhandler(self, code_or_exception):
         """A decorator that is used to register a function give a given
-        error code.  Example::
+        error code.  Example:
 
             @app.errorhandler(404)
             def page_not_found(error):
                 return 'This page does not exist', 404
 
-        You can also register handlers for arbitrary exceptions::
+        You can also register handlers for arbitrary exceptions:
 
             @app.errorhandler(DatabaseError)
             def special_exception_handler(error):
@@ -327,7 +320,7 @@ class Cocopot(object):
 
         You can also register a function as error handler without using
         the `errorhandler` decorator.  The following example is
-        equivalent to the one above::
+        equivalent to the one above:
 
             def page_not_found(error):
                 return 'This page does not exist', 404
@@ -513,10 +506,12 @@ class Cocopot(object):
         call all the `after_request` decorated functions.
 
         Args:
-            response: a `Response` object.
+
+          * response: a `Response` object.
 
         Returns:
-            a new response object or the same, has to be an
+
+          * a new response object or the same, has to be an
                  instance of `Response`.
         """
         ctx = _request_ctx_stack.top
@@ -550,11 +545,11 @@ class Cocopot(object):
     def wsgi_app(self, environ, start_response):
         """The actual WSGI application.  This is not implemented in
         `__call__` so that middlewares can be applied without losing a
-        reference to the class.  So instead of doing this::
+        reference to the class.  So instead of doing this:
 
             app = MyMiddleware(app)
 
-        It's a better idea to do this instead::
+        It's a better idea to do this instead:
 
             app.wsgi_app = MyMiddleware(app.wsgi_app)
 
@@ -562,8 +557,9 @@ class Cocopot(object):
         can continue to call methods on it.
 
         Args:
-            environ: a WSGI environment
-            start_response: a callable accepting a status code,
+
+          * environ: a WSGI environment
+          * start_response: a callable accepting a status code,
                                a list of headers and an optional
                                exception context to start the response
         """

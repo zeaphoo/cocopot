@@ -17,7 +17,7 @@ except ImportError:
 
 class LocalStack(object):
     """This class works similar to a `Local` but keeps a stack
-    of objects instead.  This is best explained with an example::
+    of objects instead.  This is best explained with an example:
 
         >>> ls = LocalStack()
         >>> ls.push(42)
@@ -30,6 +30,7 @@ class LocalStack(object):
         23
         >>> ls.top
         42
+        
     """
 
     def __init__(self):
@@ -69,7 +70,7 @@ class LocalProxy(object):
     """Acts as a proxy for a object.  Forwards all operations to
     a proxied object.
     If you want to have a proxy to an object looked up by a function,
-    you can  pass a function to the `LocalProxy` constructor::
+    you can  pass a function to the `LocalProxy` constructor:
 
         session = LocalProxy(lambda: get_current_request().session)
 

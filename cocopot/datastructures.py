@@ -23,15 +23,15 @@ class MultiDict(DictMixin):
 
         Basic Usage:
 
-        >>> d = MultiDict([('a', 'b'), ('a', 'c')])
-        >>> d
-        MultiDict([('a', 'b'), ('a', 'c')])
-        >>> d['a']
-        'b'
-        >>> d.getlist('a')
-        ['b', 'c']
-        >>> 'a' in d
-        True
+            >>> d = MultiDict([('a', 'b'), ('a', 'c')])
+            >>> d
+            MultiDict([('a', 'b'), ('a', 'c')])
+            >>> d['a']
+            'b'
+            >>> d.getlist('a')
+            ['b', 'c']
+            >>> 'a' in d
+            True
     """
 
     def __init__(self, *a, **kwargs):
@@ -106,10 +106,11 @@ class MultiDict(DictMixin):
     def get(self, key, default=None, index=0, type=None):
         """ Return the most recent value for a key.
             Args:
-                default: The default value to be returned if the key is not
+
+              * default: The default value to be returned if the key is not
                    present or the type conversion fails.
-                index: An index for the list of available values.
-                type: If defined, this callable is used to cast the value
+              * index: An index for the list of available values.
+              * type: If defined, this callable is used to cast the value
                     into a specific type. Exception are suppressed and result in
                     the default value to be returned.
         """
@@ -331,10 +332,12 @@ class FileUpload(object):
         """ Save file to disk or copy its content to an open file(-like) object.
             If *destination* is a directory, `filename` is added to the
             path. Existing files are not overwritten by default (IOError).
+
             Args:
-                destination: File path, directory or file(-like) object.
-                overwrite: If True, replace existing files. (default: False)
-                chunk_size: Bytes to read at a time. (default: 64kb)
+
+              * destination: File path, directory or file(-like) object.
+              * overwrite: If True, replace existing files. (default: False)
+              * chunk_size: Bytes to read at a time. (default: 64kb)
         """
         if isinstance(destination, string_types):  # Except file-likes here
             if os.path.isdir(destination):

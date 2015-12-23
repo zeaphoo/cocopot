@@ -285,14 +285,15 @@ class Request(object):
         """A handy helper function that recreates the full URL as IRI for the
         current request or parts of it.  Here an example:
 
-        >>> get_current_url()
-        'http://localhost/script/?param=foo'
-        >>> get_current_url(root_only=True)
-        'http://localhost/script/'
-        >>> get_current_url(host_only=True)
-        'http://localhost/'
-        >>> get_current_url(strip_querystring=True)
-        'http://localhost/script/'
+            >>> get_current_url()
+            'http://localhost/script/?param=foo'
+            >>> get_current_url(root_only=True)
+            'http://localhost/script/'
+            >>> get_current_url(host_only=True)
+            'http://localhost/'
+            >>> get_current_url(strip_querystring=True)
+            'http://localhost/script/'
+
         """
         environ = self.environ
         tmp = [environ['wsgi.url_scheme'], '://', self.get_host()]
@@ -509,10 +510,11 @@ class Request(object):
         but this can be overriden by the `force` parameter.
 
         Args:
-            force: if set to `True` the mimetype is ignored.
-            silent: if set to `False` this method will fail silently
+
+          * force: if set to `True` the mimetype is ignored.
+          * silent: if set to `False` this method will fail silently
                        and return `False`.
-            cache: if set to `True` the parsed JSON data is remembered
+          * cache: if set to `True` the parsed JSON data is remembered
                       on the request.
         """
         _missing = object()

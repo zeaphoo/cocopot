@@ -52,8 +52,9 @@ def redirect(location, code=302):
     redirects the client to the target location.  Supported codes are 301,
     302, 303, 305, and 307.
     Args:
-        location: the location the response should redirect to.
-        code: the redirect status code. defaults to 302.
+
+      * location: the location the response should redirect to.
+      * code: the redirect status code. defaults to 302.
     """
     rv = RequestRedirect(location)
     rv.code = code
@@ -64,19 +65,23 @@ def jsonify(*args, **kwargs):
     the given arguments with an`application/json` mimetype.  The
     arguments to this function are the same as to the `dict`
     constructor.
-    Example usage::
+    Example usage:
+
         from cocopot import jsonify
         @app.route('/_get_current_user')
         def get_current_user():
             return jsonify(username=g.user.username,
                            email=g.user.email,
                            id=g.user.id)
-    This will send a JSON response like this to the browser::
+
+    This will send a JSON response like this to the browser:
+
         {
             "username": "admin",
             "email": "admin@localhost",
             "id": 42
         }
+
     """
 
     indent = None
@@ -92,10 +97,12 @@ class Response(object):
         yields parts of the body and not the headers.
 
         Args:
-            body: The response body as one of the supported types.
-            status: Either an HTTP status code (e.g. 200) or a status line
+
+          * body: The response body as one of the supported types.
+          * status: Either an HTTP status code (e.g. 200) or a status line
                        including the reason phrase (e.g. '200 OK').
-            headers: A dictionary or a list of name-value pairs.
+          * headers: A dictionary or a list of name-value pairs.
+
         Additional keyword arguments are added to the list of headers.
         Underscores in the header name are replaced with dashes.
     """
@@ -264,18 +271,20 @@ class Response(object):
             set, create a `Signed Cookie` (described below).
 
             Args:
-                name: the name of the cookie.
-                value: the value of the cookie.
-                secret: a signature key required for signed cookies.
+
+              * name: the name of the cookie.
+              * value: the value of the cookie.
+              * secret: a signature key required for signed cookies.
 
             Additionally, this method accepts all RFC 2109 attributes that are
             supported by `cookie.Morsel`, including:
-                max_age: maximum age in seconds. (default: None)
-                expires: a datetime object or UNIX timestamp. (default: None)
-                domain: the domain that is allowed to read the cookie. (default: current domain)
-                path: limits the cookie to a given path (default: current path)
-                secure: limit the cookie to HTTPS connections (default: off).
-                httponly: prevents client-side javascript to read this cookie (default: off).
+
+              * max_age: maximum age in seconds. (default: None)
+              * expires: a datetime object or UNIX timestamp. (default: None)
+              * domain: the domain that is allowed to read the cookie. (default: current domain)
+              * path: limits the cookie to a given path (default: current path)
+              * secure: limit the cookie to HTTPS connections (default: off).
+              * httponly: prevents client-side javascript to read this cookie (default: off).
 
             If neither `expires` nor `max_age` is set (default), the cookie will
             expire at the end of the browser session (as soon as the browser

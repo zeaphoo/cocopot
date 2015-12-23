@@ -42,10 +42,12 @@ Wrapper for file uploads.
 Save file to disk or copy its content to an open file(-like) object.
 If *destination* is a directory, `filename` is added to the
 path. Existing files are not overwritten by default (IOError).
+
 Args:
-    destination: File path, directory or file(-like) object.
-    overwrite: If True, replace existing files. (default: False)
-    chunk_size: Bytes to read at a time. (default: 64kb)
+
+  * destination: File path, directory or file(-like) object.
+  * overwrite: If True, replace existing files. (default: False)
+  * chunk_size: Bytes to read at a time. (default: 64kb)
 ##class FormsDict(*a, **kwargs)
 
 This `MultiDict` subclass is used to store request form data.
@@ -72,7 +74,7 @@ attributes default to an empty string.
 
 Return a (possibly empty) list of values for a key. 
 
-###def **pop**(key, default=<object object at 0x104174040>)
+###def **pop**(key, default=<object object at 0x108f67040>)
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
@@ -101,10 +103,11 @@ Return a (possibly empty) list of values for a key.
 
 Return the most recent value for a key.
 Args:
-    default: The default value to be returned if the key is not
+
+  * default: The default value to be returned if the key is not
        present or the type conversion fails.
-    index: An index for the list of available values.
-    type: If defined, this callable is used to cast the value
+  * index: An index for the list of available values.
+  * type: If defined, this callable is used to cast the value
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
@@ -156,10 +159,11 @@ D.clear() -> None.  Remove all items from D.
 
 Return the most recent value for a key.
 Args:
-    default: The default value to be returned if the key is not
+
+  * default: The default value to be returned if the key is not
        present or the type conversion fails.
-    index: An index for the list of available values.
-    type: If defined, this callable is used to cast the value
+  * index: An index for the list of available values.
+  * type: If defined, this callable is used to cast the value
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
@@ -211,7 +215,7 @@ If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-###def **pop**(key, default=<object object at 0x104174040>)
+###def **pop**(key, default=<object object at 0x108f67040>)
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
@@ -232,10 +236,11 @@ If key is not found, d is returned if given, otherwise KeyError is raised.
 
 Return the most recent value for a key.
 Args:
-    default: The default value to be returned if the key is not
+
+  * default: The default value to be returned if the key is not
        present or the type conversion fails.
-    index: An index for the list of available values.
-    type: If defined, this callable is used to cast the value
+  * index: An index for the list of available values.
+  * type: If defined, this callable is used to cast the value
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
@@ -275,15 +280,15 @@ There are special methods available to access the full list of values.
 
 Basic Usage:
 
->>> d = MultiDict([('a', 'b'), ('a', 'c')])
->>> d
-MultiDict([('a', 'b'), ('a', 'c')])
->>> d['a']
-'b'
->>> d.getlist('a')
-['b', 'c']
->>> 'a' in d
-True
+    >>> d = MultiDict([('a', 'b'), ('a', 'c')])
+    >>> d
+    MultiDict([('a', 'b'), ('a', 'c')])
+    >>> d['a']
+    'b'
+    >>> d.getlist('a')
+    ['b', 'c']
+    >>> 'a' in d
+    True
 
 
 ###var **dict**
@@ -302,10 +307,11 @@ D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D
 
 Return the most recent value for a key.
 Args:
-    default: The default value to be returned if the key is not
+
+  * default: The default value to be returned if the key is not
        present or the type conversion fails.
-    index: An index for the list of available values.
-    type: If defined, this callable is used to cast the value
+  * index: An index for the list of available values.
+  * type: If defined, this callable is used to cast the value
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
@@ -332,7 +338,7 @@ If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-###def **pop**(key, default=<object object at 0x104174040>)
+###def **pop**(key, default=<object object at 0x108f67040>)
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
@@ -357,10 +363,11 @@ Replace the list of values with a single value.
 
 Return the most recent value for a key.
 Args:
-    default: The default value to be returned if the key is not
+
+  * default: The default value to be returned if the key is not
        present or the type conversion fails.
-    index: An index for the list of available values.
-    type: If defined, this callable is used to cast the value
+  * index: An index for the list of available values.
+  * type: If defined, this callable is used to cast the value
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
@@ -436,7 +443,7 @@ If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-###def **pop**(key, default=<object object at 0x104174040>)
+###def **pop**(key, default=<object object at 0x108f67040>)
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
