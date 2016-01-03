@@ -1,0 +1,22 @@
+docs:
+- module: cocopot.app
+  ident: Cocopot
+  dest: docs/api_app.md
+
+- module: cocopot.blueprints
+  ident: Blueprint
+  dest: docs/api_blueprints.md
+
+- module: cocopot.request
+  ident: Request
+  dest: docs/api_request.md
+
+- module: cocopot.response
+  dest: docs/api_response.md
+
+- module: cocopot.routing
+  ident: Router
+  dest: docs/api_routing.md
+
+- module: cocopot.datastructures
+  dest: docs/api_datastructures.md

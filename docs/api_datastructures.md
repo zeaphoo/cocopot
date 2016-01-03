@@ -1,43 +1,33 @@
-#Module cocopot.datastructures
-
-
-##var **PY2**
-
-
-
-##var **string_types**
-
-
-##class FileUpload(fileobj, name, filename, headers=None)
+#class FileUpload(fileobj, name, filename, headers=None)
 
 
 Wrapper for file uploads. 
 
-###var **content_length**
+##var **content_length**
 
 
 
-###var **content_type**
+##var **content_type**
 
 
 
-###var **headers**
+##var **headers**
 
 
 
-###var **raw_filename**
+##var **raw_filename**
 
 
 
-###var **name**
+##var **name**
 
 
 
-###var **file**
+##var **file**
 
 
 
-###def **save**(destination, overwrite=False, chunk_size=65536)
+##def **save**(destination, overwrite=False, chunk_size=65536)
 
 Save file to disk or copy its content to an open file(-like) object.
 If *destination* is a directory, `filename` is added to the
@@ -48,7 +38,7 @@ Args:
   * destination: File path, directory or file(-like) object.
   * overwrite: If True, replace existing files. (default: False)
   * chunk_size: Bytes to read at a time. (default: 64kb)
-##class FormsDict(*a, **kwargs)
+#class FormsDict(*a, **kwargs)
 
 This `MultiDict` subclass is used to store request form data.
 Additionally to the normal dict-like item access methods (which return
@@ -58,48 +48,48 @@ or recoded to match `input_encoding` (default: 'utf8'). Missing
 attributes default to an empty string. 
 
 
-###var **input_encoding**
+##var **input_encoding**
 
 
 
-###var **recode_unicode**
+##var **recode_unicode**
 
 
 
-###var **dict**
+##var **dict**
 
 
 
-###def **getlist**(key)
+##def **getlist**(key)
 
 Return a (possibly empty) list of values for a key. 
 
-###def **pop**(key, default=<object object at 0x108f67040>)
+##def **pop**(key, default=<object object at 0x109baf040>)
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
 
-###def **replace**(key, value)
+##def **replace**(key, value)
 
 Replace the list of values with a single value. 
 
-###def **append**(key, value)
+##def **append**(key, value)
 
 Add a new value to the list of values for this key. 
 
-###def **getall**(key)
+##def **getall**(key)
 
 Return a (possibly empty) list of values for a key. 
 
-###def **iterallitems**()
+##def **iterallitems**()
 
 
 
-###def **itervalues**()
+##def **itervalues**()
 
 
 
-###def **get**(key, default=None, index=0, type=None)
+##def **get**(key, default=None, index=0, type=None)
 
 Return the most recent value for a key.
 Args:
@@ -111,51 +101,51 @@ Args:
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
-###def **keys**()
+##def **keys**()
 
 
 
-###def **update**(*args, **kwds)
+##def **update**(*args, **kwds)
 
 D.update([E, ]**F) -> None.  Update D from mapping/iterable E and F.
 If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-###def **iteritems**()
+##def **iteritems**()
 
 
 
-###def **popitem**()
+##def **popitem**()
 
 D.popitem() -> (k, v), remove and return some (key, value) pair
 as a 2-tuple; but raise KeyError if D is empty.
 
-###def **iterkeys**()
+##def **iterkeys**()
 
 
 
-###def **setdefault**(key, default=None)
+##def **setdefault**(key, default=None)
 
 D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D
 
-###def **items**()
+##def **items**()
 
 
 
-###def **clear**()
+##def **clear**()
 
 D.clear() -> None.  Remove all items from D.
 
-###def **allitems**()
+##def **allitems**()
 
 
 
-###def **values**()
+##def **values**()
 
 
 
-###def **getone**(key, default=None, index=0, type=None)
+##def **getone**(key, default=None, index=0, type=None)
 
 Return the most recent value for a key.
 Args:
@@ -167,72 +157,72 @@ Args:
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
-###def **getunicode**(name, default=None, encoding=None)
+##def **getunicode**(name, default=None, encoding=None)
 
 Return the value as a unicode string, or the default. 
-##class HeaderDict(*a, **ka)
+#class HeaderDict(*a, **ka)
 
 A case-insensitive version of `MultiDict` that defaults to
 replace the old value instead of appending it. 
 
 
-###var **dict**
+##var **dict**
 
 
 
-###def **getlist**(key)
+##def **getlist**(key)
 
 Return a (possibly empty) list of values for a key. 
 
-###def **setdefault**(key, default=None)
+##def **setdefault**(key, default=None)
 
 D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D
 
-###def **get**(key, default=None, index=0)
+##def **get**(key, default=None, index=0)
 
 
 
-###def **keys**()
+##def **keys**()
 
 
 
-###def **items**()
+##def **items**()
 
 
 
-###def **clear**()
+##def **clear**()
 
 D.clear() -> None.  Remove all items from D.
 
-###def **getall**(key)
+##def **getall**(key)
 
 
 
-###def **update**(*args, **kwds)
+##def **update**(*args, **kwds)
 
 D.update([E, ]**F) -> None.  Update D from mapping/iterable E and F.
 If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-###def **pop**(key, default=<object object at 0x108f67040>)
+##def **pop**(key, default=<object object at 0x109baf040>)
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
 
-###def **replace**(key, value)
+##def **replace**(key, value)
 
 
 
-###def **iterallitems**()
+##def **iterallitems**()
 
 
 
-###def **values**()
+##def **values**()
 
 
 
-###def **getone**(key, default=None, index=0, type=None)
+##def **getone**(key, default=None, index=0, type=None)
 
 Return the most recent value for a key.
 Args:
@@ -244,35 +234,35 @@ Args:
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
-###def **itervalues**()
+##def **itervalues**()
 
 
 
-###def **iteritems**()
+##def **iteritems**()
 
 
 
-###def **popitem**()
+##def **popitem**()
 
 D.popitem() -> (k, v), remove and return some (key, value) pair
 as a 2-tuple; but raise KeyError if D is empty.
 
-###def **allitems**()
+##def **allitems**()
 
 
 
-###def **iterkeys**()
+##def **iterkeys**()
 
 
 
-###def **append**(key, value)
+##def **append**(key, value)
 
 
-##class HeaderProperty(name, reader=None, writer=<type 'str'>, default='')
+#class HeaderProperty(name, reader=None, writer=<type 'str'>, default='')
 
 
 
-##class MultiDict(*a, **kwargs)
+#class MultiDict(*a, **kwargs)
 
 This dict stores multiple values per key, but behaves exactly like a
 normal dict in that it returns only the newest value for any given key.
@@ -291,19 +281,19 @@ Basic Usage:
     True
 
 
-###var **dict**
+##var **dict**
 
 
 
-###def **getlist**(key)
+##def **getlist**(key)
 
 Return a (possibly empty) list of values for a key. 
 
-###def **setdefault**(key, default=None)
+##def **setdefault**(key, default=None)
 
 D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D
 
-###def **get**(key, default=None, index=0, type=None)
+##def **get**(key, default=None, index=0, type=None)
 
 Return the most recent value for a key.
 Args:
@@ -315,51 +305,51 @@ Args:
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
-###def **keys**()
+##def **keys**()
 
 
 
-###def **items**()
+##def **items**()
 
 
 
-###def **clear**()
+##def **clear**()
 
 D.clear() -> None.  Remove all items from D.
 
-###def **getall**(key)
+##def **getall**(key)
 
 Return a (possibly empty) list of values for a key. 
 
-###def **update**(*args, **kwds)
+##def **update**(*args, **kwds)
 
 D.update([E, ]**F) -> None.  Update D from mapping/iterable E and F.
 If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-###def **pop**(key, default=<object object at 0x108f67040>)
+##def **pop**(key, default=<object object at 0x109baf040>)
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
 
-###def **replace**(key, value)
+##def **replace**(key, value)
 
 Replace the list of values with a single value. 
 
-###def **iterallitems**()
+##def **iterallitems**()
 
 
 
-###def **values**()
+##def **values**()
 
 
 
-###def **iterkeys**()
+##def **iterkeys**()
 
 
 
-###def **getone**(key, default=None, index=0, type=None)
+##def **getone**(key, default=None, index=0, type=None)
 
 Return the most recent value for a key.
 Args:
@@ -371,27 +361,27 @@ Args:
         into a specific type. Exception are suppressed and result in
         the default value to be returned.
 
-###def **iteritems**()
+##def **iteritems**()
 
 
 
-###def **popitem**()
+##def **popitem**()
 
 D.popitem() -> (k, v), remove and return some (key, value) pair
 as a 2-tuple; but raise KeyError if D is empty.
 
-###def **allitems**()
+##def **allitems**()
 
 
 
-###def **itervalues**()
+##def **itervalues**()
 
 
 
-###def **append**(key, value)
+##def **append**(key, value)
 
 Add a new value to the list of values for this key. 
-##class WSGIHeaders(environ)
+#class WSGIHeaders(environ)
 
 This dict-like class wraps a WSGI environ dict and provides convenient
 access to HTTP_* fields. Keys and values are native strings
@@ -403,67 +393,67 @@ Currently PEP 333, 444 and 3333 are supported. (PEP 444 is the only one
 that uses non-native strings.)
 
 
-###var **cgikeys**
+##var **cgikeys**
 
 
 
-###var **environ**
+##var **environ**
 
 
 
-###def **setdefault**(key, default=None)
+##def **setdefault**(key, default=None)
 
 D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D
 
-###def **get**(key, default=None)
+##def **get**(key, default=None)
 
 D.get(k[,d]) -> D[k] if k in D, else d.  d defaults to None.
 
-###def **keys**()
+##def **keys**()
 
 
 
-###def **items**()
+##def **items**()
 
 D.items() -> list of D's (key, value) pairs, as 2-tuples
 
-###def **clear**()
+##def **clear**()
 
 D.clear() -> None.  Remove all items from D.
 
-###def **popitem**()
+##def **popitem**()
 
 D.popitem() -> (k, v), remove and return some (key, value) pair
 as a 2-tuple; but raise KeyError if D is empty.
 
-###def **update**(*args, **kwds)
+##def **update**(*args, **kwds)
 
 D.update([E, ]**F) -> None.  Update D from mapping/iterable E and F.
 If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-###def **pop**(key, default=<object object at 0x108f67040>)
+##def **pop**(key, default=<object object at 0x109baf040>)
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
 
-###def **raw**(key, default=None)
+##def **raw**(key, default=None)
 
 Return the header value as is (may be bytes or unicode). 
 
-###def **values**()
+##def **values**()
 
 D.values() -> list of D's values
 
-###def **itervalues**()
+##def **itervalues**()
 
 D.itervalues() -> an iterator over the values of D
 
-###def **iteritems**()
+##def **iteritems**()
 
 D.iteritems() -> an iterator over the (key, value) items of D
 
-###def **iterkeys**()
+##def **iterkeys**()
 
 D.iterkeys() -> an iterator over the keys of D

@@ -1,23 +1,5 @@
-#Module cocopot.response
 
-
-##var **HTTP_STATUS_CODES**
-
-
-
-##var **PY2**
-
-
-
-##var **integer_types**
-
-
-
-##var **string_types**
-
-
-
-##def **jsonify**(*args, **kwargs)
+#def **jsonify**(*args, **kwargs)
 
 Creates a `Response` with the JSON representation of
 the given arguments with an`application/json` mimetype.  The
@@ -40,11 +22,11 @@ This will send a JSON response like this to the browser:
         "id": 42
     }
 
-##def **make_response**(*args)
+#def **make_response**(*args)
 
 
 
-##def **redirect**(location, code=302)
+#def **redirect**(location, code=302)
 
 Returns a response object (a WSGI application) that, if called,
 redirects the client to the target location.  Supported codes are 301,
@@ -53,7 +35,7 @@ Args:
 
   * location: the location the response should redirect to.
   * code: the redirect status code. defaults to 302.
-##class Response(body='', status=None, headers=None, **more_headers)
+#class Response(body='', status=None, headers=None, **more_headers)
 
 Storage class for a response body as well as headers and cookies.
 This class does support dict-like case-insensitive item-access to
@@ -71,69 +53,69 @@ Additional keyword arguments are added to the list of headers.
 Underscores in the header name are replaced with dashes.
 
 
-###var **status**
+##var **status**
 
 
 
-###var **content_length**
+##var **content_length**
 
 
 
-###var **default_content_type**
+##var **default_content_type**
 
 
 
-###var **default_status**
+##var **default_status**
 
 
 
-###var **bad_headers**
+##var **bad_headers**
 
 
 
-###var **expires**
+##var **expires**
 
 
 
-###var **content_type**
+##var **content_type**
 
 
 
-###var **status**
+##var **status**
 
 
 
-###var **body**
+##var **body**
 
 
 
-###var **headerlist**
+##var **headerlist**
 
 WSGI conform list of (header, value) tuples. 
 
-###var **status_code**
+##var **status_code**
 
 The HTTP status code as an integer (e.g. 404).
 
-###var **charset**
+##var **charset**
 
 Return the charset specified in the content-type header (default: utf8). 
 
-###var **status_line**
+##var **status_line**
 
 The HTTP status line as a string (e.g. ``404 Not Found``).
 
-###var **headers**
+##var **headers**
 
 An instance of `HeaderDict`, a case-insensitive dict-like
 view on the response headers. 
 
-###def **set_header**(name, value)
+##def **set_header**(name, value)
 
 Create a new response header, replacing any previously defined
 headers with the same name. 
 
-###def **set_cookie**(name, value, secret=None, **options)
+##def **set_cookie**(name, value, secret=None, **options)
 
 Create a new cookie or replace an old one. If the `secret` parameter is
 set, create a `Signed Cookie` (described below).
@@ -165,33 +147,33 @@ the content) and not copy-protected (the client can restore an old
 cookie). The main intention is to make pickling and unpickling
 save, not to store secret information at client side.
 
-###def **init_with**(rv, status)
+##def **init_with**(rv, status)
 
 
 
-###def **add_header**(name, value)
+##def **add_header**(name, value)
 
 Add an additional response header, not removing duplicates. 
 
-###def **delete_cookie**(key, **kwargs)
+##def **delete_cookie**(key, **kwargs)
 
 Delete a cookie. Be sure to use the same `domain` and `path`
 settings as used to create the cookie. 
 
-###def **get_header**(name, default=None)
+##def **get_header**(name, default=None)
 
 Return the value of a previously defined header. If there is no
 header with that name, return a default value. 
 
-###def **close**()
+##def **close**()
 
 
 
-###def **copy**(cls=None)
+##def **copy**(cls=None)
 
 Returns a copy of self. 
 
-###def **iter_headers**()
+##def **iter_headers**()
 
 Yield (header, value) tuples, skipping headers that are not
 allowed with the current response status code. 

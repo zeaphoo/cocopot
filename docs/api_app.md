@@ -1,26 +1,4 @@
-#Module cocopot.app
-This module implements the central WSGI application object.
-
-##var **DEBUG**
-
-
-
-##var **INFO**
-
-
-
-##var **NOTSET**
-
-
-
-##var **integer_types**
-
-
-
-##var **string_types**
-
-
-##class Cocopot(import_name='')
+#class Cocopot(import_name='')
 
 The cocopot object implements a WSGI application and acts as the central
 object.  Once it is created it will act as a central registry for
@@ -33,19 +11,19 @@ in the `__init__.py` file of your package like this:
     app = Cocopot()
 
 
-###var **debug**
+##var **debug**
 
 
 
-###var **log_format**
+##var **log_format**
 
 
 
-###var **blueprints**
+##var **blueprints**
 
 
 
-###var **name**
+##var **name**
 
 The name of the application.  This is usually the import name
 with the difference that it's guessed from the run file if the
@@ -53,43 +31,43 @@ import name is main.  This name is used as a display name when
 Cocopot needs the name of the application.  It can be set and overridden
 to change the value.
 
-###var **config**
+##var **config**
 
 
 
-###var **before_request_funcs**
+##var **before_request_funcs**
 
 
 
-###var **view_functions**
+##var **view_functions**
 
 
 
-###var **error_handler_spec**
+##var **error_handler_spec**
 
 
 
-###var **teardown_request_funcs**
+##var **teardown_request_funcs**
 
 
 
-###var **router**
+##var **router**
 
 
 
-###var **logger**
+##var **logger**
 
 
 
-###var **import_name**
+##var **import_name**
 
 
 
-###var **after_request_funcs**
+##var **after_request_funcs**
 
 
 
-###def **create_logger**()
+##def **create_logger**()
 
 Creates a logger for the given application.  This logger works
 similar to a regular Python logger but changes the effective logging
@@ -97,11 +75,11 @@ level based on the application's debug flag.  Furthermore this
 function also removes all attached handlers in case there was a
 logger with the log name before.
 
-###def **before_request**(f)
+##def **before_request**(f)
 
 Registers a function to run before each request.
 
-###def **wsgi_app**(environ, start_response)
+##def **wsgi_app**(environ, start_response)
 
 The actual WSGI application.  This is not implemented in
 `__call__` so that middlewares can be applied without losing a
@@ -123,13 +101,13 @@ Args:
                        a list of headers and an optional
                        exception context to start the response
 
-###def **handle_http_exception**(e)
+##def **handle_http_exception**(e)
 
 Handles an HTTP exception.  By default this will invoke the
 registered error handlers and fall back to returning the
 exception as response.
 
-###def **handle_user_exception**(e)
+##def **handle_user_exception**(e)
 
 This method is called whenever an exception occurs that should be
 handled.  A special case are `~cocopot.exception.HTTPException`\s which are forwarded by
@@ -137,7 +115,7 @@ this function to the `handle_http_exception` method.  This
 function will either return a response value or reraise the
 exception with the same traceback.
 
-###def **process_response**(response)
+##def **process_response**(response)
 
 Can be overridden in order to modify the response object
 before it's sent to the WSGI server.  By default this will
@@ -152,18 +130,19 @@ Returns:
   * a new response object or the same, has to be an
          instance of `Response`.
 
-###def **run**(host=None, port=None, debug=True, **options)
+##def **run**(host=None, port=None, debug=True, **options)
 
 Runs the application on a local development server.
 Args:
-    host: the hostname to listen on. Set this to '0.0.0.0' to
+
+  * host: the hostname to listen on. Set this to '0.0.0.0' to
              have the server available externally as well. Defaults to
              '127.0.0.1'.
-    port: the port of the webserver. Defaults to 5000 or the
+  * port: the port of the webserver. Defaults to 5000 or the
              port defined in the SERVER_NAME` config variable if
              present.
 
-###def **do_teardown_request**(exc=None)
+##def **do_teardown_request**(exc=None)
 
 Called after the actual request dispatching and will
 call every as `teardown_request` decorated function.  This is
@@ -171,14 +150,14 @@ not actually called by the `Cocopot` object itself but is always
 triggered when the request context is popped.  That way we have a
 tighter control over certain resources under testing environments.
 
-###def **log_exception**(exc_info)
+##def **log_exception**(exc_info)
 
 Logs an exception.  This is called by `handle_exception`
 if debugging is disabled and right before the handler is called.
 The default implementation logs the exception as error on the
 `logger`.
 
-###def **errorhandler**(code_or_exception)
+##def **errorhandler**(code_or_exception)
 
 A decorator that is used to register a function give a given
 error code.  Example:
@@ -208,19 +187,19 @@ and the special case for arbitrary exception types.
 The first `None` refers to the active blueprint.  If the error
 handler should be application wide `None` shall be used.
 
-###def **full_dispatch_request**()
+##def **full_dispatch_request**()
 
 Dispatches the request and on top of that performs request
 pre and postprocessing as well as HTTP exception catching and
 error handling.
 
-###def **register_error_handler**(code_or_exception, f)
+##def **register_error_handler**(code_or_exception, f)
 
 Alternative error attach function to the `errorhandler`
 decorator that is more straightforward to use for non decorator
 usage.
 
-###def **endpoint**(endpoint)
+##def **endpoint**(endpoint)
 
 A decorator to register a function as an endpoint.
 Example:
@@ -231,12 +210,12 @@ Example:
 Args:
     endpoint: the name of the endpoint
 
-###def **register_blueprint**(blueprint, **options)
+##def **register_blueprint**(blueprint, **options)
 
 Registers a blueprint on the application.
         
 
-###def **route**(rule, **options)
+##def **route**(rule, **options)
 
 A decorator that is used to register a view function for a
 given URL rule.  This does the same thing as `add_url_rule`
@@ -255,7 +234,7 @@ Args:
                  itself assumes the name of the view function as
                  endpoint
 
-###def **handle_exception**(e)
+##def **handle_exception**(e)
 
 Default exception handling that kicks in when an exception
 occurs that is not caught.  In debug mode the exception will
@@ -263,7 +242,7 @@ be re-raised immediately, otherwise it is logged and the handler
 for a 500 internal server error is used.  If no such handler
 exists, a default 500 internal server error message is displayed.
 
-###def **preprocess_request**()
+##def **preprocess_request**()
 
 Called before the actual request dispatching and will
 call every as `before_request` decorated function.
@@ -271,7 +250,7 @@ If any of these function returns a value it's handled as
 if it was the return value from the view and further
 request handling is stopped.
 
-###def **add_url_rule**(rule, endpoint=None, view_func=None, methods=None, **options)
+##def **add_url_rule**(rule, endpoint=None, view_func=None, methods=None, **options)
 
 Connects a URL rule.  Works exactly like the `route`
 decorator.  If a view_func is provided it will be registered with the
@@ -310,13 +289,13 @@ Args:
   * options: methods is a list of methods this rule should be limited
             to (`GET`, `POST` etc.).
 
-###def **after_request**(f)
+##def **after_request**(f)
 
 Register a function to be run after each request.  Your function
 must take one parameter, a `Response` object and return
 a new response object.
 
-###def **teardown_request**(f)
+##def **teardown_request**(f)
 
 Register a function to be run at the end of each request,
 regardless of whether there was an exception or not.  These functions
@@ -330,44 +309,3 @@ statements and log occurring errors.
 
 When a teardown function was called because of a exception it will
 be passed an error object.
-##class RequestContext(app, environ, request=None, **kwargs)
-
-The application context binds an application object implicitly
-to the current thread or greenlet, similar to how the
-`RequestContext` binds request information.  The application
-context is also implicitly created if a request context is created
-but the application is not on top of the individual application
-context.
-
-
-###var **request**
-
-
-
-###var **app**
-
-
-
-###var **environ**
-
-
-
-###var **g**
-
-
-
-###def **push**()
-
-
-
-###def **pop**(exc=None)
-
-
-##class RequestContextGlobals()
-
-A plain object.
-
-
-###def **get**(name, default=None)
-
-
