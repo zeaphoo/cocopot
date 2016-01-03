@@ -64,7 +64,7 @@ attributes default to an empty string.
 
 Return a (possibly empty) list of values for a key. 
 
-##def **pop**(key, default=<object object at 0x109baf040>)
+##def **pop**(key, default=object())
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
@@ -205,7 +205,7 @@ If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-##def **pop**(key, default=<object object at 0x109baf040>)
+##def **pop**(key, default=object())
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
@@ -258,7 +258,7 @@ as a 2-tuple; but raise KeyError if D is empty.
 ##def **append**(key, value)
 
 
-#class HeaderProperty(name, reader=None, writer=<type 'str'>, default='')
+#class HeaderProperty(name, reader=None, writer=str, default='')
 
 
 
@@ -328,7 +328,7 @@ If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-##def **pop**(key, default=<object object at 0x109baf040>)
+##def **pop**(key, default=object())
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
@@ -433,7 +433,7 @@ If E present and has a .keys() method, does:     for k in E: D[k] = E[k]
 If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
 In either case, this is followed by: for k, v in F.items(): D[k] = v
 
-##def **pop**(key, default=<object object at 0x109baf040>)
+##def **pop**(key, default=object())
 
 D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
 If key is not found, d is returned if given, otherwise KeyError is raised.
