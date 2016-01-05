@@ -47,9 +47,9 @@ class PyTest(TestCommand):
 
 setup(
     name='Cocopot',
-    version='0.1',
+    version='0.2',
     url='http://github.com/zeaphoo/cocopot/',
-    download_url='http://github.com/zeaphoo/cocopot/tarball/0.1',
+    download_url='http://github.com/zeaphoo/cocopot/tarball/0.2',
     license='BSD',
     author='zeaphoo',
     author_email='zeaphoo@gmail.com',
