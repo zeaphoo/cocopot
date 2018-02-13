@@ -84,7 +84,7 @@ class Router(object):
         try:
             re_pattern = re.compile('^(%s)$' % pattern)
             re_match = re_pattern.match
-        except re.error:
+        except re.error as _e:
             raise RouteSyntaxError("Could not add Route: %s (%s)" %
                                    (rule, _e()))
 

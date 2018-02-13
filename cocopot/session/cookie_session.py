@@ -17,7 +17,8 @@ class SecureCookieSession(BaseSession):
             return load_payload(ret)
         return None
 
-    def encode_session(self):
+    def encode_session(self, data):
+        salt = 'salt'
         s = dump_payload(data)
         return sign_payload(s, session_config.get('secret_key'), salt)
 

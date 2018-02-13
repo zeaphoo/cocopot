@@ -7,7 +7,9 @@ import hmac
 import zlib
 import time
 import base64
+import hashlib
 from datetime import datetime
+from cocopot._compat import text_type
 
 # 2011/01/01 in UTC
 EPOCH = 1293840000
@@ -65,13 +67,13 @@ def load_payload(payload):
     return json.loads(jsondata)
 
 def dump_payload(data):
-    json = json.dumps(data, separators=(',', ':'))
+    data = json.dumps(data, separators=(',', ':'))
     is_compressed = False
-    compressed = zlib.compress(json)
-    if len(compressed) < (len(json) - 1):
-        json = compressed
+    compressed = zlib.compress(data)
+    if len(compressed) < (len(data) - 1):
+        data = compressed
         is_compressed = True
-    base64d = base64_encode(json)
+    base64d = base64_encode(data)
     if is_compressed:
         base64d = b'.' + base64d
     return base64d

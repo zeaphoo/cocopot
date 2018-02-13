@@ -194,7 +194,8 @@ class CocopotClient(object):
         resp_buffer = []
         def start_response(status, headers, exc_info=None):
             if exc_info is not None:
-                reraise(*exc_info)
+                pass
+                #reraise(*exc_info)
             response[:] = [status, headers]
             return resp_buffer.append
 
